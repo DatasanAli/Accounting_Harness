@@ -1,0 +1,743 @@
+{
+  "schema_version": 1,
+  "fictional": true,
+  "description": "Original acceptance example; no real business, customer, vendor or bank data.",
+  "entity": {
+    "id": "demo-service-001",
+    "name": "Example Service Studio",
+    "currency": "USD",
+    "basis": "accrual",
+    "equity_model": "owner_capital_and_drawings"
+  },
+  "period": {
+    "start": "2026-01-01",
+    "end": "2026-01-31"
+  },
+  "opening_balances": "all_zero",
+  "accounts": [
+    {
+      "code": "1000",
+      "name": "Cash",
+      "classification": "asset",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "1100",
+      "name": "Accounts Receivable",
+      "classification": "asset",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "1200",
+      "name": "Prepaid Insurance",
+      "classification": "asset",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "1500",
+      "name": "Equipment",
+      "classification": "asset",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "1590",
+      "name": "Accumulated Depreciation",
+      "classification": "asset",
+      "normal_side": "credit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "2000",
+      "name": "Accounts Payable",
+      "classification": "liability",
+      "normal_side": "credit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "2100",
+      "name": "Unearned Service Revenue",
+      "classification": "liability",
+      "normal_side": "credit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "3000",
+      "name": "Owner Capital",
+      "classification": "equity",
+      "normal_side": "credit",
+      "active": true,
+      "temporary": false
+    },
+    {
+      "code": "3100",
+      "name": "Owner Drawings",
+      "classification": "equity",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": true
+    },
+    {
+      "code": "4000",
+      "name": "Service Revenue",
+      "classification": "revenue",
+      "normal_side": "credit",
+      "active": true,
+      "temporary": true
+    },
+    {
+      "code": "5000",
+      "name": "Rent Expense",
+      "classification": "expense",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": true
+    },
+    {
+      "code": "5100",
+      "name": "Software Expense",
+      "classification": "expense",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": true
+    },
+    {
+      "code": "5200",
+      "name": "Insurance Expense",
+      "classification": "expense",
+      "normal_side": "debit",
+      "active": true,
+      "temporary": true
+    }
+  ],
+  "evidence": [
+    {
+      "id": "source-T01",
+      "date": "2026-01-01",
+      "description": "Owner contributes cash; this is equity, not revenue.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T02",
+      "date": "2026-01-02",
+      "description": "Pay January office rent for space used this month.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T03",
+      "date": "2026-01-03",
+      "description": "Pay 1200.00 for 12 months of insurance beginning January; fixture policy allocates equally by full month.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T04",
+      "date": "2026-01-10",
+      "description": "Invoice customer for 2500.00 of services already delivered.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T05",
+      "date": "2026-01-15",
+      "description": "Collect 1500.00 against T04; no new revenue.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T06",
+      "date": "2026-01-18",
+      "description": "Receive 300.00 vendor bill for software service consumed in January.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T07",
+      "date": "2026-01-20",
+      "description": "Record 100.00 payment against T06.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T08",
+      "date": "2026-01-22",
+      "description": "Receive 600.00 advance before delivering the related service.",
+      "synthetic": true
+    },
+    {
+      "id": "source-T09",
+      "date": "2026-01-25",
+      "description": "Owner withdraws 200.00; this is drawings, not expense.",
+      "synthetic": true
+    },
+    {
+      "id": "source-A01",
+      "date": "2026-01-31",
+      "description": "Recognize one month of the prepaid insurance using the stated allocation policy.",
+      "synthetic": true
+    },
+    {
+      "id": "source-A02",
+      "date": "2026-01-31",
+      "description": "Service evidence confirms 200.00 of T08's advance has been earned.",
+      "synthetic": true
+    },
+    {
+      "id": "source-C01",
+      "date": "2026-01-31",
+      "description": "Close revenue directly to owner capital under the sample's closing policy.",
+      "synthetic": true
+    },
+    {
+      "id": "source-C02",
+      "date": "2026-01-31",
+      "description": "Close expenses directly to owner capital.",
+      "synthetic": true
+    },
+    {
+      "id": "source-C03",
+      "date": "2026-01-31",
+      "description": "Close drawings directly to owner capital.",
+      "synthetic": true
+    }
+  ],
+  "transactions": [
+    {
+      "id": "T01",
+      "date": "2026-01-01",
+      "description": "Owner contributes cash; this is equity, not revenue.",
+      "kind": "ordinary",
+      "evidence_id": "source-T01",
+      "cash_flow_category": "financing",
+      "lines": [
+        {
+          "account": "1000",
+          "side": "debit",
+          "amount": "10000.00"
+        },
+        {
+          "account": "3000",
+          "side": "credit",
+          "amount": "10000.00"
+        }
+      ]
+    },
+    {
+      "id": "T02",
+      "date": "2026-01-02",
+      "description": "Pay January office rent for space used this month.",
+      "kind": "ordinary",
+      "evidence_id": "source-T02",
+      "cash_flow_category": "operating",
+      "lines": [
+        {
+          "account": "5000",
+          "side": "debit",
+          "amount": "1200.00"
+        },
+        {
+          "account": "1000",
+          "side": "credit",
+          "amount": "1200.00"
+        }
+      ]
+    },
+    {
+      "id": "T03",
+      "date": "2026-01-03",
+      "description": "Pay 1200.00 for 12 months of insurance beginning January; fixture policy allocates equally by full month.",
+      "kind": "ordinary",
+      "evidence_id": "source-T03",
+      "cash_flow_category": "operating",
+      "lines": [
+        {
+          "account": "1200",
+          "side": "debit",
+          "amount": "1200.00"
+        },
+        {
+          "account": "1000",
+          "side": "credit",
+          "amount": "1200.00"
+        }
+      ]
+    },
+    {
+      "id": "T04",
+      "date": "2026-01-10",
+      "description": "Invoice customer for 2500.00 of services already delivered.",
+      "kind": "ordinary",
+      "evidence_id": "source-T04",
+      "cash_flow_category": null,
+      "lines": [
+        {
+          "account": "1100",
+          "side": "debit",
+          "amount": "2500.00"
+        },
+        {
+          "account": "4000",
+          "side": "credit",
+          "amount": "2500.00"
+        }
+      ]
+    },
+    {
+      "id": "T05",
+      "date": "2026-01-15",
+      "description": "Collect 1500.00 against T04; no new revenue.",
+      "kind": "ordinary",
+      "evidence_id": "source-T05",
+      "cash_flow_category": "operating",
+      "lines": [
+        {
+          "account": "1000",
+          "side": "debit",
+          "amount": "1500.00"
+        },
+        {
+          "account": "1100",
+          "side": "credit",
+          "amount": "1500.00"
+        }
+      ]
+    },
+    {
+      "id": "T06",
+      "date": "2026-01-18",
+      "description": "Receive 300.00 vendor bill for software service consumed in January.",
+      "kind": "ordinary",
+      "evidence_id": "source-T06",
+      "cash_flow_category": null,
+      "lines": [
+        {
+          "account": "5100",
+          "side": "debit",
+          "amount": "300.00"
+        },
+        {
+          "account": "2000",
+          "side": "credit",
+          "amount": "300.00"
+        }
+      ]
+    },
+    {
+      "id": "T07",
+      "date": "2026-01-20",
+      "description": "Record 100.00 payment against T06.",
+      "kind": "ordinary",
+      "evidence_id": "source-T07",
+      "cash_flow_category": "operating",
+      "lines": [
+        {
+          "account": "2000",
+          "side": "debit",
+          "amount": "100.00"
+        },
+        {
+          "account": "1000",
+          "side": "credit",
+          "amount": "100.00"
+        }
+      ]
+    },
+    {
+      "id": "T08",
+      "date": "2026-01-22",
+      "description": "Receive 600.00 advance before delivering the related service.",
+      "kind": "ordinary",
+      "evidence_id": "source-T08",
+      "cash_flow_category": "operating",
+      "lines": [
+        {
+          "account": "1000",
+          "side": "debit",
+          "amount": "600.00"
+        },
+        {
+          "account": "2100",
+          "side": "credit",
+          "amount": "600.00"
+        }
+      ]
+    },
+    {
+      "id": "T09",
+      "date": "2026-01-25",
+      "description": "Owner withdraws 200.00; this is drawings, not expense.",
+      "kind": "ordinary",
+      "evidence_id": "source-T09",
+      "cash_flow_category": "financing",
+      "lines": [
+        {
+          "account": "3100",
+          "side": "debit",
+          "amount": "200.00"
+        },
+        {
+          "account": "1000",
+          "side": "credit",
+          "amount": "200.00"
+        }
+      ]
+    },
+    {
+      "id": "A01",
+      "date": "2026-01-31",
+      "description": "Recognize one month of the prepaid insurance using the stated allocation policy.",
+      "kind": "adjustment",
+      "evidence_id": "source-A01",
+      "cash_flow_category": null,
+      "lines": [
+        {
+          "account": "5200",
+          "side": "debit",
+          "amount": "100.00"
+        },
+        {
+          "account": "1200",
+          "side": "credit",
+          "amount": "100.00"
+        }
+      ]
+    },
+    {
+      "id": "A02",
+      "date": "2026-01-31",
+      "description": "Service evidence confirms 200.00 of T08's advance has been earned.",
+      "kind": "adjustment",
+      "evidence_id": "source-A02",
+      "cash_flow_category": null,
+      "lines": [
+        {
+          "account": "2100",
+          "side": "debit",
+          "amount": "200.00"
+        },
+        {
+          "account": "4000",
+          "side": "credit",
+          "amount": "200.00"
+        }
+      ]
+    }
+  ],
+  "closing_entries": [
+    {
+      "id": "C01",
+      "date": "2026-01-31",
+      "description": "Close revenue directly to owner capital under the sample's closing policy.",
+      "kind": "closing",
+      "evidence_id": "source-C01",
+      "cash_flow_category": null,
+      "lines": [
+        {
+          "account": "4000",
+          "side": "debit",
+          "amount": "2700.00"
+        },
+        {
+          "account": "3000",
+          "side": "credit",
+          "amount": "2700.00"
+        }
+      ]
+    },
+    {
+      "id": "C02",
+      "date": "2026-01-31",
+      "description": "Close expenses directly to owner capital.",
+      "kind": "closing",
+      "evidence_id": "source-C02",
+      "cash_flow_category": null,
+      "lines": [
+        {
+          "account": "3000",
+          "side": "debit",
+          "amount": "1600.00"
+        },
+        {
+          "account": "5000",
+          "side": "credit",
+          "amount": "1200.00"
+        },
+        {
+          "account": "5100",
+          "side": "credit",
+          "amount": "300.00"
+        },
+        {
+          "account": "5200",
+          "side": "credit",
+          "amount": "100.00"
+        }
+      ]
+    },
+    {
+      "id": "C03",
+      "date": "2026-01-31",
+      "description": "Close drawings directly to owner capital.",
+      "kind": "closing",
+      "evidence_id": "source-C03",
+      "cash_flow_category": null,
+      "lines": [
+        {
+          "account": "3000",
+          "side": "debit",
+          "amount": "200.00"
+        },
+        {
+          "account": "3100",
+          "side": "credit",
+          "amount": "200.00"
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "unadjusted_trial_balance": {
+      "rows": [
+        {
+          "account": "1000",
+          "debit": "9400.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1100",
+          "debit": "1000.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1200",
+          "debit": "1200.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1500",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1590",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "2000",
+          "debit": "0.00",
+          "credit": "200.00"
+        },
+        {
+          "account": "2100",
+          "debit": "0.00",
+          "credit": "600.00"
+        },
+        {
+          "account": "3000",
+          "debit": "0.00",
+          "credit": "10000.00"
+        },
+        {
+          "account": "3100",
+          "debit": "200.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "4000",
+          "debit": "0.00",
+          "credit": "2500.00"
+        },
+        {
+          "account": "5000",
+          "debit": "1200.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "5100",
+          "debit": "300.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "5200",
+          "debit": "0.00",
+          "credit": "0.00"
+        }
+      ],
+      "total_debits": "13300.00",
+      "total_credits": "13300.00"
+    },
+    "adjusted_trial_balance": {
+      "rows": [
+        {
+          "account": "1000",
+          "debit": "9400.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1100",
+          "debit": "1000.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1200",
+          "debit": "1100.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1500",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1590",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "2000",
+          "debit": "0.00",
+          "credit": "200.00"
+        },
+        {
+          "account": "2100",
+          "debit": "0.00",
+          "credit": "400.00"
+        },
+        {
+          "account": "3000",
+          "debit": "0.00",
+          "credit": "10000.00"
+        },
+        {
+          "account": "3100",
+          "debit": "200.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "4000",
+          "debit": "0.00",
+          "credit": "2700.00"
+        },
+        {
+          "account": "5000",
+          "debit": "1200.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "5100",
+          "debit": "300.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "5200",
+          "debit": "100.00",
+          "credit": "0.00"
+        }
+      ],
+      "total_debits": "13300.00",
+      "total_credits": "13300.00"
+    },
+    "post_closing_trial_balance": {
+      "rows": [
+        {
+          "account": "1000",
+          "debit": "9400.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1100",
+          "debit": "1000.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1200",
+          "debit": "1100.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1500",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "1590",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "2000",
+          "debit": "0.00",
+          "credit": "200.00"
+        },
+        {
+          "account": "2100",
+          "debit": "0.00",
+          "credit": "400.00"
+        },
+        {
+          "account": "3000",
+          "debit": "0.00",
+          "credit": "10900.00"
+        },
+        {
+          "account": "3100",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "4000",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "5000",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "5100",
+          "debit": "0.00",
+          "credit": "0.00"
+        },
+        {
+          "account": "5200",
+          "debit": "0.00",
+          "credit": "0.00"
+        }
+      ],
+      "total_debits": "11500.00",
+      "total_credits": "11500.00"
+    },
+    "income_statement": {
+      "revenue": "2700.00",
+      "expenses": "1600.00",
+      "net_income": "1100.00"
+    },
+    "owners_equity": {
+      "opening_capital": "0.00",
+      "contributions": "10000.00",
+      "net_income": "1100.00",
+      "drawings": "200.00",
+      "ending_equity": "10900.00"
+    },
+    "balance_sheet": {
+      "assets": "11500.00",
+      "liabilities": "600.00",
+      "equity": "10900.00"
+    },
+    "cash_flows": {
+      "opening_cash": "0.00",
+      "operating": "-400.00",
+      "investing": "0.00",
+      "financing": "9800.00",
+      "net_change": "9400.00",
+      "ending_cash": "9400.00"
+    }
+  }
+}

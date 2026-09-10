@@ -1,0 +1,38 @@
+{
+  "review_date": "2026-09-10",
+  "reading_order": [
+    "V1",
+    "V2"
+  ],
+  "method": "pdftotext -layout; all chapter outlines and summaries, plus selected foundational sections; not every exercise",
+  "sources": [
+    {
+      "id": "V1",
+      "filename": "Principles_of_Financial_Accounting_Vol1.pdf",
+      "title": "Principles of Accounting, Volume 1: Financial Accounting",
+      "url": "https://openstax.org/details/books/principles-financial-accounting",
+      "publisher": "OpenStax, Rice University",
+      "copyright_year": 2019,
+      "pdf_pages": 973,
+      "printed_to_pdf_offset": 14,
+      "bytes": 167017826,
+      "sha256": "a98ed7dcb92eec2bd70f32b150aa4f1d3140ad78bb1477e86a31682ec5ac31e5",
+      "chapter_count": 16,
+      "license_as_printed": "CC BY-NC-SA 4.0"
+    },
+    {
+      "id": "V2",
+      "filename": "Principles_of_Financial_Accounting_Vol2.pdf",
+      "title": "Principles of Accounting, Volume 2: Managerial Accounting",
+      "url": "https://openstax.org/details/books/principles-managerial-accounting",
+      "publisher": "OpenStax, Rice University",
+      "copyright_year": 2019,
+      "pdf_pages": 677,
+      "printed_to_pdf_offset": 12,
+      "bytes": 89822467,
+      "sha256": "233b94100de54a5ed9fd6b9cf419a2b165aa2b5975ae06c9ac7bcba556a7bc26",
+      "chapter_count": 13,
+      "license_as_printed": "CC BY-NC-SA 4.0"
+    }
+  ]
+}

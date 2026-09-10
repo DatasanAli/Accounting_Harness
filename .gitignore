@@ -1,0 +1,19 @@
+# Local source books and extracted reading material.
+/Principles_of_Financial_Accounting_Vol1.pdf
+/Principles_of_Financial_Accounting_Vol2.pdf
+/.local/
+
+# Local data, credentials, and Python output.
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.sqlite
+*.sqlite3
+*.db
+.DS_Store

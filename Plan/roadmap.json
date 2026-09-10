@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "current_step": "01",
+  "next_step": "02",
+  "phases": [
+    {
+      "id": "01",
+      "path": "Plan/01-foundation/README.md",
+      "title": "Scope and reference examples",
+      "steps": [
+        {
+          "id": "01",
+          "title": "Establish the foundation",
+          "status": "complete"
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "path": "Plan/02-ledger-core/README.md",
+      "title": "Exact money and ledger core",
+      "steps": [
+        {
+          "id": "02",
+          "title": "Money and chart of accounts",
+          "status": "ready"
+        },
+        {
+          "id": "03",
+          "title": "Journal validation",
+          "status": "planned"
+        },
+        {
+          "id": "04",
+          "title": "Ledger and trial balance",
+          "status": "planned"
+        },
+        {
+          "id": "05",
+          "title": "Atomic persistence and retry",
+          "status": "planned"
+        },
+        {
+          "id": "06",
+          "title": "Linked reversals",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "path": "Plan/03-evidence-and-review/README.md",
+      "title": "Evidence, review and audit",
+      "steps": [
+        {
+          "id": "07",
+          "title": "Source registration",
+          "status": "planned"
+        },
+        {
+          "id": "08",
+          "title": "Versioned drafts and review queue",
+          "status": "planned"
+        },
+        {
+          "id": "09",
+          "title": "Approval, posting and audit",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "path": "Plan/04-agent-harness/README.md",
+      "title": "A bounded accounting agent",
+      "steps": [
+        {
+          "id": "10",
+          "title": "Typed tools and offline evaluation cases",
+          "status": "planned"
+        },
+        {
+          "id": "11",
+          "title": "Resumable fake-provider run loop",
+          "status": "planned"
+        },
+        {
+          "id": "12",
+          "title": "One real provider and proposal evaluation",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "05",
+      "path": "Plan/05-service-bookkeeping/README.md",
+      "title": "Daily service-business operations",
+      "steps": [
+        {
+          "id": "13",
+          "title": "Cash receipts and expenses",
+          "status": "planned"
+        },
+        {
+          "id": "14",
+          "title": "Vendor bills and partial settlement",
+          "status": "planned"
+        },
+        {
+          "id": "15",
+          "title": "Customer invoices and collection",
+          "status": "planned"
+        },
+        {
+          "id": "16",
+          "title": "Customer advances and earning",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "path": "Plan/06-bank-reconciliation/README.md",
+      "title": "Bank reconciliation",
+      "steps": [
+        {
+          "id": "17",
+          "title": "Bank statement CSV import",
+          "status": "planned"
+        },
+        {
+          "id": "18",
+          "title": "Matching and exceptions",
+          "status": "planned"
+        },
+        {
+          "id": "19",
+          "title": "Reconciliation and reviewed adjustments",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "path": "Plan/07-period-close/README.md",
+      "title": "Adjustments, statements and close",
+      "steps": [
+        {
+          "id": "20",
+          "title": "Month-end adjustment proposals",
+          "status": "planned"
+        },
+        {
+          "id": "21",
+          "title": "Core financial statements",
+          "status": "planned"
+        },
+        {
+          "id": "22",
+          "title": "Closing entries and date locks",
+          "status": "planned"
+        },
+        {
+          "id": "23",
+          "title": "Cash flow and reproducible exports",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "08",
+      "path": "Plan/08-service-management/README.md",
+      "title": "Service costing, budgets and analysis",
+      "steps": [
+        {
+          "id": "24",
+          "title": "Project and cost dimensions",
+          "status": "planned"
+        },
+        {
+          "id": "25",
+          "title": "Service project costing",
+          "status": "planned"
+        },
+        {
+          "id": "26",
+          "title": "Versioned operating and cash budgets",
+          "status": "planned"
+        },
+        {
+          "id": "27",
+          "title": "Flexible budgets and variance explanations",
+          "status": "planned"
+        },
+        {
+          "id": "28",
+          "title": "Contribution and operating indicators",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "path": "Plan/09-integrations-and-pilot/README.md",
+      "title": "Access, integrations and controlled pilot",
+      "steps": [
+        {
+          "id": "29",
+          "title": "Authenticated operator and entity access",
+          "status": "planned"
+        },
+        {
+          "id": "30",
+          "title": "One sandbox read adapter",
+          "status": "planned"
+        },
+        {
+          "id": "31",
+          "title": "Review workbench",
+          "status": "planned"
+        },
+        {
+          "id": "32",
+          "title": "One sandbox journal export",
+          "status": "planned"
+        },
+        {
+          "id": "33",
+          "title": "Recovery and operational visibility",
+          "status": "planned"
+        },
+        {
+          "id": "34",
+          "title": "Controlled pilot acceptance",
+          "status": "planned"
+        }
+      ]
+    }
+  ]
+}
