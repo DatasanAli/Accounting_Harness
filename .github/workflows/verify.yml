@@ -15,3 +15,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Verify plan and accounting reference example
         run: python3 scripts/verify_foundation.py
+      - name: Run application tests with discovery guard
+        run: python3 scripts/run_tests.py
+      - name: Demonstrate exact money and the account catalog
+        run: python3 -m accounting_harness demo-accounts

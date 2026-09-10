@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "01",
-  "next_step": "02",
+  "current_step": "02",
+  "next_step": "03",
   "phases": [
     {
       "id": "01",
@@ -23,12 +23,12 @@
         {
           "id": "02",
           "title": "Money and chart of accounts",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "03",
           "title": "Journal validation",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "04",

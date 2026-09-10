@@ -2,7 +2,7 @@
 
 Updated: 2026-09-10.
 
-**Completed work: Step 01 — foundation. Next implementation: Step 02 — Money and chart of accounts.**
+**Completed work: Steps 01–02 — foundation, Money, and chart of accounts. Next implementation: Step 03 — journal validation.**
 
 | Item | State |
 | --- | --- |
@@ -12,10 +12,13 @@ Updated: 2026-09-10.
 | Implementation/testing/GitHub guidelines | Written |
 | Fictional reference month | Created with independent expected results |
 | Foundation verification | See the observed results in the verification record |
-| Application, ledger, agents, integrations | Not implemented |
-| Next step | Step 02 ready; later steps planned |
+| Money and chart of accounts | Implemented: exact USD cents, immutable accounts/catalog, validated JSON loader |
+| Application verification | 30 tests pass, including invalid inputs, CLI behavior and zero-test discovery failure |
+| Demonstration | 13 accounts; 0.10 + 0.20 = 0.30 USD; excess precision rejected |
+| Journal validation, ledger, agents, integrations | Not implemented |
+| Next step | Step 03 ready; later steps planned |
 
-Read the [verification record](01-foundation/VERIFICATION.md) for Step 01's checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) are the delivery evidence for the introducing commit. The completion response must identify its exact commit and CI run.
+Read the [Step 01 verification record](01-foundation/VERIFICATION.md) and [Step 02 verification record](02-ledger-core/STEP_02_VERIFICATION.md) for observed checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) provide delivery evidence for each commit. The completion response must identify the exact commit and CI run.
 
 [roadmap.json](roadmap.json) records the ordered step states. Keep it synchronized with this page and [NEXT_STEP.md](NEXT_STEP.md) after every completed increment. The complete roadmap is in [README.md](README.md).
 

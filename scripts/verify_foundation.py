@@ -212,7 +212,7 @@ def main():
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
-    print("Foundation verification passed. Application behavior is not implemented or tested yet.")
+    print("Foundation verification passed. Run scripts/run_tests.py for application tests.")
     return 0
 
 

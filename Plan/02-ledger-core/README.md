@@ -1,6 +1,6 @@
 # Phase 02: Exact money and ledger core
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: in progress. Step 02 is implemented and verified; Step 03 is ready. Steps 03–06 remain unimplemented. See the [Step 02 verification record](STEP_02_VERIFICATION.md).
 
 **Depends on:** Step 01. Keep all examples local and fictional; no operational posting claims.
 
@@ -17,6 +17,8 @@ Implement the pure domain first. Account codes stay stable. Use integer cents fo
 Build only one numbered step per request. Split a row further if it cannot be demonstrated and reviewed as one small change.
 
 ### Step 02: Money and chart of accounts
+
+Completed: `Money`, `Account`, `AccountCatalog`, validated JSON loading, the `demo-accounts` CLI, and 30 passing application tests. The remaining rows describe future work.
 
 - **Build:** Add exact USD Money values and a validated service-business account catalog; expose one list-accounts demonstration.
 - **Test:** Reject invalid amount formats, floats, booleans, unsupported currency and duplicate/invalid accounts; 0.10 + 0.20 equals 0.30 exactly.

@@ -1,6 +1,6 @@
 # Intended architecture
 
-Status: design target. Step 01 implements documentation and fixture verification only.
+Status: design target with Step 02 implemented. The package currently contains `domain/money.py`, `domain/accounts.py`, the `demo-accounts` CLI, and application tests. Journals, persistence, approval, agents, and reporting remain future work.
 
 ## Responsibility boundaries
 

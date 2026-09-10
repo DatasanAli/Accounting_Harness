@@ -1,12 +1,12 @@
 # Accounting Harness implementation plan
 
-Step 01 defines what we are building and how each increment is verified. The first coding step is **Step 02: Money and chart of accounts**. The selected initial workflow is bookkeeping for a small service business.
+Steps 01–02 establish the plan and implement exact Money values and a chart of accounts. The next small build is **Step 03: journal validation**. The selected initial workflow is bookkeeping for a small service business.
 
 An agent harness is the application around an agent: its task state, evidence context, allowed tools, execution limits, approvals, and recorded results. Our ledger and accounting rules must be testable independently of the model.
 
 ## Directory tree
 
-These plan files exist now. The application modules in the [architecture](ARCHITECTURE.md) are future work.
+These plan files exist now. The [architecture](ARCHITECTURE.md) distinguishes the implemented Money/accounts package from the remaining design target.
 
 ```text
 Plan/
@@ -24,7 +24,8 @@ Plan/
 ├── 01-foundation/
 │   └── README.md                      # Steps 01–01
 ├── 02-ledger-core/
-│   └── README.md                      # Steps 02–06
+│   ├── README.md                      # Steps 02–06
+│   └── STEP_02_VERIFICATION.md
 ├── 03-evidence-and-review/
 │   └── README.md                      # Steps 07–09
 ├── 04-agent-harness/

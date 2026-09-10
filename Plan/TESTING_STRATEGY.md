@@ -4,11 +4,13 @@
 
 ```sh
 python3 scripts/verify_foundation.py
+python3 scripts/run_tests.py
+python3 -m accounting_harness demo-accounts
 ```
 
-Step 01 checks documentation links, the ordered roadmap, and the arithmetic/structure of [the original reference month](../data/fixtures/service-business-month.json). It checks all expected account balances, statement totals, cash movements, and closing results. It does not test any production application: none exists yet.
+The foundation check validates documentation links, the ordered roadmap, and the arithmetic/structure of [the original reference month](../data/fixtures/service-business-month.json). It checks expected account balances, statement totals, cash movements, and closing results. These are fixture checks, separate from the application's tests.
 
-Step 02 introduces application tests using Python's standard library. Tests must fail on unexpected zero-test discovery. Add the same test runner to CI and the README when it exists. Dependencies and paid model calls are unnecessary for the first implementation steps.
+Step 02 has 30 application tests using Python's standard library. The suite exercises exact arithmetic, strict parsing/direct construction, full catalog contents, invalid metadata, immutable snapshots, entity-local lookups, inactive accounts, JSON validation, CLI output, and test-runner failure handling. The runner must fail on unexpected zero-test discovery and on a failing test; both behaviors have subprocess tests. CI runs the same commands above. No external packages or model calls are needed.
 
 ## Test the outcome and the failure boundary
 
