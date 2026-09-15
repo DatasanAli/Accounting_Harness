@@ -9,6 +9,15 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_journal_demo_shows_acceptance_and_rejection(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-journal"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("ACCEPTED: debits 1000.00 / credits 1000.00 USD", result.stdout)
+        self.assertIn("REJECTED: debits 1000.00 / credits 999.00 USD", result.stdout)
+        self.assertIn("Difference: 1.00 USD", result.stdout)
+        self.assertIn("unbalanced at lines", result.stdout)
+
     def test_account_demo_displays_catalog_and_exact_addition(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-accounts"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

@@ -1,6 +1,6 @@
 # Intended architecture
 
-Status: design target with Step 02 implemented. The package currently contains `domain/money.py`, `domain/accounts.py`, the `demo-accounts` CLI, and application tests. Journals, persistence, approval, agents, and reporting remain future work.
+Status: design target with Steps 02–03 implemented. The package currently contains `domain/money.py`, `domain/accounts.py`, pure validation in `domain/journal.py`, the `demo-accounts` and `demo-journal` CLI commands, and application tests. Ledger posting, persistence, approval, agents, and reporting remain future work.
 
 ## Responsibility boundaries
 

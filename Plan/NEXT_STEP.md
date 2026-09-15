@@ -1,55 +1,40 @@
-# Next: Step 03 — Journal validation
+# Next: Step 04 — Ledger and trial balance
 
-Status: ready. Steps 01–02 established the foundation and implemented exact Money values and the service-business account catalog.
+Status: ready. Steps 01–03 established the foundation, exact Money/account catalog, and pure journal validation.
 
 ## Copy this prompt
 
-> Build Step 03: journal-entry validation. Follow Plan/NEXT_STEP.md, accept balanced entries and reject invalid ones, test and demonstrate the result, then commit and push to GitHub. Stop after this step.
+> Build Step 04: ledger and trial balance. Follow Plan/NEXT_STEP.md, apply validated entries to an in-memory ledger and demonstrate the reference trial balance, test it, then commit and push to GitHub. Stop after this step.
 
 ## The small thing to build
 
-Add a pure journal-entry validator and one CLI demonstration. It accepts a proposed entry only when its metadata and lines are valid and its debit/credit totals match exactly. The validator returns structured findings that can later be used by review workflows.
+Add an in-memory ledger for one entity/catalog and a defined inclusive accounting date range, plus an as-of-date trial balance. Use the Step 03 validator with explicitly supplied known source IDs on every entry admission. A caller-provided validation result must not bypass revalidation. Reject invalid entries, duplicate entry IDs and effective dates outside the ledger range without changing existing entries or balances.
 
-Use the existing `Money`, `Account`, `AccountCatalog`, and `get_for_posting` validation boundaries. This step does not apply entries to balances, save a database, manage approval, or call an agent. Those capabilities remain in their existing later steps.
+Use integer cents, with signed per-account balances or separate debit/credit totals. Preserve a snapshot of accepted entries and their IDs, dates, descriptions, sources and lines so later caller mutations cannot alter history. This is a local synthetic ledger demonstration; authenticated approval, durable posting, idempotency and audit events remain in their planned steps. Do not add SQLite or an agent.
 
-## Proposed contract
-
-A proposed entry contains a nonblank ID, entity ID, USD currency, effective accounting date, nonblank description, source IDs, and two or more lines. Each line contains one active account code, one side (`debit` or `credit`), and a positive Money amount. Inputs with both debit and credit fields should not be coerced into a single-sided line.
-
-The entry entity/currency must match the supplied catalog, and every line's currency must match the entry. Use actual calendar dates; serialized dates must use `YYYY-MM-DD`. Reject date/time strings masquerading as accounting dates. Closed-period validation belongs to the later period-lock step.
-
-Require at least one nonblank source ID and check it against explicitly supplied known source IDs. For this step, the validator's tests and demo can supply IDs from the fictional fixture; source registration, storage, digest verification and document interpretation remain later work. A known source ID is not proof that its accounting classification is correct.
-
-Return a result that clearly identifies accepted/rejected status, exact debit and credit totals when computable, and field/line-specific findings with stable error codes. Invalid input must not be silently rounded, coerced, dropped, or accepted after only some lines have been checked. Keep input objects/catalog unchanged.
+The report includes entity, currency, inclusive date cutoff, included entry IDs (the in-memory snapshot), and an explicit unadjusted/all-zero-opening report policy. Include all catalog accounts in stable code order. Net debit balances appear in the debit column; net credit balances appear in the credit column, regardless of normal-side metadata. Zero balances have zero in both columns. Reject invalid or out-of-range report dates. Report generation must not change the ledger.
 
 ## Acceptance examples
 
-| Example | Expected result |
-| --- | --- |
-| Owner contribution: Cash debit 1000.00, Owner Capital credit 1000.00 | Accepted, totals 1000.00 / 1000.00 |
-| Same example with credit 999.00 | Rejected as unbalanced; difference 1.00 |
-| Compound earned service receipt: Cash debit 700.00, Accounts Receivable debit 300.00, Service Revenue credit 1000.00 | Accepted; multiple lines on one side are supported |
-| Empty/one-line entry, zero amount, negative or floating-point amount, invalid side | Rejected with relevant line/entry finding |
-| Unknown/inactive account | Rejected using the catalog boundary |
-| Wrong entity, unsupported currency or currency mismatch | Rejected before acceptance |
-| Blank ID/description; impossible date such as 2026-02-30; timestamp instead of date | Rejected with field-specific finding |
-| Missing, blank or unknown source ID | Rejected; no fabricated evidence |
-| Repeat validation of the same proposal | Same result; proposal and catalog unchanged |
-
-Balancing verifies arithmetic, not all accounting meaning. Do not claim this validator can establish correct recognition, classification, approval, posting idempotency or business completeness.
+- Explicitly adapt only ordinary transactions T01–T09 from `data/fixtures/service-business-month.json` to the journal contract. Leave adjustments and closing entries for their later steps.
+- At 2026-01-31, compare every account against the independent `expected.unadjusted_trial_balance` fixture. Both columns total **13300.00 USD**, with Cash **9400.00 USD** debit.
+- Earlier cutoffs include only entries effective on or before that date, including transactions on the cutoff itself. Empty ledgers show zero totals and all catalog accounts.
+- Duplicate IDs, unbalanced proposals, invalid evidence/accounts, and dates before or after the ledger range fail without partial changes. Different IDs with identical amounts remain separate transactions.
+- A malformed batch must not leave an undocumented partial import; either keep the API single-entry or define atomic batch behavior explicitly.
+- Repeated reports are identical for an unchanged snapshot; modifying input dicts/lists after admission cannot alter the stored entries or report.
+- Include a credit balance in an asset account to verify display follows the actual net balance rather than the account's normal side.
 
 ## Files and verification
 
-Add a focused domain module such as `accounting_harness/domain/journal.py` and meaningful tests in `tests/test_journal.py`. Extend the CLI with a `demo-journal` command that shows the valid 1000.00 contribution and refused 999.00 credit. No third-party dependencies are needed.
-
-Keep these existing commands passing:
+Add a focused ledger module, meaningful tests, and `python3 -m accounting_harness demo-ledger`. Keep these checks passing:
 
 ```sh
 python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 python3 -m accounting_harness demo-accounts
+python3 -m accounting_harness demo-journal
 ```
 
-Add the new demonstration to CI when it exists, record observed results, and update the root README and active phase. Mark Step 03 complete and Step 04 ready in the roadmap/status. Replace this document with a small Step 04 ledger/trial-balance specification. Commit, push, verify that exact commit and CI run, then stop.
+Add the ledger demo to CI, update the root README and phase verification record, mark Step 04 complete and Step 05 ready in status/roadmap, and replace this document with a small persistence/retry specification. Commit, push, verify the exact commit and CI run, then stop.
 
-Source basis: Volume 1 §§3.3–3.6. Exact types and structured validation findings are engineering decisions.
+Source basis: Volume 1 §§3.5–3.6. Snapshot metadata and validation boundaries are engineering decisions.

@@ -6,11 +6,12 @@
 python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 python3 -m accounting_harness demo-accounts
+python3 -m accounting_harness demo-journal
 ```
 
 The foundation check validates documentation links, the ordered roadmap, and the arithmetic/structure of [the original reference month](../data/fixtures/service-business-month.json). It checks expected account balances, statement totals, cash movements, and closing results. These are fixture checks, separate from the application's tests.
 
-Step 02 has 30 application tests using Python's standard library. The suite exercises exact arithmetic, strict parsing/direct construction, full catalog contents, invalid metadata, immutable snapshots, entity-local lookups, inactive accounts, JSON validation, CLI output, and test-runner failure handling. The runner must fail on unexpected zero-test discovery and on a failing test; both behaviors have subprocess tests. CI runs the same commands above. No external packages or model calls are needed.
+Steps 02–03 have 50 application tests using Python's standard library. The suite exercises exact arithmetic, strict parsing/direct construction, full catalog contents, invalid metadata, immutable snapshots, entity-local lookups, inactive accounts, JSON validation, CLI output, and test-runner failure handling. The runner must fail on unexpected zero-test discovery and on a failing test; both behaviors have subprocess tests. Journal coverage includes balanced and compound entries, signed imbalance, exact large amounts, invalid line shapes and fields, source/account/date/currency checks, complete findings without partial totals, repeatability, and unchanged inputs. A balanced but misclassified contribution documents the semantic limit. CI runs the same commands above. No external packages or model calls are needed.
 
 ## Test the outcome and the failure boundary
 

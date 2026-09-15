@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "02",
-  "next_step": "03",
+  "current_step": "03",
+  "next_step": "04",
   "phases": [
     {
       "id": "01",
@@ -28,12 +28,12 @@
         {
           "id": "03",
           "title": "Journal validation",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "04",
           "title": "Ledger and trial balance",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "05",
