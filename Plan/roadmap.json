@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "03",
-  "next_step": "04",
+  "current_step": "04",
+  "next_step": "05",
   "phases": [
     {
       "id": "01",
@@ -33,12 +33,12 @@
         {
           "id": "04",
           "title": "Ledger and trial balance",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "05",
           "title": "Atomic persistence and retry",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "06",

@@ -9,6 +9,18 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_ledger_demo_displays_reference_trial_balance_and_scope(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-ledger"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Unadjusted trial balance as of 2026-01-31", result.stdout)
+        self.assertIn("Entity: demo-service-001 | Currency: USD", result.stdout)
+        self.assertIn("Policy: unadjusted-zero-opening-v1", result.stdout)
+        self.assertIn("Included entries: T01, T02, T03, T04, T05, T06, T07, T08, T09", result.stdout)
+        self.assertRegex(result.stdout, r"1000\s+Cash\s+9400\.00\s+0\.00")
+        self.assertRegex(result.stdout, r"TOTAL\s+13300\.00\s+13300\.00")
+        self.assertIn("balances are not saved after exit", result.stdout)
+
     def test_journal_demo_shows_acceptance_and_rejection(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-journal"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

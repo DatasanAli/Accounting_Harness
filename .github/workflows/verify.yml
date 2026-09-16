@@ -21,3 +21,5 @@ jobs:
         run: python3 -m accounting_harness demo-accounts
       - name: Demonstrate journal validation
         run: python3 -m accounting_harness demo-journal
+      - name: Demonstrate ledger and trial balance
+        run: python3 -m accounting_harness demo-ledger

@@ -1,10 +1,9 @@
 """Pure draft validation. Acceptance is neither approval nor posting authority."""
 
-import re
 from dataclasses import dataclass
-from datetime import date
 
 from accounting_harness.domain.accounts import AccountCatalog
+from accounting_harness.domain.dates import accounting_date
 from accounting_harness.domain.money import Money
 
 
@@ -78,16 +77,10 @@ def validate_journal(
     if currency != catalog.currency:
         add("currency_mismatch", "currency", "entry currency must match the catalog")
 
-    effective_date = proposal.get("effective_date")
-    valid_date = type(effective_date) is date
-    if isinstance(effective_date, str) and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", effective_date):
-        try:
-            date.fromisoformat(effective_date)
-            valid_date = True
-        except ValueError:
-            pass
-    if not valid_date:
-        add("invalid_date", "effective_date", "must be a calendar date or YYYY-MM-DD string")
+    try:
+        accounting_date(proposal.get("effective_date"))
+    except ValueError as error:
+        add("invalid_date", "effective_date", str(error))
 
     sources = proposal.get("source_ids")
     if not isinstance(sources, (list, tuple)) or not sources:

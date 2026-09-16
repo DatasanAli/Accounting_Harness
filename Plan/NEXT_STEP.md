@@ -1,40 +1,42 @@
-# Next: Step 04 — Ledger and trial balance
+# Next: Step 05 — Atomic persistence and retry
 
-Status: ready. Steps 01–03 established the foundation, exact Money/account catalog, and pure journal validation.
+Status: ready. Steps 01–04 provide exact Money/accounts, journal validation, and an in-memory ledger with reproducible trial balances.
 
 ## Copy this prompt
 
-> Build Step 04: ledger and trial balance. Follow Plan/NEXT_STEP.md, apply validated entries to an in-memory ledger and demonstrate the reference trial balance, test it, then commit and push to GitHub. Stop after this step.
+> Build Step 05: atomic persistence and retry. Follow Plan/NEXT_STEP.md, persist journals in SQLite with atomic writes and safe idempotent retries, test and demonstrate restart/retry behavior, then commit and push to GitHub. Stop after this step.
 
 ## The small thing to build
 
-Add an in-memory ledger for one entity/catalog and a defined inclusive accounting date range, plus an as-of-date trial balance. Use the Step 03 validator with explicitly supplied known source IDs on every entry admission. A caller-provided validation result must not bypass revalidation. Reject invalid entries, duplicate entry IDs and effective dates outside the ledger range without changing existing entries or balances.
+Add a standard-library SQLite repository for the local synthetic ledger. Preserve Step 04's validation, date range, immutable entry semantics, and snapshot/report policy. A persisted journal must retain ID, entity, currency, effective date, description, source references and lines, plus a local operator actor reference and a separate recorded UTC timestamp. This is a synthetic local persistence demonstration; authenticated approval and real-data operation remain later steps.
 
-Use integer cents, with signed per-account balances or separate debit/credit totals. Preserve a snapshot of accepted entries and their IDs, dates, descriptions, sources and lines so later caller mutations cannot alter history. This is a local synthetic ledger demonstration; authenticated approval, durable posting, idempotency and audit events remain in their planned steps. Do not add SQLite or an agent.
+Define a schema version and reject unsupported versions without destructive changes. Preserve the entity/catalog/period context across reopen; reject incompatible reopen configuration. Document the supported cents range for SQLite storage and reject overflow before any write; never fall back to REAL money columns or float conversion.
 
-The report includes entity, currency, inclusive date cutoff, included entry IDs (the in-memory snapshot), and an explicit unadjusted/all-zero-opening report policy. Include all catalog accounts in stable code order. Net debit balances appear in the debit column; net credit balances appear in the credit column, regardless of normal-side metadata. Zero balances have zero in both columns. Reject invalid or out-of-range report dates. Report generation must not change the ledger.
+Commit each journal, its lines, a posting event, and its idempotency record in one transaction. Revalidate inside the write transaction and enforce applicable database uniqueness, foreign keys and field constraints. Keep admission single-entry. Report snapshots must be loaded consistently from stored entries and carry the metadata needed to reproduce a trial balance.
 
-## Acceptance examples
+## Retry contract
 
-- Explicitly adapt only ordinary transactions T01–T09 from `data/fixtures/service-business-month.json` to the journal contract. Leave adjustments and closing entries for their later steps.
-- At 2026-01-31, compare every account against the independent `expected.unadjusted_trial_balance` fixture. Both columns total **13300.00 USD**, with Cash **9400.00 USD** debit.
-- Earlier cutoffs include only entries effective on or before that date, including transactions on the cutoff itself. Empty ledgers show zero totals and all catalog accounts.
-- Duplicate IDs, unbalanced proposals, invalid evidence/accounts, and dates before or after the ledger range fail without partial changes. Different IDs with identical amounts remain separate transactions.
-- A malformed batch must not leave an undocumented partial import; either keep the API single-entry or define atomic batch behavior explicitly.
-- Repeated reports are identical for an unchanged snapshot; modifying input dicts/lists after admission cannot alter the stored entries or report.
-- Include a credit balance in an asset account to verify display follows the actual net balance rather than the account's normal side.
+Require an explicit nonblank idempotency key scoped to the entity and operation. Canonicalize the validated entry payload deterministically, including source IDs, effective date and lines; document treatment of equivalent amount/date representations and collection ordering. Bind the actor/context needed for the recorded action. Store a digest with the result identity.
 
-## Files and verification
+- Same scoped key and same canonical payload returns the original result, with no extra journal, lines or event.
+- Same scoped key and changed payload fails without mutation.
+- Same journal ID under another key is rejected, preserving Step 04's uniqueness rule.
+- Different entry IDs and different keys with equal amounts remain distinct transactions.
+- Concurrent attempts using separate SQLite connections with the same key/payload yield one committed journal and one event. Use a bounded busy/retry policy and report exhaustion clearly.
 
-Add a focused ledger module, meaningful tests, and `python3 -m accounting_harness demo-ledger`. Keep these checks passing:
+## Required evidence
 
-```sh
-python3 scripts/verify_foundation.py
-python3 scripts/run_tests.py
-python3 -m accounting_harness demo-accounts
-python3 -m accounting_harness demo-journal
-```
+- Persist ordinary T01–T09, close the connection, reopen it and reproduce every reference trial-balance row and both 13300.00 USD totals.
+- Inject a failure after at least one line write but before commit. A fresh connection must find no partial journal, lines, event or idempotency result. Retrying after the failure must succeed once.
+- Exercise unchanged retry, changed-payload retry, duplicate IDs under a different key, and concurrent same-key requests.
+- Check unknown/inactive accounts, wrong entity/currency, invalid sources, unbalanced entries, out-of-period dates and storage overflow through the persistence service; failures leave existing reports unchanged.
+- Test applicable schema constraints via direct SQL and verify a new database uses the expected schema version. Do not claim SQL constraints cover an invariant tested only through application code.
+- Retain a report snapshot, persist later entries and reproduce the old report from that snapshot.
 
-Add the ledger demo to CI, update the root README and phase verification record, mark Step 04 complete and Step 05 ready in status/roadmap, and replace this document with a small persistence/retry specification. Commit, push, verify the exact commit and CI run, then stop.
+## Demonstration and delivery
 
-Source basis: Volume 1 §§3.5–3.6. Snapshot metadata and validation boundaries are engineering decisions.
+Add `python3 -m accounting_harness demo-persistence`, using a temporary synthetic database that is cleaned up after the demo. Show persist → close/reopen → retry → unchanged journal/event counts and balances. Keep real databases and financial records out of GitHub.
+
+Keep the foundation check, guarded application test runner and all three existing demos passing. Add the persistence demo to CI. Record observed checks, schema/retry semantics and rollback limits; update README, phase/status/roadmap; mark Step 05 complete and Step 06 ready; replace this document with the linked-reversal brief. Commit, push, verify the exact commit and CI run, then stop.
+
+Source basis: journal/ledger principles from Volume 1 §§3.5–3.6. Transactions, idempotency, storage limits, schema versioning and concurrency are engineering decisions.

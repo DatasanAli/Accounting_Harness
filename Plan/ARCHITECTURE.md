@@ -1,6 +1,6 @@
 # Intended architecture
 
-Status: design target with Steps 02–03 implemented. The package currently contains `domain/money.py`, `domain/accounts.py`, pure validation in `domain/journal.py`, the `demo-accounts` and `demo-journal` CLI commands, and application tests. Ledger posting, persistence, approval, agents, and reporting remain future work.
+Status: design target with Steps 02–04 implemented. The package contains exact Money/accounts, pure journal validation, shared strict calendar dates, and an in-memory ledger with immutable snapshots and trial balances. CLI commands are `demo-accounts`, `demo-journal`, and `demo-ledger`. Durable posting, persistence, approval, agents, and financial statements remain future work. The local ledger is a synthetic single-threaded demonstration, with no hosted deployment.
 
 ## Responsibility boundaries
 

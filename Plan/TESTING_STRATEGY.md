@@ -7,11 +7,12 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 python3 -m accounting_harness demo-accounts
 python3 -m accounting_harness demo-journal
+python3 -m accounting_harness demo-ledger
 ```
 
 The foundation check validates documentation links, the ordered roadmap, and the arithmetic/structure of [the original reference month](../data/fixtures/service-business-month.json). It checks expected account balances, statement totals, cash movements, and closing results. These are fixture checks, separate from the application's tests.
 
-Steps 02–03 have 50 application tests using Python's standard library. The suite exercises exact arithmetic, strict parsing/direct construction, full catalog contents, invalid metadata, immutable snapshots, entity-local lookups, inactive accounts, JSON validation, CLI output, and test-runner failure handling. The runner must fail on unexpected zero-test discovery and on a failing test; both behaviors have subprocess tests. Journal coverage includes balanced and compound entries, signed imbalance, exact large amounts, invalid line shapes and fields, source/account/date/currency checks, complete findings without partial totals, repeatability, and unchanged inputs. A balanced but misclassified contribution documents the semantic limit. CI runs the same commands above. No external packages or model calls are needed.
+Steps 02–04 have 68 application tests using Python's standard library. The suite exercises exact arithmetic, strict parsing/direct construction, full catalog contents, invalid metadata, immutable snapshots, entity-local lookups, inactive accounts, JSON validation, CLI output, and test-runner failure handling. The runner must fail on unexpected zero-test discovery and on a failing test; both behaviors have subprocess tests. Journal coverage includes balanced and compound entries, signed imbalance, exact large amounts, invalid line shapes and fields, source/account/date/currency checks, complete findings without partial totals, repeatability, and unchanged inputs. A balanced but misclassified contribution documents the semantic limit. Ledger tests compare every ordinary reference account against independently defined expected balances, check inclusive cutoffs, immutable historical snapshots, duplicate/invalid entry refusal without mutation, large integer cents, zero/credit asset balances, and explicit report scope. CI runs the same commands above. No external packages or model calls are needed.
 
 ## Test the outcome and the failure boundary
 
@@ -34,7 +35,7 @@ For each numbered step, supply a valid example, a meaningful invalid example, an
 
 Start with the reference month's owner contribution, rent, prepaid insurance, earned invoice, partial collection, supplier bill/payment, customer advance, owner withdrawal, and two adjustments. All amounts and company details are original fictional examples.
 
-At Step 04, use its ordinary transactions for an unadjusted trial balance. At Step 20 add the two adjustments. At Step 21 check net income of $1,100.00, assets of $11,500.00, liabilities of $600.00, and ending equity of $10,900.00. At Step 22 check temporary accounts clear without losing historical performance reports. At Step 23 check the $9,400.00 closing cash balance and its operating/financing sources.
+Step 04 uses its ordinary transactions for an unadjusted trial balance (13300.00 USD per column; Cash 9400.00 USD debit). At Step 20 add the two adjustments. At Step 21 check net income of $1,100.00, assets of $11,500.00, liabilities of $600.00, and ending equity of $10,900.00. At Step 22 check temporary accounts clear without losing historical performance reports. At Step 23 check the $9,400.00 closing cash balance and its operating/financing sources.
 
 Add fixtures when a capability is introduced: bad-debt estimates, depreciation, reversals, prior balances, multiple periods, loss months, no activity, and contra accounts. Add property-based generation when handwritten cases stop covering ledger combinations; conserve total debits/credits and test reversal identities. Do not require a new test framework in advance.
 
