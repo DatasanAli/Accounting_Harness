@@ -2,12 +2,15 @@
 
 import argparse
 import json
+import sqlite3
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from accounting_harness.domain.accounts import load_account_catalog
 from accounting_harness.domain.money import Money
 from accounting_harness.domain.journal import validate_journal
 from accounting_harness.domain.ledger import InMemoryLedger
+from accounting_harness.persistence import SQLiteLedger, PersistenceBusy
 
 FIXTURE = Path(__file__).resolve().parents[1] / "data/fixtures/service-business-month.json"
 
@@ -84,12 +87,52 @@ def demo_ledger() -> None:
     print("Synthetic in-memory demonstration; balances are not saved after exit.")
 
 
+def demo_persistence() -> None:
+    catalog = load_account_catalog(FIXTURE)
+    fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    proposals = [
+        dict(id=row["id"], entity_id=catalog.entity_id, currency=catalog.currency,
+             effective_date=row["date"], description=row["description"],
+             source_ids=[row["evidence_id"]], lines=row["lines"])
+        for row in fixture["transactions"] if row["kind"] == "ordinary"
+    ]
+
+    def show(stage, ledger):
+        counts = ledger.counts()
+        report = ledger.trial_balance(fixture["period"]["end"])
+        print(f"{stage}: {counts['journals']} journals, {counts['lines']} lines, "
+              f"{counts['posting_events']} events, {counts['idempotency']} retry records")
+        print(f"Debits {report.total_debits} / credits {report.total_credits} USD; "
+              f"Cash {report.rows[0].debit} USD")
+        return counts, report
+
+    with TemporaryDirectory(prefix="accounting-harness-") as directory:
+        path = Path(directory) / "synthetic.sqlite3"
+        options = dict(catalog=catalog, period_start=fixture["period"]["start"],
+                       period_end=fixture["period"]["end"],
+                       known_source_ids={row["id"] for row in fixture["evidence"]})
+        with SQLiteLedger(path, **options) as ledger:
+            receipts = [ledger.admit(p, idempotency_key=p["id"], actor_id="synthetic-local-operator")
+                        for p in proposals]
+            original = show("Persisted", ledger)
+        with SQLiteLedger(path, **options) as ledger:
+            reopened = show("Reopened", ledger)
+            retried = [ledger.admit(p, idempotency_key=p["id"], actor_id="synthetic-local-operator")
+                       for p in proposals]
+            after_retry = show("Retried", ledger)
+            if reopened != original or after_retry != original or retried != receipts:
+                raise ValueError("persistence/retry demonstration changed original records")
+            print("Original receipt preserved for every entry, including operator and UTC timestamp.")
+    print("Temporary synthetic database removed; authenticated approval remains a later step.")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("demo-accounts", help="show the fictional account catalog and exact arithmetic")
     commands.add_parser("demo-journal", help="validate balanced and unbalanced fictional entries")
     commands.add_parser("demo-ledger", help="show the fictional unadjusted trial balance")
+    commands.add_parser("demo-persistence", help="persist, reopen and safely retry fictional entries")
     args = parser.parse_args(argv)
     try:
         if args.command == "demo-accounts":
@@ -98,7 +141,9 @@ def main(argv: list[str] | None = None) -> int:
             demo_journal()
         elif args.command == "demo-ledger":
             demo_ledger()
-    except (OSError, ValueError, TypeError) as error:
+        elif args.command == "demo-persistence":
+            demo_persistence()
+    except (OSError, ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
         parser.error(str(error))
     return 0
 

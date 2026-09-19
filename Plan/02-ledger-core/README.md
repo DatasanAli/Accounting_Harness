@@ -1,6 +1,6 @@
 # Phase 02: Exact money and ledger core
 
-Status: in progress. Steps 02–04 are implemented and verified locally; Step 05 is ready. Steps 05–06 remain unimplemented. See the [Step 02 verification record](STEP_02_VERIFICATION.md), [Step 03 verification record](STEP_03_VERIFICATION.md), and [Step 04 verification record](STEP_04_VERIFICATION.md); delivery evidence is reported for the exact commit in the completion response.
+Status: in progress. Steps 02–05 are implemented and verified locally; Step 06 is ready. See the [Step 02](STEP_02_VERIFICATION.md), [Step 03](STEP_03_VERIFICATION.md), [Step 04](STEP_04_VERIFICATION.md), and [Step 05 verification records](STEP_05_VERIFICATION.md); delivery evidence is reported for the exact commit in the completion response.
 
 **Depends on:** Step 01. Keep all examples local and fictional; no operational posting claims.
 
@@ -18,7 +18,7 @@ Build only one numbered step per request. Split a row further if it cannot be de
 
 ### Step 02: Money and chart of accounts
 
-Completed: `Money`, `Account`, `AccountCatalog`, validated JSON loading, the `demo-accounts` CLI, and 30 passing application tests. Steps 03–04 are also complete; Steps 05–06 describe future work.
+Completed: `Money`, `Account`, `AccountCatalog`, validated JSON loading, the `demo-accounts` CLI, and 30 passing application tests. Steps 03–05 are also complete; Step 06 describes future work.
 
 - **Build:** Add exact USD Money values and a validated service-business account catalog; expose one list-accounts demonstration.
 - **Test:** Reject invalid amount formats, floats, booleans, unsupported currency and duplicate/invalid accounts; 0.10 + 0.20 equals 0.30 exactly.
@@ -56,6 +56,8 @@ Copyable prompt:
 > Build Step 04: Ledger and trial balance. Follow Plan/02-ledger-core/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 05: Atomic persistence and retry
+
+Completed: schema-v1 SQLite storage, atomic journals/lines/evidence/events/retry results, canonical idempotency, immutable records, reproducible snapshots and `demo-persistence`. All 90 application tests pass. See the [implementation plan](STEP_05_PLAN.md) and [verification record](STEP_05_VERIFICATION.md).
 
 - **Build:** Persist journals in SQLite with schema versioning, atomic posting and scoped idempotency keys.
 - **Test:** Reopen database; inject failure after a line write; exercise same-key retries and changed payloads; concurrent same-key requests result in one posting.

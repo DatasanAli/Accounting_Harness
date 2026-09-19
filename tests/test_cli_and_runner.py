@@ -9,6 +9,16 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_persistence_demo_restarts_and_retries_without_duplicate_posting(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-persistence"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for stage in ("Persisted", "Reopened", "Retried"):
+            self.assertIn(f"{stage}: 9 journals, 18 lines, 9 events, 9 retry records", result.stdout)
+        self.assertIn("Debits 13300.00 / credits 13300.00 USD; Cash 9400.00 USD", result.stdout)
+        self.assertIn("Original receipt preserved", result.stdout)
+        self.assertIn("Temporary synthetic database removed", result.stdout)
+
     def test_ledger_demo_displays_reference_trial_balance_and_scope(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-ledger"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

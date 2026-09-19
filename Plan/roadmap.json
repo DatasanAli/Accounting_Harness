@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "04",
-  "next_step": "05",
+  "current_step": "05",
+  "next_step": "06",
   "phases": [
     {
       "id": "01",
@@ -38,12 +38,12 @@
         {
           "id": "05",
           "title": "Atomic persistence and retry",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "06",
           "title": "Linked reversals",
-          "status": "planned"
+          "status": "ready"
         }
       ]
     },

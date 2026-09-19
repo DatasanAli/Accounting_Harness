@@ -1,42 +1,31 @@
-# Next: Step 05 — Atomic persistence and retry
+# Next: Step 06 — Linked reversals
 
-Status: ready. Steps 01–04 provide exact Money/accounts, journal validation, and an in-memory ledger with reproducible trial balances.
+Status: ready. Steps 01–05 provide exact Money/accounts, journal validation, immutable ledger snapshots, and atomic SQLite persistence with safe retries.
 
 ## Copy this prompt
 
-> Build Step 05: atomic persistence and retry. Follow Plan/NEXT_STEP.md, persist journals in SQLite with atomic writes and safe idempotent retries, test and demonstrate restart/retry behavior, then commit and push to GitHub. Stop after this step.
+> Build Step 06: linked reversals. Follow Plan/NEXT_STEP.md, preserve original posted entries, add linked reversing journals with safe retries, test and demonstrate reversal behavior, then commit and push to GitHub. Stop after this step.
 
 ## The small thing to build
 
-Add a standard-library SQLite repository for the local synthetic ledger. Preserve Step 04's validation, date range, immutable entry semantics, and snapshot/report policy. A persisted journal must retain ID, entity, currency, effective date, description, source references and lines, plus a local operator actor reference and a separate recorded UTC timestamp. This is a synthetic local persistence demonstration; authenticated approval and real-data operation remain later steps.
+Add a correction operation to the synthetic local SQLite ledger. Given an existing journal ID, a new reversal ID, effective date, correction reason/evidence, local actor and explicit idempotency key, create a balanced journal with the original lines' debit/credit sides exchanged and the same exact amounts. Store a durable, queryable link to the original. Keep original entries, events and retry results unchanged. This step supports a full reversal, not arbitrary partial corrections or automatic replacement entries.
 
-Define a schema version and reject unsupported versions without destructive changes. Preserve the entity/catalog/period context across reopen; reject incompatible reopen configuration. Document the supported cents range for SQLite storage and reject overflow before any write; never fall back to REAL money columns or float conversion.
+Revalidate reversal inputs and current account/source/period context inside the write transaction. A date outside the configured period is rejected; do not backdate around future locked-period rules. Preserve integer storage limits, schema/version handling, recorded UTC timestamps and reproducible report snapshots. If schema changes are required, provide a tested non-destructive versioned migration from Step 05 and reject unsupported versions; do not silently recreate databases.
 
-Commit each journal, its lines, a posting event, and its idempotency record in one transaction. Revalidate inside the write transaction and enforce applicable database uniqueness, foreign keys and field constraints. Keep admission single-entry. Report snapshots must be loaded consistently from stored entries and carry the metadata needed to reproduce a trial balance.
-
-## Retry contract
-
-Require an explicit nonblank idempotency key scoped to the entity and operation. Canonicalize the validated entry payload deterministically, including source IDs, effective date and lines; document treatment of equivalent amount/date representations and collection ordering. Bind the actor/context needed for the recorded action. Store a digest with the result identity.
-
-- Same scoped key and same canonical payload returns the original result, with no extra journal, lines or event.
-- Same scoped key and changed payload fails without mutation.
-- Same journal ID under another key is rejected, preserving Step 04's uniqueness rule.
-- Different entry IDs and different keys with equal amounts remain distinct transactions.
-- Concurrent attempts using separate SQLite connections with the same key/payload yield one committed journal and one event. Use a bounded busy/retry policy and report exhaustion clearly.
+Define reversal retry scope and payload canonicalization explicitly. The same key/action returns its original result; changed parameters fail without mutation. A different key must not reverse the same original twice. Reject missing original IDs and reversal-of-reversal requests for this first correction API. Atomically persist the reversal, lines, evidence, original link, event and retry result.
 
 ## Required evidence
 
-- Persist ordinary T01–T09, close the connection, reopen it and reproduce every reference trial-balance row and both 13300.00 USD totals.
-- Inject a failure after at least one line write but before commit. A fresh connection must find no partial journal, lines, event or idempotency result. Retrying after the failure must succeed once.
-- Exercise unchanged retry, changed-payload retry, duplicate IDs under a different key, and concurrent same-key requests.
-- Check unknown/inactive accounts, wrong entity/currency, invalid sources, unbalanced entries, out-of-period dates and storage overflow through the persistence service; failures leave existing reports unchanged.
-- Test applicable schema constraints via direct SQL and verify a new database uses the expected schema version. Do not claim SQL constraints cover an invariant tested only through application code.
-- Retain a report snapshot, persist later entries and reproduce the old report from that snapshot.
+- Reverse a fictional erroneous expense; show original and reversing journals with their link. A report including both nets their account effect to zero.
+- Compare original journal/receipt before and after reversal and after reopen; originals remain unchanged.
+- Retain a pre-reversal snapshot and reproduce its original report. A cutoff before the reversal excludes it; the reversal date is included.
+- Test unchanged retry, changed-payload retry, duplicate reversal IDs, repeated reversal under another key and concurrent reversal requests; one original gets at most one full reversal.
+- Reject missing originals, reversal-of-reversal, invalid evidence, wrong entity, inactive/unknown accounts and out-of-period dates without changing existing balances or records.
+- Inject a mid-write failure and prove a fresh connection sees no partial reversal/link/event/retry record; a later retry succeeds once.
+- Exercise any new database constraints and any schema migration using synthetic temporary databases. Preserve Step 05's immutability, restart and retry tests.
 
 ## Demonstration and delivery
 
-Add `python3 -m accounting_harness demo-persistence`, using a temporary synthetic database that is cleaned up after the demo. Show persist → close/reopen → retry → unchanged journal/event counts and balances. Keep real databases and financial records out of GitHub.
+Add `python3 -m accounting_harness demo-reversal` using a cleaned-up temporary synthetic database. Run the foundation check, guarded application test suite and all existing demos; add the new demo to CI. Record observed evidence and correction/rollback limits. Update README, phase/status/roadmap, mark Step 06 complete and Step 07 ready, and replace this brief with source registration. Commit, push, verify the exact commit and Actions run, then stop.
 
-Keep the foundation check, guarded application test runner and all three existing demos passing. Add the persistence demo to CI. Record observed checks, schema/retry semantics and rollback limits; update README, phase/status/roadmap; mark Step 05 complete and Step 06 ready; replace this document with the linked-reversal brief. Commit, push, verify the exact commit and CI run, then stop.
-
-Source basis: journal/ledger principles from Volume 1 §§3.5–3.6. Transactions, idempotency, storage limits, schema versioning and concurrency are engineering decisions.
+Source basis: journal/ledger principles from Volume 1 §§3.5–3.6. Reversal linkage, idempotency, concurrency and migrations are engineering decisions. Authenticated approval remains later work.
