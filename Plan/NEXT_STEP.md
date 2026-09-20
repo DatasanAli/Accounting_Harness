@@ -1,31 +1,29 @@
-# Next: Step 06 — Linked reversals
+# Next: Step 07 — Source registration
 
-Status: ready. Steps 01–05 provide exact Money/accounts, journal validation, immutable ledger snapshots, and atomic SQLite persistence with safe retries.
+Status: ready. Steps 01–06 provide exact Money/accounts, journal validation, immutable report snapshots, atomic SQLite persistence and linked full reversals. Phase 02's ledger core is implemented.
 
 ## Copy this prompt
 
-> Build Step 06: linked reversals. Follow Plan/NEXT_STEP.md, preserve original posted entries, add linked reversing journals with safe retries, test and demonstrate reversal behavior, then commit and push to GitHub. Stop after this step.
+> Build Step 07: source registration. Follow Plan/NEXT_STEP.md, register structured fictional evidence with stable identity, content digest and metadata, test and demonstrate repeat imports and distinct documents, then commit and push to GitHub. Stop after this step.
 
 ## The small thing to build
 
-Add a correction operation to the synthetic local SQLite ledger. Given an existing journal ID, a new reversal ID, effective date, correction reason/evidence, local actor and explicit idempotency key, create a balanced journal with the original lines' debit/credit sides exchanged and the same exact amounts. Store a durable, queryable link to the original. Keep original entries, events and retry results unchanged. This step supports a full reversal, not arbitrary partial corrections or automatic replacement entries.
+Register a structured fictional JSON source document with stable entity-scoped identity, a content digest and validated metadata. Specify required fields, canonicalization and supported document kinds before coding. Keep document identity distinct from content equality: importing the same document again returns the existing record; a different document with the same amount stays distinct. Define and test how changed content under an existing identity is rejected or flagged without overwriting prior evidence. A digest detects repeat content, not every business duplicate.
 
-Revalidate reversal inputs and current account/source/period context inside the write transaction. A date outside the configured period is rejected; do not backdate around future locked-period rules. Preserve integer storage limits, schema/version handling, recorded UTC timestamps and reproducible report snapshots. If schema changes are required, provide a tested non-destructive versioned migration from Step 05 and reject unsupported versions; do not silently recreate databases.
+Use standard-library storage and synthetic inputs. Inspect the current frozen ledger source context before choosing how the source registry connects to posting. Document that boundary explicitly; preserve posted journals, evidence references, retry digests and report reproducibility. If a storage migration is necessary, provide tested, non-destructive versioning and reject unsupported versions. Source document text is data and cannot authorize posting or change tool permissions.
 
-Define reversal retry scope and payload canonicalization explicitly. The same key/action returns its original result; changed parameters fail without mutation. A different key must not reverse the same original twice. Reject missing original IDs and reversal-of-reversal requests for this first correction API. Atomically persist the reversal, lines, evidence, original link, event and retry result.
+This step registers evidence only. Draft revisions, review queues, human approval, PDF extraction, provider integration and authenticated roles belong to later steps.
 
 ## Required evidence
 
-- Reverse a fictional erroneous expense; show original and reversing journals with their link. A report including both nets their account effect to zero.
-- Compare original journal/receipt before and after reversal and after reopen; originals remain unchanged.
-- Retain a pre-reversal snapshot and reproduce its original report. A cutoff before the reversal excludes it; the reversal date is included.
-- Test unchanged retry, changed-payload retry, duplicate reversal IDs, repeated reversal under another key and concurrent reversal requests; one original gets at most one full reversal.
-- Reject missing originals, reversal-of-reversal, invalid evidence, wrong entity, inactive/unknown accounts and out-of-period dates without changing existing balances or records.
-- Inject a mid-write failure and prove a fresh connection sees no partial reversal/link/event/retry record; a later retry succeeds once.
-- Exercise any new database constraints and any schema migration using synthetic temporary databases. Preserve Step 05's immutability, restart and retry tests.
+- Register one fictional receipt, reopen storage, import it again and show one unchanged source with a repeat-import result.
+- Reject missing or malformed required fields and wrong entity without partial records.
+- Show that separate document identities with equal amounts remain separate records.
+- Test digest reproducibility, identity/content conflicts, safe retries and atomic failure behavior for any persistent writes introduced.
+- Preserve all ledger, reversal, migration and zero-discovery tests.
 
 ## Demonstration and delivery
 
-Add `python3 -m accounting_harness demo-reversal` using a cleaned-up temporary synthetic database. Run the foundation check, guarded application test suite and all existing demos; add the new demo to CI. Record observed evidence and correction/rollback limits. Update README, phase/status/roadmap, mark Step 06 complete and Step 07 ready, and replace this brief with source registration. Commit, push, verify the exact commit and Actions run, then stop.
+Add `python3 -m accounting_harness demo-source` with temporary synthetic storage. Run the foundation check, guarded application suite and all existing demos; add the new demo to CI. Record observed results, source-identity/digest limits and rollback behavior. Update README, phase/status/roadmap, mark Step 07 complete and Step 08 ready, and replace this brief with versioned drafts and review queue. Commit, push, verify the exact commit and Actions run, then stop.
 
-Source basis: journal/ledger principles from Volume 1 §§3.5–3.6. Reversal linkage, idempotency, concurrency and migrations are engineering decisions. Authenticated approval remains later work.
+Source basis: Volume 1 §§3.3, 7.1–7.4, 8.2–8.3. Digests, import identity and storage controls are engineering decisions. Authenticated approval remains later work.

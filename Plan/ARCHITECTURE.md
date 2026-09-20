@@ -1,6 +1,6 @@
 # Intended architecture
 
-Status: design target with Steps 02–04 implemented. The package contains exact Money/accounts, pure journal validation, shared strict calendar dates, and an in-memory ledger with immutable snapshots and trial balances. CLI commands are `demo-accounts`, `demo-journal`, and `demo-ledger`. Durable posting, persistence, approval, agents, and financial statements remain future work. The local ledger is a synthetic single-threaded demonstration, with no hosted deployment.
+Status: design target with Steps 02–06 implemented. The package contains exact Money/accounts, pure journal validation, strict calendar dates, immutable ledger snapshots and trial balances, atomic SQLite persistence and linked full reversals. The five local CLI demonstrations cover accounts, journal validation, ledger reports, persistence and reversals. Approval, agents and financial statements remain future work. SQLite handles concurrent requests with serialized transactions; this remains a synthetic local prototype with no hosted deployment.
 
 ## Responsibility boundaries
 
@@ -44,7 +44,7 @@ Add each record when its step needs it; this is not an instruction to scaffold e
 accounting_harness/          # Introduced in Step 02
   domain/                   # Money, accounts, journals, pure accounting rules
   application/              # Use cases, approvals, posting, reconciliation, close
-  storage/                  # SQLite repository and migrations
+  persistence.py            # Implemented SQLite storage, retries and v1→v2 migration
   evidence/                 # Source registration and import formats
   agent/                    # Typed tools, run loop, provider adapter, checkpoints
   reporting/                # Statements and management calculations
@@ -55,7 +55,7 @@ evals/                      # Introduced with agent tools
 data/fixtures/              # Fictional examples, including Step 01 reference month
 ```
 
-The initial CLI works locally with a single fictional entity. SQLite is the first persistence target. Provider adapters keep accounting rules independent of any model vendor. Production storage, authentication, web UI, and hosting are decisions for their later steps.
+The initial CLI works locally with a single fictional entity. SQLite is the implemented persistence store. Full reversals append an opposite journal and an immutable link/retry record in one transaction. Provider adapters keep accounting rules independent of any model vendor. Production storage, authentication, web UI, and hosting are decisions for their later steps.
 
 ## Hard boundaries
 

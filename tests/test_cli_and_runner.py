@@ -9,6 +9,20 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_reversal_demo_cancels_expense_and_preserves_original_after_reopen(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-reversal"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for text in ("Original expense: 5100 debit 125.00; 1000 credit 125.00",
+                     "Reversal correction -> expense: 5100 credit 125.00; 1000 debit 125.00",
+                     "2026-01-09: debits 125.00 / credits 125.00 USD",
+                     "2026-01-10: debits 0.00 / credits 0.00 USD",
+                     "Pre-reversal snapshot reproduced: 125.00 / 125.00 USD",
+                     "Original receipt unchanged after reversal and reopen",
+                     "Retried: 2 journals, 2 events, 1 reversal",
+                     "Temporary synthetic database removed"):
+            self.assertIn(text, result.stdout)
+
     def test_persistence_demo_restarts_and_retries_without_duplicate_posting(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-persistence"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

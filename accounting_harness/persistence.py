@@ -15,9 +15,10 @@ from accounting_harness.domain.ledger import (
 )
 from accounting_harness.domain.money import Money
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 MAX_CENTS = 2**63 - 1
 OPERATION = "post-v1"
+REVERSAL_OPERATION = "reverse-v1"
 RECORD_TABLES = ("journals", "lines", "journal_sources", "posting_events", "idempotency")
 
 # Cross-row balance, active-account and complete calendar/period validation live
@@ -80,6 +81,7 @@ class PostingReceipt:
     entry: LedgerEntry
     actor_id: str
     recorded_at: datetime
+    original_entry_id: str | None = None
 
 
 def _canonical(value: object) -> str:
@@ -92,8 +94,8 @@ class SQLiteLedger:
     Each write uses BEGIN IMMEDIATE and SQLite's native bounded busy handler
     (2000 ms by default, at most 60000 ms per lock acquisition). A busy failure
     rolls back; the caller may retry using the same explicit idempotency key.
-    Existing files must have schema v1 and exactly the requested frozen context.
-    No schema migration, context change, update or deletion API is provided.
+    Existing files must match the frozen context. Schema v1 migrates atomically
+    to v2; other versions are rejected. No context change, update or deletion API.
     """
 
     def __init__(
@@ -182,14 +184,16 @@ class SQLiteLedger:
                 self._connection.execute(f"""CREATE TRIGGER {table}_frozen
                     BEFORE INSERT ON {table}
                     BEGIN SELECT RAISE(ABORT, 'ledger context is frozen'); END""")
-            self._connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
-        elif version != SCHEMA_VERSION:
+            version = 1
+        elif version not in (1, SCHEMA_VERSION):
             raise ValueError(f"unsupported schema version: {version}")
         else:
             stored = self._connection.execute(
                 "SELECT canonical FROM ledger_context WHERE singleton = 1").fetchone()
             if stored != (self._context,):
                 raise ValueError("database context does not match requested entity/catalog/period/sources")
+        if version == 1:
+            self._migrate_v2()
 
     def admit(self, proposal: object, *, idempotency_key: str, actor_id: str) -> PostingReceipt:
         """Validate and store one entry atomically, or return its original receipt.
@@ -203,18 +207,8 @@ class SQLiteLedger:
         _validate_text(idempotency_key, "idempotency key")
         _validate_text(actor_id, "actor ID")
         with self._transaction(write=True):
-            validator = InMemoryLedger(self._empty.catalog, self._empty.period_start,
-                                       self._empty.period_end, known_source_ids=self._sources)
-            entry = validator.admit(proposal)
-            for index, line in enumerate(entry.lines):
-                if line.amount.cents > MAX_CENTS:
-                    raise EntryRejected((Finding("storage_overflow", f"lines[{index}].amount",
-                                                 f"SQLite line cents must be <= {MAX_CENTS}"),))
-            payload = dict(id=entry.id, entity_id=entry.entity_id, currency=entry.currency,
-                           effective_date=entry.effective_date.isoformat(),
-                           description=entry.description, source_ids=entry.source_ids,
-                           lines=[dict(account=l.account, side=l.side, cents=l.amount.cents)
-                                  for l in entry.lines])
+            entry = self._validate_entry(proposal)
+            payload = self._entry_payload(entry)
             digest = hashlib.sha256(_canonical(dict(
                 context=self._context, actor_id=actor_id, operation=OPERATION, entry=payload,
             )).encode("utf-8")).hexdigest()
@@ -226,23 +220,129 @@ class SQLiteLedger:
                 if prior[0] != digest:
                     raise ValueError("idempotency key already binds a different payload or actor")
                 return self._receipt(prior[1])
-            if self._connection.execute("SELECT 1 FROM journals WHERE id=?", (entry.id,)).fetchone():
-                raise EntryRejected((Finding("duplicate_entry_id", "id",
-                                             "entry ID already exists in this ledger"),))
-            recorded_at = datetime.now(timezone.utc)
-            self._connection.execute("INSERT INTO journals VALUES (?, ?, ?, ?, ?)",
-                                     (entry.id, entry.entity_id, entry.currency,
-                                      entry.effective_date.isoformat(), entry.description))
-            self._connection.executemany("INSERT INTO journal_sources VALUES (?, ?, ?)",
-                                         [(entry.id, i, source) for i, source in enumerate(entry.source_ids)])
-            self._connection.executemany("INSERT INTO lines VALUES (?, ?, ?, ?, ?)",
-                                         [(entry.id, i, l.account, l.side, l.amount.cents)
-                                          for i, l in enumerate(entry.lines)])
-            self._connection.execute("INSERT INTO posting_events VALUES (?, ?, ?, ?)",
-                                     (entry.id, actor_id, recorded_at.isoformat(), OPERATION))
+            receipt = self._store_entry(entry, actor_id)
             self._connection.execute("INSERT INTO idempotency VALUES (?, ?, ?, ?, ?)",
                                      (entry.entity_id, OPERATION, idempotency_key, digest, entry.id))
-            return PostingReceipt(entry, actor_id, recorded_at)
+            return receipt
+
+    def _migrate_v2(self):
+        # Additive migration: v1 journals/events/retry bytes and triggers stay intact.
+        self._connection.execute("""CREATE TABLE reversals (
+            original_id TEXT PRIMARY KEY REFERENCES posting_events(journal_id),
+            reversal_id TEXT NOT NULL UNIQUE REFERENCES posting_events(journal_id),
+            entity_id TEXT NOT NULL,
+            operation TEXT NOT NULL CHECK (operation = 'reverse-v1'),
+            key TEXT NOT NULL CHECK (length(trim(key)) > 0 AND key = trim(key)),
+            digest TEXT NOT NULL CHECK (length(digest) = 64 AND digest NOT GLOB '*[^0-9a-f]*'),
+            CHECK (original_id != reversal_id),
+            UNIQUE (entity_id, operation, key),
+            FOREIGN KEY (entity_id, original_id) REFERENCES journals(entity_id, id),
+            FOREIGN KEY (entity_id, reversal_id) REFERENCES journals(entity_id, id)
+        ) STRICT, WITHOUT ROWID""")
+        for action in ("UPDATE", "DELETE"):
+            self._connection.execute(f"""CREATE TRIGGER reversals_no_{action.lower()}
+                BEFORE {action} ON reversals
+                BEGIN SELECT RAISE(ABORT, 'ledger records are append-only'); END""")
+        self._connection.execute("""CREATE TRIGGER reversals_no_replace
+            BEFORE INSERT ON reversals WHEN EXISTS (SELECT 1 FROM reversals WHERE
+                original_id = NEW.original_id OR reversal_id = NEW.reversal_id OR
+                (entity_id = NEW.entity_id AND operation = NEW.operation AND key = NEW.key))
+            BEGIN SELECT RAISE(ABORT, 'ledger records cannot be replaced'); END""")
+        self._connection.execute("""CREATE TRIGGER reversals_no_chain
+            BEFORE INSERT ON reversals WHEN EXISTS (SELECT 1 FROM reversals WHERE
+                reversal_id = NEW.original_id OR original_id = NEW.reversal_id)
+            BEGIN SELECT RAISE(ABORT, 'reversal chains are not supported'); END""")
+        self._connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+
+    def _validate_entry(self, proposal) -> LedgerEntry:
+        validator = InMemoryLedger(self._empty.catalog, self._empty.period_start,
+                                   self._empty.period_end, known_source_ids=self._sources)
+        entry = validator.admit(proposal)
+        for index, line in enumerate(entry.lines):
+            if line.amount.cents > MAX_CENTS:
+                raise EntryRejected((Finding("storage_overflow", f"lines[{index}].amount",
+                                             f"SQLite line cents must be <= {MAX_CENTS}"),))
+        return entry
+
+    @staticmethod
+    def _entry_payload(entry):
+        return dict(id=entry.id, entity_id=entry.entity_id, currency=entry.currency,
+                    effective_date=entry.effective_date.isoformat(),
+                    description=entry.description, source_ids=entry.source_ids,
+                    lines=[dict(account=l.account, side=l.side, cents=l.amount.cents)
+                           for l in entry.lines])
+
+    def _store_entry(self, entry, actor_id) -> PostingReceipt:
+        # Called only inside the admission/reversal write transaction.
+        if self._connection.execute("SELECT 1 FROM journals WHERE id=?", (entry.id,)).fetchone():
+            raise EntryRejected((Finding("duplicate_entry_id", "id",
+                                         "entry ID already exists in this ledger"),))
+        recorded_at = datetime.now(timezone.utc)
+        self._connection.execute("INSERT INTO journals VALUES (?, ?, ?, ?, ?)",
+                                 (entry.id, entry.entity_id, entry.currency,
+                                  entry.effective_date.isoformat(), entry.description))
+        self._connection.executemany("INSERT INTO journal_sources VALUES (?, ?, ?)",
+                                     [(entry.id, i, source) for i, source in enumerate(entry.source_ids)])
+        self._connection.executemany("INSERT INTO lines VALUES (?, ?, ?, ?, ?)",
+                                     [(entry.id, i, l.account, l.side, l.amount.cents)
+                                      for i, l in enumerate(entry.lines)])
+        # Every journal, including a reversing journal, gets its own posting event.
+        self._connection.execute("INSERT INTO posting_events VALUES (?, ?, ?, ?)",
+                                 (entry.id, actor_id, recorded_at.isoformat(), OPERATION))
+        return PostingReceipt(entry, actor_id, recorded_at)
+
+    def reverse(
+        self, original_id: str, *, reversal_id: str, entity_id: str,
+        effective_date: date | str, reason: str, source_ids: list[str] | tuple[str, ...],
+        actor_id: str, idempotency_key: str,
+    ) -> PostingReceipt:
+        """Post one full reversal, retaining its original link and retry result.
+
+        Retry scope is (entity, reverse-v1, key), separate from post-v1. The
+        digest binds original ID, normalized reversing entry, actor and context.
+        Dates normalize to ISO; evidence lists/tuples are equivalent, but their
+        order and duplicates matter. Reason is stored verbatim as description.
+        """
+        _validate_text(original_id, "original ID")
+        _validate_text(actor_id, "actor ID")
+        _validate_text(idempotency_key, "idempotency key")
+        with self._transaction(write=True):
+            original = self._receipt(original_id)
+            if original.original_entry_id is not None:
+                raise ValueError("reversal of a reversal is not supported")
+            entry = self._validate_entry(dict(
+                id=reversal_id, entity_id=entity_id, currency=original.entry.currency,
+                effective_date=effective_date, description=reason, source_ids=source_ids,
+                lines=[dict(account=l.account, side="credit" if l.side == "debit" else "debit",
+                            amount=l.amount) for l in original.entry.lines],
+            ))
+            digest = hashlib.sha256(_canonical(dict(
+                context=self._context, operation=REVERSAL_OPERATION, actor_id=actor_id,
+                original_id=original_id, entry=self._entry_payload(entry),
+            )).encode("utf-8")).hexdigest()
+            prior = self._connection.execute(
+                "SELECT digest, reversal_id FROM reversals WHERE entity_id=? AND operation=? AND key=?",
+                (entity_id, REVERSAL_OPERATION, idempotency_key),
+            ).fetchone()
+            if prior:
+                if prior[0] != digest:
+                    raise ValueError("idempotency key already binds a different payload or actor")
+                return self._receipt(prior[1])
+            if self._connection.execute(
+                "SELECT 1 FROM reversals WHERE original_id=?", (original_id,),
+            ).fetchone():
+                raise ValueError("original journal is already reversed")
+            receipt = self._store_entry(entry, actor_id)
+            self._connection.execute("INSERT INTO reversals VALUES (?, ?, ?, ?, ?, ?)",
+                                     (original_id, entry.id, entity_id, REVERSAL_OPERATION,
+                                      idempotency_key, digest))
+            return replace(receipt, original_entry_id=original_id)
+
+    def receipt(self, entry_id: str) -> PostingReceipt:
+        """Read a journal, actor, UTC timestamp and optional original-entry link."""
+        _validate_text(entry_id, "entry ID")
+        with self._transaction():
+            return self._receipt(entry_id)
 
     def _entry(self, row) -> LedgerEntry:
         entry_id, entity, currency, effective_date, description = row
@@ -259,14 +359,21 @@ class SQLiteLedger:
                            tuple(LedgerLine(account, side, Money(cents)) for account, side, cents in lines))
 
     def _receipt(self, entry_id: str) -> PostingReceipt:
-        entry = self._entry(self._connection.execute(
+        row = self._connection.execute(
             "SELECT id, entity_id, currency, effective_date, description FROM journals WHERE id=?",
             (entry_id,),
-        ).fetchone())
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"missing original or journal ID: {entry_id}")
+        entry = self._entry(row)
         actor, recorded_at = self._connection.execute(
             "SELECT actor_id, recorded_at FROM posting_events WHERE journal_id=?", (entry_id,),
         ).fetchone()
-        return PostingReceipt(entry, actor, datetime.fromisoformat(recorded_at))
+        link = self._connection.execute(
+            "SELECT original_id FROM reversals WHERE reversal_id=?", (entry_id,),
+        ).fetchone()
+        return PostingReceipt(entry, actor, datetime.fromisoformat(recorded_at),
+                              link[0] if link else None)
 
     @property
     def snapshot(self) -> LedgerSnapshot:
@@ -283,7 +390,7 @@ class SQLiteLedger:
     def counts(self) -> dict[str, int]:
         with self._transaction():
             return {table: self._connection.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
-                    for table in RECORD_TABLES}
+                    for table in (*RECORD_TABLES, "reversals")}
 
     def close(self) -> None:
         self._connection.close()

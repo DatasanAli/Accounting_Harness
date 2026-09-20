@@ -1,8 +1,8 @@
 # Current status
 
-Updated: 2026-09-19.
+Updated: 2026-09-20.
 
-**Completed work: Steps 01–05 — foundation, Money, accounts, journals, ledger/trial balance, and atomic SQLite persistence. Next implementation: Step 06 — linked reversals.**
+**Completed work: Steps 01–06 — foundation and ledger core, including atomic SQLite persistence and linked reversals. Next implementation: Step 07 — source registration.**
 
 | Item | State |
 | --- | --- |
@@ -13,19 +13,21 @@ Updated: 2026-09-19.
 | Fictional reference month | Created with independent expected results |
 | Foundation verification | See the observed results in the verification record |
 | Money and chart of accounts | Implemented: exact USD cents, immutable accounts/catalog, validated JSON loader |
-| Application verification | 90 tests pass, including invalid inputs, CLI behavior and zero-test discovery failure |
+| Application verification | 109 tests pass, including invalid inputs, CLI behavior and zero-test discovery failure |
 | Demonstration | 13 accounts; 0.10 + 0.20 = 0.30 USD; excess precision rejected |
 | Journal validation | Implemented: pure validation, field/line findings, exact totals, source/account/date checks |
 | Journal demonstration | Accepts 1000.00 / 1000.00; rejects 1000.00 / 999.00 with a 1.00 difference |
 | In-memory ledger | Implemented: single-entry admission, immutable snapshots, inclusive date cutoffs and exact trial balances |
 | Ledger demonstration | T01–T09; 13 accounts; 13300.00 debit/credit totals; Cash 9400.00 debit |
-| SQLite persistence | Implemented: atomic journals/events/retry records; schema v1, immutable context, restart and concurrent safe retry |
+| SQLite persistence | Implemented: atomic journals/events/retry records; schema v2 with additive v1 migration, immutable context, restart and concurrent safe retry |
 | Persistence demonstration | Reopen/retry: 9 journals, 18 lines, 9 events; unchanged 13300.00 totals and 9400.00 Cash |
-| Reversals, approval, agents, integrations | Not implemented |
+| Linked reversals | Implemented: exact inverse journals, durable original links, scoped retries, one reversal per original |
+| Reversal demonstration | 125.00 expense canceled to zero; original receipt and historical snapshot preserved after reopen |
+| Approval, agents, integrations | Not implemented |
 | Delivery target | GitHub repository and CI; local CLI, no hosted deployment configured |
-| Next step | Step 06 ready; later steps planned |
+| Next step | Step 07 ready; Phase 02 implemented; later steps planned |
 
-Read the [Step 01 verification record](01-foundation/VERIFICATION.md), [Step 02 verification record](02-ledger-core/STEP_02_VERIFICATION.md), [Step 03 verification record](02-ledger-core/STEP_03_VERIFICATION.md), [Step 04 verification record](02-ledger-core/STEP_04_VERIFICATION.md), and [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md) for observed checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) provide delivery evidence for each commit. The completion response must identify the exact commit and CI run.
+Read the [Step 01 verification record](01-foundation/VERIFICATION.md), [Step 02 verification record](02-ledger-core/STEP_02_VERIFICATION.md), [Step 03 verification record](02-ledger-core/STEP_03_VERIFICATION.md), [Step 04 verification record](02-ledger-core/STEP_04_VERIFICATION.md), [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md), and [Step 06 verification record](02-ledger-core/STEP_06_VERIFICATION.md) for observed checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) provide delivery evidence for each commit. The completion response must identify the exact commit and CI run.
 
 [roadmap.json](roadmap.json) records the ordered step states. Keep it synchronized with this page and [NEXT_STEP.md](NEXT_STEP.md) after every completed increment. The complete roadmap is in [README.md](README.md).
 

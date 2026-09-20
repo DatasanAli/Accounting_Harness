@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 from accounting_harness.domain.accounts import load_account_catalog
 from accounting_harness.domain.money import Money
 from accounting_harness.domain.journal import validate_journal
-from accounting_harness.domain.ledger import InMemoryLedger
+from accounting_harness.domain.ledger import InMemoryLedger, trial_balance
 from accounting_harness.persistence import SQLiteLedger, PersistenceBusy
 
 FIXTURE = Path(__file__).resolve().parents[1] / "data/fixtures/service-business-month.json"
@@ -126,6 +126,55 @@ def demo_persistence() -> None:
     print("Temporary synthetic database removed; authenticated approval remains a later step.")
 
 
+def demo_reversal() -> None:
+    catalog = load_account_catalog(FIXTURE)
+    options = dict(catalog=catalog, period_start="2026-01-01", period_end="2026-01-31",
+                   known_source_ids={"synthetic-expense", "synthetic-correction"})
+    proposal = dict(id="expense", entity_id=catalog.entity_id, currency="USD",
+                    effective_date="2026-01-05", description="Fictional erroneous expense",
+                    source_ids=["synthetic-expense"], lines=[
+                        dict(account="5100", side="debit", amount="125.00"),
+                        dict(account="1000", side="credit", amount="125.00")])
+    correction = dict(original_id="expense", reversal_id="correction", entity_id=catalog.entity_id,
+                      effective_date="2026-01-10", reason="Expense entered in error",
+                      source_ids=["synthetic-correction"], actor_id="synthetic-local-operator",
+                      idempotency_key="correction-key")
+
+    def show_entry(label, receipt):
+        lines = "; ".join(f"{l.account} {l.side} {l.amount}" for l in receipt.entry.lines)
+        print(f"{label}: {lines}")
+
+    with TemporaryDirectory(prefix="accounting-harness-") as directory:
+        path = Path(directory) / "synthetic.sqlite3"
+        with SQLiteLedger(path, **options) as ledger:
+            original = ledger.admit(proposal, idempotency_key="expense-key",
+                                    actor_id="synthetic-local-operator")
+            before = ledger.trial_balance("2026-01-31")
+            reversed_receipt = ledger.reverse(**correction)
+            show_entry("Original expense", ledger.receipt("expense"))
+            show_entry(f"Reversal correction -> {reversed_receipt.original_entry_id}", reversed_receipt)
+            for cutoff in ("2026-01-09", "2026-01-10"):
+                report = ledger.trial_balance(cutoff)
+                print(f"{cutoff}: debits {report.total_debits} / credits {report.total_credits} USD")
+            report = trial_balance(before.snapshot, before.as_of)
+            if report != before or ledger.receipt("expense") != original:
+                raise ValueError("reversal changed original receipt or snapshot")
+            after = ledger.trial_balance("2026-01-10")
+            if any(row.debit.cents or row.credit.cents for row in after.rows):
+                raise ValueError("full reversal did not cancel the expense")
+            print(f"Pre-reversal snapshot reproduced: {report.total_debits} / {report.total_credits} USD")
+        with SQLiteLedger(path, **options) as ledger:
+            if ledger.receipt("expense") != original or ledger.reverse(**correction) != reversed_receipt:
+                raise ValueError("reopen/retry changed receipts")
+            if ledger.trial_balance("2026-01-10") != after:
+                raise ValueError("reopen changed the reversed report")
+            print("Original receipt unchanged after reversal and reopen")
+            counts = ledger.counts()
+            print(f"Retried: {counts['journals']} journals, {counts['posting_events']} events, "
+                  f"{counts['reversals']} reversal")
+    print("Temporary synthetic database removed; authenticated approval remains a later step.")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -133,6 +182,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-journal", help="validate balanced and unbalanced fictional entries")
     commands.add_parser("demo-ledger", help="show the fictional unadjusted trial balance")
     commands.add_parser("demo-persistence", help="persist, reopen and safely retry fictional entries")
+    commands.add_parser("demo-reversal", help="reverse a fictional expense and preserve its history")
     args = parser.parse_args(argv)
     try:
         if args.command == "demo-accounts":
@@ -143,6 +193,8 @@ def main(argv: list[str] | None = None) -> int:
             demo_ledger()
         elif args.command == "demo-persistence":
             demo_persistence()
+        elif args.command == "demo-reversal":
+            demo_reversal()
     except (OSError, ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
         parser.error(str(error))
     return 0

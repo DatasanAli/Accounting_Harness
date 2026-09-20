@@ -22,7 +22,7 @@
 ## Verification
 
 - Current checks: `python3 scripts/verify_foundation.py` and `python3 scripts/run_tests.py`.
-- Current demonstrations: `python3 -m accounting_harness demo-accounts`, `python3 -m accounting_harness demo-journal`, `python3 -m accounting_harness demo-ledger`, and `python3 -m accounting_harness demo-persistence`.
-- Application tests exist for Steps 02–05. Update the documented commands and CI with each new behavior. A foundation check passing does not prove application behavior works.
+- Current demonstrations: `python3 -m accounting_harness demo-accounts`, `python3 -m accounting_harness demo-journal`, `python3 -m accounting_harness demo-ledger`, `python3 -m accounting_harness demo-persistence`, and `python3 -m accounting_harness demo-reversal`.
+- Application tests exist for Steps 02–06. Update the documented commands and CI with each new behavior. A foundation check passing does not prove application behavior works.
 - Preserve the test runner's guard that fails if discovery unexpectedly finds zero tests.
 - Never mark a step uploaded or CI passed without checking GitHub. Record a blocked upload honestly while preserving completed local work.

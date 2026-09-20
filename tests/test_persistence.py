@@ -60,7 +60,7 @@ class PersistenceTests(unittest.TestCase):
 
     def assert_counts(self, journals, lines, sources, events, retries):
         expected = dict(journals=journals, lines=lines, journal_sources=sources,
-                        posting_events=events, idempotency=retries)
+                        posting_events=events, idempotency=retries, reversals=0)
         self.assertEqual(self.ledger.counts(), expected)
         # A separate connection observes only committed rows.
         sql = self.sql()
@@ -276,7 +276,7 @@ class PersistenceTests(unittest.TestCase):
     def test_schema_version_and_unknown_version_refusal_preserve_data(self):
         self.post()
         sql = self.sql()
-        self.assertEqual(sql.execute("PRAGMA user_version").fetchone()[0], 1)
+        self.assertEqual(sql.execute("PRAGMA user_version").fetchone()[0], 2)
         sql.execute("PRAGMA user_version = 999")
         with self.assertRaisesRegex(ValueError, "schema version"):
             self.open()

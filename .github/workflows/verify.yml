@@ -25,3 +25,5 @@ jobs:
         run: python3 -m accounting_harness demo-ledger
       - name: Demonstrate atomic persistence and safe retry
         run: python3 -m accounting_harness demo-persistence
+      - name: Demonstrate linked reversals and preserved history
+        run: python3 -m accounting_harness demo-reversal

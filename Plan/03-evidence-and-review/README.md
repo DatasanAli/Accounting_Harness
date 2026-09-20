@@ -1,6 +1,6 @@
 # Phase 03: Evidence, review and audit
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: Step 07 is ready following the completed ledger-core implementation. No behavior in this phase is implemented yet.
 
 **Depends on:** Steps 02–06.
 

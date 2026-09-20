@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "05",
-  "next_step": "06",
+  "current_step": "06",
+  "next_step": "07",
   "phases": [
     {
       "id": "01",
@@ -43,7 +43,7 @@
         {
           "id": "06",
           "title": "Linked reversals",
-          "status": "ready"
+          "status": "complete"
         }
       ]
     },
@@ -55,7 +55,7 @@
         {
           "id": "07",
           "title": "Source registration",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "08",

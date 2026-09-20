@@ -1,6 +1,6 @@
 # Phase 02: Exact money and ledger core
 
-Status: in progress. Steps 02–05 are implemented and verified locally; Step 06 is ready. See the [Step 02](STEP_02_VERIFICATION.md), [Step 03](STEP_03_VERIFICATION.md), [Step 04](STEP_04_VERIFICATION.md), and [Step 05 verification records](STEP_05_VERIFICATION.md); delivery evidence is reported for the exact commit in the completion response.
+Status: Steps 02–06 are implemented and verified locally. Step 06 completes the ledger-core implementation; Step 07 is ready. See the [Step 06 verification record](STEP_06_VERIFICATION.md) for the correction contract, migration and observed checks. Delivery evidence is reported for the exact commit in the completion response.
 
 **Depends on:** Step 01. Keep all examples local and fictional; no operational posting claims.
 
@@ -18,7 +18,7 @@ Build only one numbered step per request. Split a row further if it cannot be de
 
 ### Step 02: Money and chart of accounts
 
-Completed: `Money`, `Account`, `AccountCatalog`, validated JSON loading, the `demo-accounts` CLI, and 30 passing application tests. Steps 03–05 are also complete; Step 06 describes future work.
+Completed: `Money`, `Account`, `AccountCatalog`, validated JSON loading, the `demo-accounts` CLI, and 30 passing application tests. Steps 03–06 are also complete.
 
 - **Build:** Add exact USD Money values and a validated service-business account catalog; expose one list-accounts demonstration.
 - **Test:** Reject invalid amount formats, floats, booleans, unsupported currency and duplicate/invalid accounts; 0.10 + 0.20 equals 0.30 exactly.
@@ -69,6 +69,8 @@ Copyable prompt:
 > Build Step 05: Atomic persistence and retry. Follow Plan/02-ledger-core/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 06: Linked reversals
+
+Completed: full exact reversals, immutable original links, action-scoped safe retries, additive schema-v2 migration and `demo-reversal`. All 109 application tests pass. See the [verification record](STEP_06_VERIFICATION.md).
 
 - **Build:** Add corrections using an original-entry reference and a balanced reversing journal.
 - **Test:** Original remains unchanged; reversal nets to zero; repeated reversal request does not double-reverse; reject missing original.
