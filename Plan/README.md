@@ -1,6 +1,6 @@
 # Accounting Harness implementation plan
 
-Steps 01–06 establish the plan and implement exact Money values, accounts, journal validation, reproducible trial balances, atomic SQLite persistence and linked reversals. The next small build is **Step 07: source registration**. The selected initial workflow is bookkeeping for a small service business.
+Steps 01–07 establish the plan and implement exact Money values, accounts, journal validation, reproducible trial balances, atomic SQLite persistence, linked reversals and source registration. The next small build is **Step 08: versioned drafts and review queue**. The selected initial workflow is bookkeeping for a small service business.
 
 An agent harness is the application around an agent: its task state, evidence context, allowed tools, execution limits, approvals, and recorded results. Our ledger and accounting rules must be testable independently of the model.
 
@@ -32,7 +32,9 @@ Plan/
 │   ├── STEP_05_VERIFICATION.md
 │   └── STEP_06_VERIFICATION.md
 ├── 03-evidence-and-review/
-│   └── README.md                      # Steps 07–09
+│   ├── README.md                      # Steps 07–09
+│   ├── STEP_07_PLAN.md
+│   └── STEP_07_VERIFICATION.md
 ├── 04-agent-harness/
 │   └── README.md                      # Steps 10–12
 ├── 05-service-bookkeeping/

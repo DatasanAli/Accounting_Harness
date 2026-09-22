@@ -1,29 +1,31 @@
-# Next: Step 07 — Source registration
+# Next: Step 08 — Versioned drafts and review queue
 
-Status: ready. Steps 01–06 provide exact Money/accounts, journal validation, immutable report snapshots, atomic SQLite persistence and linked full reversals. Phase 02's ledger core is implemented.
+Status: ready. Steps 01–07 provide the ledger core and immutable registration of structured fictional receipts. Phase 03 remains in progress; registration does not post or approve journals.
 
 ## Copy this prompt
 
-> Build Step 07: source registration. Follow Plan/NEXT_STEP.md, register structured fictional evidence with stable identity, content digest and metadata, test and demonstrate repeat imports and distinct documents, then commit and push to GitHub. Stop after this step.
+> Build Step 08: versioned drafts and review queue. Follow Plan/NEXT_STEP.md, create immutable draft revisions from registered evidence with validation findings and pending/rejected states, demonstrate an edited proposal and its history, then commit and push to GitHub. Stop after this step.
 
 ## The small thing to build
 
-Register a structured fictional JSON source document with stable entity-scoped identity, a content digest and validated metadata. Specify required fields, canonicalization and supported document kinds before coding. Keep document identity distinct from content equality: importing the same document again returns the existing record; a different document with the same amount stays distinct. Define and test how changed content under an existing identity is rejected or flagged without overwriting prior evidence. A digest detects repeat content, not every business duplicate.
+Turn registered evidence into editable journal proposals represented by immutable draft revisions. Define required draft metadata, entity-scoped identity, evidence identity/digest binding, revision identity and allowed pending/rejected transitions before coding. Each edit must append a new revision and preserve earlier content and findings. Reuse the pure journal validator for supported accounting checks; do not treat a balanced proposal or document text as permission to post.
 
-Use standard-library storage and synthetic inputs. Inspect the current frozen ledger source context before choosing how the source registry connects to posting. Document that boundary explicitly; preserve posted journals, evidence references, retry digests and report reproducibility. If a storage migration is necessary, provide tested, non-destructive versioning and reject unsupported versions. Source document text is data and cannot authorize posting or change tool permissions.
+Read the [Step 07 source contract](03-evidence-and-review/STEP_07_PLAN.md) and [verification record](03-evidence-and-review/STEP_07_VERIFICATION.md). Inspect the source registry and frozen ledger context before choosing draft storage. The receipt importer currently supports only synthetic receipts; add another document kind only if essential to this step and explicitly specified/tested. Draft reads must bind the exact registered evidence. Missing or conflicting evidence must remain visible as unresolved review findings. Clarify how validation relates to pending/rejected state and how edits supersede the current revision without erasing history.
 
-This step registers evidence only. Draft revisions, review queues, human approval, PDF extraction, provider integration and authenticated roles belong to later steps.
+Use standard-library storage and synthetic inputs. Persist each revision, its validation findings and mutation event atomically, with scoped retry behavior and explicit conflict handling. If storage changes require migration, test non-destructive versioning, rollback and unsupported-version rejection. Preserve registered evidence, posted journals, posting retry digests and historical snapshots.
+
+This step provides drafts and a review queue only. Human approval binding and application posting are Step 09; agents, PDF extraction, providers and authenticated roles remain later work.
 
 ## Required evidence
 
-- Register one fictional receipt, reopen storage, import it again and show one unchanged source with a repeat-import result.
-- Reject missing or malformed required fields and wrong entity without partial records.
-- Show that separate document identities with equal amounts remain separate records.
-- Test digest reproducibility, identity/content conflicts, safe retries and atomic failure behavior for any persistent writes introduced.
-- Preserve all ledger, reversal, migration and zero-discovery tests.
+- Create a proposal from registered fictional evidence, edit its amount, reopen storage and show both unchanged historical and current revisions.
+- Show validation findings and a queue with explicit pending/rejected states and reasons.
+- Reject invalid transitions; ensure invalid drafts cannot advance toward posting and missing/conflicting evidence remains in review.
+- Test entity isolation, stale edits, repeated requests, changed-payload retries, atomic failures and revision history across restart.
+- Preserve the entire ledger/reversal/source suite and the zero-discovery guard.
 
 ## Demonstration and delivery
 
-Add `python3 -m accounting_harness demo-source` with temporary synthetic storage. Run the foundation check, guarded application suite and all existing demos; add the new demo to CI. Record observed results, source-identity/digest limits and rollback behavior. Update README, phase/status/roadmap, mark Step 07 complete and Step 08 ready, and replace this brief with versioned drafts and review queue. Commit, push, verify the exact commit and Actions run, then stop.
+Add a CLI demonstration of an edited fictional rent proposal, its revision history and unresolved findings using temporary storage. Run the foundation check, guarded application suite and every existing demo; add the new demo to CI. Record observed results and rollback limits. Update README, phase/status/roadmap, mark Step 08 complete and Step 09 ready, and replace this brief with approval, posting and audit. Commit, push, verify the exact commit and Actions run, then stop.
 
-Source basis: Volume 1 §§3.3, 7.1–7.4, 8.2–8.3. Digests, import identity and storage controls are engineering decisions. Authenticated approval remains later work.
+Source basis: Volume 1 §§3.3, 7.1–7.4, 8.2–8.3. Revision identity, digest binding and retry controls are engineering decisions. Authenticated approval remains later work.

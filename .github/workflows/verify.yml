@@ -27,3 +27,5 @@ jobs:
         run: python3 -m accounting_harness demo-persistence
       - name: Demonstrate linked reversals and preserved history
         run: python3 -m accounting_harness demo-reversal
+      - name: Demonstrate source registration and repeat imports
+        run: python3 -m accounting_harness demo-source

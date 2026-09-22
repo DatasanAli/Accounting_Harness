@@ -1,6 +1,6 @@
 # Phase 03: Evidence, review and audit
 
-Status: Step 07 is ready following the completed ledger-core implementation. No behavior in this phase is implemented yet.
+Status: Step 07 source registration is implemented. Step 08 is ready; draft review and approval remain planned. See the [source contract and implementation plan](STEP_07_PLAN.md) and [observed verification](STEP_07_VERIFICATION.md).
 
 **Depends on:** Steps 02–06.
 
@@ -10,13 +10,15 @@ Status: Step 07 is ready following the completed ledger-core implementation. No 
 
 ## Implementation approach
 
-Start with structured JSON evidence and a CLI, with content digest and explicit document identity. A content digest detects repeat bytes, not every business duplicate. Source identity and possible duplicate warnings remain separate. Introduce state and immutable audit events alongside each mutation. The local operator identity is a prototype convention until Step 29.
+Start with structured JSON evidence and a CLI, with content digest and explicit document identity. The implemented content digest detects canonical structured content equality, not every business duplicate. Distinct identities remain separate even with equal digests. The registry is separate from the ledger’s frozen source context; registration alone cannot authorize posting. Source identity and possible duplicate warnings remain separate. Introduce state and immutable audit events alongside each mutation. The local operator identity is a prototype convention until Step 29.
 
 ## Small build steps
 
 Build only one numbered step per request. Split a row further if it cannot be demonstrated and reviewed as one small change.
 
 ### Step 07: Source registration
+
+Implemented: strict fictional JSON receipts, stable identity, canonical SHA-256 digest, original actor/time, atomic SQLite registration and safe repeat/conflict behavior.
 
 - **Build:** Register one structured fictional source document with stable identity, digest and metadata.
 - **Test:** Missing required fields fail; identical import is recognized; same amount with different document identity stays distinct.

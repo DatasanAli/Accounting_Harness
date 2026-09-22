@@ -11,6 +11,7 @@ from accounting_harness.domain.money import Money
 from accounting_harness.domain.journal import validate_journal
 from accounting_harness.domain.ledger import InMemoryLedger, trial_balance
 from accounting_harness.persistence import SQLiteLedger, PersistenceBusy
+from accounting_harness.sources import SQLiteSourceRegistry, load_source_document
 
 FIXTURE = Path(__file__).resolve().parents[1] / "data/fixtures/service-business-month.json"
 
@@ -175,6 +176,41 @@ def demo_reversal() -> None:
     print("Temporary synthetic database removed; authenticated approval remains a later step.")
 
 
+def demo_source() -> None:
+    document = load_source_document(FIXTURE.with_name("source-receipt.json"))
+    with TemporaryDirectory(prefix="accounting-harness-") as directory:
+        path = Path(directory) / "synthetic-sources.sqlite3"
+        with SQLiteSourceRegistry(path, document["entity_id"]) as registry:
+            original = registry.register(document, actor_id="synthetic-local-operator")
+            if original.repeated or registry.counts() != {"documents": 1, "registration_events": 1}:
+                raise ValueError("first import did not create one source and event")
+            print("Registered: 1 source, 1 registration event")
+            print(f"Content SHA-256: {original.record.content_digest}")
+        with SQLiteSourceRegistry(path, document["entity_id"]) as registry:
+            repeated = registry.register(document, actor_id="synthetic-second-operator")
+            if (not repeated.repeated or repeated.record != original.record
+                    or registry.counts() != {"documents": 1, "registration_events": 1}):
+                raise ValueError("repeat import changed original evidence or audit receipt")
+            print("Reopened repeat: True; 1 unchanged source")
+            distinct = registry.register(dict(document, document_id="fictional-receipt-002"),
+                                         actor_id="synthetic-local-operator")
+            if (distinct.repeated or distinct.record.content_digest != original.record.content_digest
+                    or registry.counts() != {"documents": 2, "registration_events": 2}):
+                raise ValueError("separate identity was merged or changed")
+            print("Distinct identity: 2 sources; equal content digests: True")
+            try:
+                registry.register(dict(document, amount="126.00"), actor_id="synthetic-local-operator")
+            except ValueError:
+                if (registry.get(document["document_id"]) != original.record
+                        or registry.counts() != {"documents": 2, "registration_events": 2}):
+                    raise ValueError("conflicting import changed stored evidence")
+                print("Rejected changed content; original evidence preserved")
+            else:
+                raise ValueError("conflicting content was accepted")
+    print("Registration only; ledger source context unchanged. No approval or posting.")
+    print("Temporary synthetic database removed.")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -183,6 +219,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-ledger", help="show the fictional unadjusted trial balance")
     commands.add_parser("demo-persistence", help="persist, reopen and safely retry fictional entries")
     commands.add_parser("demo-reversal", help="reverse a fictional expense and preserve its history")
+    commands.add_parser("demo-source", help="register, reopen and repeat a fictional receipt import")
     args = parser.parse_args(argv)
     try:
         if args.command == "demo-accounts":
@@ -195,6 +232,8 @@ def main(argv: list[str] | None = None) -> int:
             demo_persistence()
         elif args.command == "demo-reversal":
             demo_reversal()
+        elif args.command == "demo-source":
+            demo_source()
     except (OSError, ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
         parser.error(str(error))
     return 0

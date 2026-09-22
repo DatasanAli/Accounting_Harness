@@ -1,6 +1,6 @@
 # Intended architecture
 
-Status: design target with Steps 02–06 implemented. The package contains exact Money/accounts, pure journal validation, strict calendar dates, immutable ledger snapshots and trial balances, atomic SQLite persistence and linked full reversals. The five local CLI demonstrations cover accounts, journal validation, ledger reports, persistence and reversals. Approval, agents and financial statements remain future work. SQLite handles concurrent requests with serialized transactions; this remains a synthetic local prototype with no hosted deployment.
+Status: design target with Steps 02–07 implemented. The package contains exact Money/accounts, pure journal validation, strict calendar dates, immutable ledger snapshots and trial balances, atomic SQLite persistence, linked full reversals and immutable source registration. The six local CLI demonstrations cover accounts, journal validation, ledger reports, persistence, reversals and source registration. Approval, agents and financial statements remain future work. SQLite handles concurrent requests with serialized transactions; this remains a synthetic local prototype with no hosted deployment.
 
 ## Responsibility boundaries
 
@@ -45,7 +45,7 @@ accounting_harness/          # Introduced in Step 02
   domain/                   # Money, accounts, journals, pure accounting rules
   application/              # Use cases, approvals, posting, reconciliation, close
   persistence.py            # Implemented SQLite storage, retries and v1→v2 migration
-  evidence/                 # Source registration and import formats
+  sources.py                # Implemented separate SQLite source registry and JSON receipt loader
   agent/                    # Typed tools, run loop, provider adapter, checkpoints
   reporting/                # Statements and management calculations
   integrations/             # External accounting/provider adapters
@@ -56,6 +56,8 @@ data/fixtures/              # Fictional examples, including Step 01 reference mo
 ```
 
 The initial CLI works locally with a single fictional entity. SQLite is the implemented persistence store. Full reversals append an opposite journal and an immutable link/retry record in one transaction. Provider adapters keep accounting rules independent of any model vendor. Production storage, authentication, web UI, and hosting are decisions for their later steps.
+
+The source registry uses a separate entity-bound SQLite file with its own application ID and schema v1. The ledger keeps schema v2 and its frozen source-ID context, preserving posting retry digests and historical reports. Registration records evidence only; it does not extend an existing ledger’s source set. Application posting in Step 09 must design evidence binding explicitly.
 
 ## Hard boundaries
 

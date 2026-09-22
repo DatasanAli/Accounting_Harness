@@ -38,3 +38,7 @@ The three closing entries are original examples using direct closure to owner ca
 ## Verification limits
 
 Run `python3 scripts/verify_foundation.py` from the repository root. The checker recomputes these identities using exact cents and compares the full expected account balances at each checkpoint. It also verifies fixture references and local plan links. It does not demonstrate persistent posting, human approval, agent accuracy, report cutoff logic or real-world accounting correctness; those receive application tests in their numbered steps.
+
+## Source-registration fixture
+
+[source-receipt.json](source-receipt.json) is an original fictional 125.00 USD receipt for Step 07. It uses a separate document identity and is not an extra posting in the reference month. The source demo and application tests register it in temporary SQLite storage. It contains no real business records.

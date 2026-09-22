@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "entity_id": "demo-service-001",
+  "document_id": "fictional-receipt-001",
+  "kind": "receipt",
+  "document_date": "2026-01-05",
+  "currency": "USD",
+  "amount": "125.00",
+  "counterparty": "Fictional Office Supplies",
+  "description": "Synthetic stationery receipt for source registration"
+}

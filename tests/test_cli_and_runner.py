@@ -9,6 +9,18 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_source_demo_preserves_repeat_and_distinct_identity(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-source"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for text in ("Registered: 1 source, 1 registration event",
+                     "Reopened repeat: True; 1 unchanged source",
+                     "Distinct identity: 2 sources; equal content digests: True",
+                     "Rejected changed content; original evidence preserved",
+                     "Registration only; ledger source context unchanged",
+                     "Temporary synthetic database removed"):
+            self.assertIn(text, result.stdout)
+
     def test_reversal_demo_cancels_expense_and_preserves_original_after_reopen(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-reversal"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

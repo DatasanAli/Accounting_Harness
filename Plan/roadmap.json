@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "06",
-  "next_step": "07",
+  "current_step": "07",
+  "next_step": "08",
   "phases": [
     {
       "id": "01",
@@ -55,12 +55,12 @@
         {
           "id": "07",
           "title": "Source registration",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "08",
           "title": "Versioned drafts and review queue",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "09",
