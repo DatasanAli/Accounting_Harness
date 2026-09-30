@@ -2,7 +2,7 @@
 
 Updated: 2026-09-30.
 
-**Completed work: Steps 01–09 — foundation, ledger core, evidence, review and local approval/posting. Next implementation: Step 10 — typed tools and offline evaluation cases.**
+**Completed work: Steps 01–10 — ledger, evidence/review, local approval/posting and typed agent tools. Next implementation: Step 11 — resumable fake-provider run loop.**
 
 | Item | State |
 | --- | --- |
@@ -13,7 +13,7 @@ Updated: 2026-09-30.
 | Fictional reference month | Created with independent expected results |
 | Foundation verification | See the observed results in the verification record |
 | Money and chart of accounts | Implemented: exact USD cents, immutable accounts/catalog, validated JSON loader |
-| Application verification | 156 tests pass, including invalid inputs, CLI behavior and zero-test discovery failure |
+| Application verification | 168 tests pass, including invalid inputs, CLI behavior and zero-test discovery failure |
 | Demonstration | 13 accounts; 0.10 + 0.20 = 0.30 USD; excess precision rejected |
 | Journal validation | Implemented: pure validation, field/line findings, exact totals, source/account/date checks |
 | Journal demonstration | Accepts 1000.00 / 1000.00; rejects 1000.00 / 999.00 with a 1.00 difference |
@@ -27,9 +27,11 @@ Updated: 2026-09-30.
 | Source demonstration | Reopen/repeat retains one unchanged source; separate identity creates a second source; changed content is rejected |
 | Draft review | Immutable revisions, evidence binding, pending/rejected queue and atomic retry/event storage |
 | Local approval/posting | Exact human-reviewed revision/evidence/policy binding; atomic journal/audit link; immutable source-to-journal trail |
-| Authenticated roles, agents, integrations | Not implemented |
+| Agent tools | Five strict entity-scoped tools; runtime-controlled actor; approval/posting unavailable |
+| Offline evaluation | 24/24 labeled synthetic tool-contract cases pass across eight categories; no model calls or ledger mutations |
+| Authenticated roles, provider run loop, integrations | Not implemented |
 | Delivery target | GitHub repository and CI; local CLI, no hosted deployment configured |
-| Next step | Step 10 ready; Phase 03 complete; typed tools are next |
+| Next step | Step 11 ready; Phase 03 complete; Phase 04 typed tools implemented |
 
 Read the [Step 01 verification record](01-foundation/VERIFICATION.md), [Step 02 verification record](02-ledger-core/STEP_02_VERIFICATION.md), [Step 03 verification record](02-ledger-core/STEP_03_VERIFICATION.md), [Step 04 verification record](02-ledger-core/STEP_04_VERIFICATION.md), [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md), [Step 06 verification record](02-ledger-core/STEP_06_VERIFICATION.md), and [Step 07 verification record](03-evidence-and-review/STEP_07_VERIFICATION.md) for observed checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) provide delivery evidence for each commit. The completion response must identify the exact commit and CI run.
 
@@ -48,3 +50,5 @@ These are scoped starting decisions, not a claim of production or regulatory rea
 Step 08: [contract](03-evidence-and-review/STEP_08_PLAN.md) and [verification](03-evidence-and-review/STEP_08_VERIFICATION.md).
 
 Step 09: [contract](03-evidence-and-review/STEP_09_PLAN.md) and [verification](03-evidence-and-review/STEP_09_VERIFICATION.md). Step 08 delivered as [0984747](https://github.com/DatasanAli/Accounting_Harness/commit/09847473cf77453e105ba6249eeee391fc5b468c), [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/36762898574).
+
+Step 10: [contract](04-agent-harness/STEP_10_PLAN.md) and [verification](04-agent-harness/STEP_10_VERIFICATION.md). Step 09 delivered as [48b4848](https://github.com/DatasanAli/Accounting_Harness/commit/48b4848106d23d3769613ded5c73ee21bd8a7cd5), [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/36764276544).

@@ -1,17 +1,17 @@
-# Next: Step 10 — Typed tools and offline evaluation cases
+# Next: Step 11 — Resumable fake-provider run loop
 
-Status: ready. Steps 01–09 provide evidence, immutable drafts, local human approval, atomic posting and audit.
+Status: ready. Steps 01–10 provide deterministic accounting, evidence/review/approval and an entity-scoped typed tool boundary with 24 labeled offline cases.
 
 ## Copy this prompt
 
-> Build Step 10: typed tools and offline evaluation cases. Follow Plan/NEXT_STEP.md, expose only entity-scoped account/evidence reads, proposal validation, draft saving and review requests, add labeled synthetic offline cases and a scripted rent demonstration that leaves ledger balances unchanged, then commit and push to GitHub. Stop after this step.
+> Build Step 11: resumable fake-provider run loop. Follow Plan/NEXT_STEP.md, persist bounded run states and checkpoints around the existing typed tools, handle retries, cancellation and restart without duplicate drafts or posting, demonstrate a run pausing for human review and resuming safely, then commit and push to GitHub. Stop after this step.
 
 ## The small thing to build
 
-Read [Phase 04](04-agent-harness/README.md), the [Step 08 contract](03-evidence-and-review/STEP_08_PLAN.md), and [Step 09 verification](03-evidence-and-review/STEP_09_VERIFICATION.md). Build a small strict JSON tool dispatcher with documented schemas, argument validation, fixed runtime entity and actor, and a deny-by-default allowlist. No approval, posting, reversal, raw SQL, arbitrary files or source-registration tool. Retrieve only actual registered evidence; reject fabricated/cross-entity references before writes. Source text is inert data even when it contains instructions. Invalid or ambiguous proposals stay in review; validation never grants permission.
+Read [Phase 04](04-agent-harness/README.md), the [Step 10 contract](04-agent-harness/STEP_10_PLAN.md) and [verification](04-agent-harness/STEP_10_VERIFICATION.md). Add one fake-provider run loop over the existing five-tool allowlist. Define durable run/task IDs, entity/actor/policy scope, states and legal transitions, checkpoints, tool/result references, fake provider/prompt version, explicit stop reasons, cancellation and bounded tool-call/time/cost/retry budgets before implementation. Budget amounts require exact integer units. Model/document text cannot alter scope, budgets or permission. No real provider/network calls or approval/posting tool.
 
-Define deterministic scripted fake tool responses and a versioned labeled offline corpus (at least 20 cases, covering clean, malformed, missing, conflicting, ambiguous, duplicate, unsupported and hostile inputs). Compare outcomes with independent expected entries or review/error labels. Do not implement the provider run loop, time/cost budgets, checkpoints or live model calls; those are Steps 11–12.
+Persist concise explanations and references, never hidden reasoning or raw sensitive provider traces. Make the crash boundary around draft writes explicit: restart/replay must reuse the same scoped request and cannot create a second revision accidentally. Preserve the existing review/approval/ledger schemas and history; test any additive migration and unsupported-version rejection. A run awaiting human review must not resume by impersonating a reviewer or posting.
 
 ## Required evidence
 
-A scripted tool sequence retrieves accounts/evidence, validates and saves a valid rent draft, requests human review, and leaves ledger snapshots/balances unchanged. Test malformed/unknown tools, direct approval/post requests, fabricated sources, stale/replayed saves, entity isolation, prompt injection and changed-payload retries. Document case counts and category results; this is a deterministic tool-contract evaluation, not a model accuracy score. Run foundation, guarded suite and all existing demos; add new demo to CI. Update status/roadmap and Step 11 brief, commit/push and verify the exact Actions run.
+Use deterministic fake outputs/timeouts to test interruption before/after a side effect, restart/replay, invalid output/tool calls, exhausted budgets, bounded retry, cancellation and cross-entity access. Demonstrate start, pause at review, restart/resume and a complete persisted trace with one unchanged draft and zero unapproved postings. Keep the 24-case offline suite and discovery guard. Add the run demo to CI, run the foundation check, guarded suite and every demo. Update status/roadmap and the Step 12 brief, commit/push, inspect the exact Actions run, then stop.

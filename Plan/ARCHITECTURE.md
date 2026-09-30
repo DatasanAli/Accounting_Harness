@@ -1,6 +1,7 @@
 # Intended architecture
 
-Status: design target with Steps 02–07 implemented. The package contains exact Money/accounts, pure journal validation, strict calendar dates, immutable ledger snapshots and trial balances, atomic SQLite persistence, linked full reversals and immutable source registration. The six local CLI demonstrations cover accounts, journal validation, ledger reports, persistence, reversals and source registration. Approval, agents and financial statements remain future work. SQLite handles concurrent requests with serialized transactions; this remains a synthetic local prototype with no hosted deployment.
+Status: Steps 02–10 implemented. The standard-library package contains exact money/accounts, pure validation, ledger snapshots/trial balances, SQLite persistence/reversals, immutable source registration, versioned drafts, local human approval/atomic posting, and five typed proposal tools. Nine CLI demos cover these behaviors. Resumable provider runs, authenticated roles and financial statements remain future work. SQLite serializes writes; this remains a synthetic local prototype.
+
 
 ## Responsibility boundaries
 
@@ -43,26 +44,30 @@ Add each record when its step needs it; this is not an instruction to scaffold e
 ```text
 accounting_harness/          # Introduced in Step 02
   domain/                   # Money, accounts, journals, pure accounting rules
-  application/              # Use cases, approvals, posting, reconciliation, close
+  review.py                 # Implemented immutable revisions and pending/rejected queue
+  approval.py               # Implemented local decisions, atomic posting and audit
+  review_cli.py             # Explicit local human confirmation
+  application/              # Future reconciliation and close use cases
   persistence.py            # Implemented SQLite storage, retries and v1→v2 migration
   sources.py                # Implemented separate SQLite source registry and JSON receipt loader
-  agent/                    # Typed tools, run loop, provider adapter, checkpoints
+  agent_tools.py            # Implemented strict JSON allowlist, fixed runtime scope
+  tool_evaluation.py        # Implemented scripted offline contract runner
+  agent/                    # Future run loop, provider adapter, checkpoints
   reporting/                # Statements and management calculations
   integrations/             # External accounting/provider adapters
   cli/                      # Local operator commands
 tests/                      # Introduced in Step 02; grows with each layer
-evals/                      # Introduced with agent tools
 data/fixtures/              # Fictional examples, including Step 01 reference month
 ```
 
 The initial CLI works locally with a single fictional entity. SQLite is the implemented persistence store. Full reversals append an opposite journal and an immutable link/retry record in one transaction. Provider adapters keep accounting rules independent of any model vendor. Production storage, authentication, web UI, and hosting are decisions for their later steps.
 
-The source registry uses a separate entity-bound SQLite file with its own application ID and schema v1. The ledger keeps schema v2 and its frozen source-ID context, preserving posting retry digests and historical reports. Registration records evidence only; it does not extend an existing ledger’s source set. Application posting in Step 09 must design evidence binding explicitly.
+The source registry uses a separate entity-bound SQLite file with its own application ID and schema v1. The ledger keeps schema v2 and its frozen source-ID context, preserving posting retry digests and historical reports. Registration records evidence only; it does not extend an existing ledger’s source set. Review schema v1 and approval schema v1 are optional additive tables in the ledger file. Approval binds entity, revision/evidence digests, policy and posting action. Posting and audit links commit together after revalidation; evidence identities must already be provisioned in the frozen ledger context. Agent tools never receive approval/posting capabilities. The local trusted-file/CLI boundary is not production authentication.
 
 ## Hard boundaries
 
 - A model response cannot write a journal directly or act as a human approval.
-- A valid proposal is revalidated when posted, including date locks and revision identity.
+- A valid proposal is revalidated when posted, including period bounds and revision identity; explicit period locks arrive in Step 22.
 - Invalid, unsupported, or incomplete evidence produces a review item with a reason.
 - An external accounting system's ownership of the authoritative ledger must be decided before integration. In mirror mode, this application's ledger is a reconciled local view; it must not create a second independently authoritative book.
 - Posting or exporting accounting records is distinct from sending money. Bank transfers, payments, filings, and customer/vendor messaging require separately scoped future work.

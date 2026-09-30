@@ -9,6 +9,14 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_tools_demo_reports_offline_cases_and_unchanged_ledger(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-tools"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for text in ("save revision 1 -> human review", "Ledger unchanged: 0 posted journals",
+                     "Offline tool contracts: 24/24 passed; no model calls"):
+            self.assertIn(text, result.stdout)
+
     def test_approval_demo_posts_once_and_traces_evidence(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-approval"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

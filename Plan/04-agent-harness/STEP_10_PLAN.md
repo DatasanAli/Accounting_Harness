@@ -1,0 +1,18 @@
+# Step 10: typed tools and offline evaluation contract
+
+Goal: a scripted agent can read scoped accounts/evidence, validate a proposal, save immutable drafts and request review without changing ledger balances. Implements Phase 04 Step 10 only. Standard library, exact cents, synthetic fixtures, no model or network calls.
+
+`AgentTools(store, actor_id)` is a trusted-runtime-created dispatcher. `schemas()` returns independent JSON schema copies for exactly five tools: `read_accounts`, `get_evidence`, `validate_proposal`, `save_draft`, `request_review`. Every request supplies `entity_id` matching the runtime's frozen ledger entity; caller arguments cannot select actor, storage, policy or permissions. Unknown names and unsupported/extra fields fail closed. The small schema checker implements only the subset used by these five schemas: object/array/string/integer, properties/required/additionalProperties/items/minItems/minLength/pattern/enum/minimum. Python booleans are not integer revisions. Proposal amounts are unsigned two-decimal strings.
+
+Evidence reads return actual registered canonical content/digest; text never drives dispatch. Validation/saving requires all proposal sources to exist in the scoped registry with exact matching digests. Missing/fabricated/cross-entity references are tool errors. Known but semantically inconsistent evidence returns validation findings and may be saved pending human review. Agent identity is set by trusted code at construction. Draft saving reuses Step 08 atomic revisions, scoped retries and stale-edit checks. Approval, posting, reversal, registration, filesystem access and SQL are absent from the tool allowlist. This is a JSON capability boundary, not a Python-code sandbox.
+
+A save already persists a pending review item and event. `request_review` is a read-only acknowledgement of the exact current pending revision, returning its findings and explicit human-review requirement; no duplicate queue/event storage. It rejects stale, rejected or posted drafts. All saved proposals, even balanced ones, require human review. Uncertain classification can be explained in the required saved reason; the tool never infers a correct account from document text.
+
+`data/fixtures/agent-tool-cases.json` is a versioned corpus of at least 20 labeled, explicit synthetic scripts and expected outcomes. Each case starts isolated storage, uses a scripted fake sequence (no language-model inference), and checks outcomes, draft counts, findings, exact independently labeled proposed accounts/amounts where applicable, and an unchanged ledger snapshot. Categories: clean, malformed, missing, conflict, ambiguous, duplicate, unsupported, hostile. Error scripts stop at the denied call; earlier pending drafts remain intact. The runner reports category numerators/denominators, never a model accuracy claim.
+
+- [x] Write failing `tests/test_agent_tools.py` for schemas, strict malformed/cross-entity checks, forbidden operations, real evidence, pending/rejected/stale requests, replay/conflict and unchanged balances.
+- [x] Implement `accounting_harness/agent_tools.py` with typed schemas and deterministic dispatch; reuse review APIs.
+- [x] Freeze explicit labeled cases and independent assertions in `accounting_harness/tool_evaluation.py`; add offline corpus test and `demo-tools` showing rent draft/review plus category counts.
+- [x] Run guarded suite, foundation, all nine demos, independent review; update docs/status/roadmap and Step 11 brief. Commit/push and inspect exact GitHub SHA/CI. Stop after Step 10.
+
+Rollback: remove tool exposure with a new revert commit; retain draft/evidence history. No migration or schema change. Resumable runs, budgets, provider adapters and live evaluations remain Steps 11–12.

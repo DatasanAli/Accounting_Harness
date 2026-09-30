@@ -33,3 +33,5 @@ jobs:
         run: python3 -m accounting_harness demo-review
       - name: Demonstrate approval binding and atomic posting
         run: python3 -m accounting_harness demo-approval
+      - name: Demonstrate typed tools and offline contract cases
+        run: python3 -m accounting_harness demo-tools

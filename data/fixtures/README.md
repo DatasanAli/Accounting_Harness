@@ -42,3 +42,7 @@ Run `python3 scripts/verify_foundation.py` from the repository root. The checker
 ## Source-registration fixture
 
 [source-receipt.json](source-receipt.json) is an original fictional 125.00 USD receipt for Step 07. It uses a separate document identity and is not an extra posting in the reference month. The source demo and application tests register it in temporary SQLite storage. It contains no real business records.
+
+## Offline tool-contract corpus
+
+[agent-tool-cases.json](agent-tool-cases.json) contains 24 original synthetic scripts with explicit expected outcomes, proposed account/amount labels, findings and retained revision counts. Corpus v1 covers eight categories. `python3 -m accounting_harness demo-tools` runs them offline in isolated temporary databases. It verifies deterministic capabilities and denied calls, not model inference accuracy. Hostile text is intentional test data and grants no permissions.

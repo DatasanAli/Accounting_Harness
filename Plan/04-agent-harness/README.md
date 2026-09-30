@@ -1,6 +1,6 @@
 # Phase 04: A bounded accounting agent
 
-Status: Step 10 is ready; evidence/review/approval dependencies are complete. No behavior in this phase is implemented yet.
+Status: Step 10 typed tools and offline cases are implemented. Step 11 is ready; provider run loop and live models remain planned. See [contract](STEP_10_PLAN.md) and [verification](STEP_10_VERIFICATION.md).
 
 **Depends on:** Steps 02–09. No model provider is required for Steps 10–11.
 

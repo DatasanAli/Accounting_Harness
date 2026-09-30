@@ -15,6 +15,7 @@ from accounting_harness.sources import SQLiteSourceRegistry, load_source_documen
 
 from accounting_harness.review_demo import demo_review, demo_approval
 from accounting_harness.review_cli import review_post
+from accounting_harness.tool_evaluation import demo_tools
 
 FIXTURE = Path(__file__).resolve().parents[1] / "data/fixtures/service-business-month.json"
 
@@ -225,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-source", help="register, reopen and repeat a fictional receipt import")
     commands.add_parser("demo-review", help="edit and review immutable fictional draft revisions")
     commands.add_parser("demo-approval", help="approve, post once and trace a fictional rent journal")
+    commands.add_parser("demo-tools", help="run a scripted agent and labeled offline tool cases")
     review = commands.add_parser("review-post", help="review and explicitly approve a saved draft for posting")
     for name in ("ledger", "registry", "draft", "actor"):
         review.add_argument(f"--{name}", required=True)
@@ -232,6 +234,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "review-post":
             review_post(args)
+        elif args.command == "demo-tools":
+            demo_tools()
         elif args.command == "demo-approval":
             demo_approval()
         elif args.command == "demo-review":
