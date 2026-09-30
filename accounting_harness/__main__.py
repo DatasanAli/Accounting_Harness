@@ -13,7 +13,8 @@ from accounting_harness.domain.ledger import InMemoryLedger, trial_balance
 from accounting_harness.persistence import SQLiteLedger, PersistenceBusy
 from accounting_harness.sources import SQLiteSourceRegistry, load_source_document
 
-from accounting_harness.review_demo import demo_review
+from accounting_harness.review_demo import demo_review, demo_approval
+from accounting_harness.review_cli import review_post
 
 FIXTURE = Path(__file__).resolve().parents[1] / "data/fixtures/service-business-month.json"
 
@@ -223,9 +224,17 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-reversal", help="reverse a fictional expense and preserve its history")
     commands.add_parser("demo-source", help="register, reopen and repeat a fictional receipt import")
     commands.add_parser("demo-review", help="edit and review immutable fictional draft revisions")
+    commands.add_parser("demo-approval", help="approve, post once and trace a fictional rent journal")
+    review = commands.add_parser("review-post", help="review and explicitly approve a saved draft for posting")
+    for name in ("ledger", "registry", "draft", "actor"):
+        review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "demo-review":
+        if args.command == "review-post":
+            review_post(args)
+        elif args.command == "demo-approval":
+            demo_approval()
+        elif args.command == "demo-review":
             demo_review()
         elif args.command == "demo-accounts":
             demo_accounts()
@@ -239,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
             demo_reversal()
         elif args.command == "demo-source":
             demo_source()
-    except (OSError, ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
+    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error, PersistenceBusy) as error:
         parser.error(str(error))
     return 0
 

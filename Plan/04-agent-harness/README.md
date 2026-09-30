@@ -1,6 +1,6 @@
 # Phase 04: A bounded accounting agent
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: Step 10 is ready; evidence/review/approval dependencies are complete. No behavior in this phase is implemented yet.
 
 **Depends on:** Steps 02–09. No model provider is required for Steps 10–11.
 

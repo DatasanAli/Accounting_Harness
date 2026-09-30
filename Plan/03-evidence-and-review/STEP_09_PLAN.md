@@ -1,0 +1,15 @@
+# Step 09 implementation contract
+
+Goal: a local human CLI decision approves an exact revision; an application transaction posts it once with a reconstructable audit trail. Read Step 08's storage contract first. Standard library only; no provider or authenticated shared deployment.
+
+`ReviewApplication(store)` adds optional approval schema v1 atomically alongside review schema v1 and ledger schema v2. Existing ledger/source/review data remains unchanged. `approve(draft_id, revision, confirmed_digest, actor_id, idempotency_key)` requires a current, pending, fully validated revision and exact human-reviewed digest. Immutable approval binds entity, draft/revision digest, evidence digests, policy, action `post`, actor and timestamp. Only one approval per revision; edit/rejection creates a different revision and makes older approval unusable. Rejection uses the existing revision/reason API. `post(approval_id, actor_id, idempotency_key)` revalidates binding, current revision, evidence, policy, period and ledger rules while holding the SQLite write transaction. Journal, posting event, approval link and posting request commit together. No changes to legacy ledger retry digests. Original request retries return original receipts, while changed actor/approval conflicts; another key cannot post an already posted draft. Posted drafts cannot be edited/rejected.
+
+Source evidence is append-only in its separate registry, re-read before posting. This is a local trusted-file model, not protection against a hostile administrator replacing files during a transaction. New source identities must already exist in the ledger's frozen context; adding dynamic sources is excluded. Existing low-level ledger admission is a trusted internal primitive, not an agent or public endpoint.
+
+`review-post --ledger PATH --registry PATH --draft ID --actor ID` opens existing databases, displays exact proposal/evidence/policy/digest and requires the typed phrase `approve DIGEST`. EOF or anything else cancels without approval/posting. The actor is a prototype operator reference, not authenticated identity. `demo-approval` simulates that local decision on temporary synthetic data and verifies reopening, exact retry and source-to-journal trace.
+
+- [x] Write failing approval tests: no/stale/rejected approval, changed evidence/policy, confirmation mismatch, atomic failures after journal writes, concurrency, retries, immutable SQL records, version/init rollback, trace and CLI cancellation/confirmation.
+- [x] Implement `accounting_harness/approval.py` and `review_cli.py`; integrate posted-draft protection into review mutation. Add demo and CI command.
+- [x] Run full suite, foundation and eight demos. Record exact observed results, update status/roadmap and Step 10 brief, review code, commit/push, inspect exact Actions run before Step 10.
+
+Rollback: new revert commit; retain optional tables and posted history. Old low-level ledger code reads the unchanged schema. Corrections use linked reversal, never row deletion.

@@ -31,3 +31,5 @@ jobs:
         run: python3 -m accounting_harness demo-source
       - name: Demonstrate draft revisions and review findings
         run: python3 -m accounting_harness demo-review
+      - name: Demonstrate approval binding and atomic posting
+        run: python3 -m accounting_harness demo-approval

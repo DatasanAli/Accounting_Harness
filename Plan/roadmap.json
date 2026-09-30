@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "08",
-  "next_step": "09",
+  "current_step": "09",
+  "next_step": "10",
   "phases": [
     {
       "id": "01",
@@ -65,7 +65,7 @@
         {
           "id": "09",
           "title": "Approval, posting and audit",
-          "status": "ready"
+          "status": "complete"
         }
       ]
     },
@@ -77,7 +77,7 @@
         {
           "id": "10",
           "title": "Typed tools and offline evaluation cases",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "11",

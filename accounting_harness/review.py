@@ -172,6 +172,8 @@ class SQLiteReviewStore:
                 return self._get(prior[1], prior[2])
             current = self.db.execute('SELECT max(revision) FROM draft_revisions WHERE draft_id=?',
                                       (draft_id,)).fetchone()[0] or 0
+            if self._is_posted(draft_id):
+                raise ValueError("posted drafts cannot be edited or rejected")
             if current != expected:
                 raise ValueError('stale draft revision')
             if operation == 'reject':
@@ -212,10 +214,15 @@ class SQLiteReviewStore:
                                         (draft_id,)).fetchall()
             return tuple(self._get(draft_id, r[0]) for r in revisions)
 
+    def _is_posted(self, draft_id):
+        if not self.db.execute("SELECT 1 FROM sqlite_master WHERE name='review_postings'").fetchone():
+            return False
+        return self.db.execute("SELECT 1 FROM review_postings WHERE draft_id=?", (draft_id,)).fetchone() is not None
+
     def queue(self, state=None):
         if state not in (None, 'pending', 'rejected'):
             raise ValueError('queue state must be pending or rejected')
         with self.ledger._transaction():
             ids = self.db.execute('SELECT DISTINCT draft_id FROM draft_revisions ORDER BY draft_id').fetchall()
-            records = tuple(self._get(row[0]) for row in ids)
+            records = tuple(self._get(row[0]) for row in ids if not self._is_posted(row[0]))
             return tuple(r for r in records if state is None or r.state == state)
