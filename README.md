@@ -4,7 +4,7 @@ An accounting agent harness for bookkeeping at a small service business, built o
 
 The intended workflow is: **evidence → proposed journal entry → validation → human approval → posting → reconciliation → reporting**. Accounting code owns calculations and ledger changes. The agent helps interpret evidence and propose work.
 
-**Current state:** Steps 01–07 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, and immutable registration of structured fictional receipts. Authenticated approval and the agent runtime are future steps.
+**Current state:** Steps 01–08 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, and immutable registration of structured fictional receipts. Authenticated approval and the agent runtime are future steps.
 
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
 
@@ -19,6 +19,7 @@ python3 -m accounting_harness demo-ledger
 python3 -m accounting_harness demo-persistence
 python3 -m accounting_harness demo-reversal
 python3 -m accounting_harness demo-source
+python3 -m accounting_harness demo-review
 ```
 
 The account demo prints 13 fictional accounts, including credit-normal accumulated depreciation and debit-normal owner drawings. It demonstrates `0.10 + 0.20 = 0.30 USD (30 cents)` and rejects the unsupported precision in `1.005`.
@@ -33,6 +34,8 @@ The reversal demo cancels a fictional 125.00 USD expense using a linked journal.
 
 The source demo registers a fictional receipt in a separate temporary SQLite registry, reopens it, and recognizes the repeat import without changing the original evidence or audit receipt. A separate identity with identical content stays distinct; changed content under the original identity is rejected. Registration does not change the ledger’s frozen source context or authorize posting. Only structured synthetic receipts are supported in this step.
 
+The review demo edits a fictional rent proposal, reopens both immutable revisions, shows unresolved amount findings and a rejected queue item, and verifies zero posted journals. See the [Step 08 contract and verification](Plan/03-evidence-and-review/STEP_08_VERIFICATION.md).
+
 ## Verify the implementation
 
 ```sh
@@ -40,7 +43,7 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 128 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all six demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 142 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all seven demonstrations.
 
 Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting is implemented; authenticated approval is not. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
@@ -60,6 +63,6 @@ The current delivery target is this repository on GitHub with its verification w
 
 Next prompt:
 
-> Build Step 08: versioned drafts and review queue. Follow Plan/NEXT_STEP.md, create immutable draft revisions from registered evidence with validation findings and pending/rejected states, demonstrate an edited proposal and its history, then commit and push to GitHub. Stop after this step.
+> Build Step 09: approval, posting and audit. Follow Plan/NEXT_STEP.md, bind a human CLI decision to an exact validated revision and evidence/policy digests, post atomically through the application, demonstrate the source-to-journal audit trail, then commit and push to GitHub. Stop after this step.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).

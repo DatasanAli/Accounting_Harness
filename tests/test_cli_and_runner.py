@@ -9,6 +9,13 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_review_demo_preserves_history_and_findings(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-review"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for text in ("Reopened: 2 unchanged revisions", "unbalanced", "rejected", "0 posted journals"):
+            self.assertIn(text, result.stdout)
+
     def test_source_demo_preserves_repeat_and_distinct_identity(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-source"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

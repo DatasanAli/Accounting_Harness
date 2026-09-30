@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "07",
-  "next_step": "08",
+  "current_step": "08",
+  "next_step": "09",
   "phases": [
     {
       "id": "01",
@@ -60,12 +60,12 @@
         {
           "id": "08",
           "title": "Versioned drafts and review queue",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "09",
           "title": "Approval, posting and audit",
-          "status": "planned"
+          "status": "ready"
         }
       ]
     },

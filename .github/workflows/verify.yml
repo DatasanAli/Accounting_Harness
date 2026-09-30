@@ -29,3 +29,5 @@ jobs:
         run: python3 -m accounting_harness demo-reversal
       - name: Demonstrate source registration and repeat imports
         run: python3 -m accounting_harness demo-source
+      - name: Demonstrate draft revisions and review findings
+        run: python3 -m accounting_harness demo-review

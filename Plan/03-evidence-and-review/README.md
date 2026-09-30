@@ -1,6 +1,6 @@
 # Phase 03: Evidence, review and audit
 
-Status: Step 07 source registration is implemented. Step 08 is ready; draft review and approval remain planned. See the [source contract and implementation plan](STEP_07_PLAN.md) and [observed verification](STEP_07_VERIFICATION.md).
+Status: Steps 07–08 are implemented. Step 09 approval/posting is ready. See [draft verification](STEP_08_VERIFICATION.md). See the [source contract and implementation plan](STEP_07_PLAN.md) and [observed verification](STEP_07_VERIFICATION.md).
 
 **Depends on:** Steps 02–06.
 
