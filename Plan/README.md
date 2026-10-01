@@ -1,6 +1,6 @@
 # Accounting Harness implementation plan
 
-Steps 01–10 establish the plan and implement exact money/accounts, a durable ledger, source registration, versioned drafts, local approval/posting and typed agent tools with offline cases. The next small build is **Step 11: resumable fake-provider run loop**. The selected initial workflow is bookkeeping for a small service business.
+Steps 01–11 establish the plan and implement exact money/accounts, a durable ledger, source registration, versioned drafts, local approval/posting and typed agent tools with offline cases and a bounded resumable fake-provider loop. The next small build is **Step 12: one real provider and proposal evaluation**. The selected initial workflow is bookkeeping for a small service business.
 
 An agent harness is the application around an agent: its task state, evidence context, allowed tools, execution limits, approvals, and recorded results. Our ledger and accounting rules must be testable independently of the model.
 
@@ -42,7 +42,9 @@ Plan/
 ├── 04-agent-harness/
 │   ├── README.md                      # Steps 10–12
 │   ├── STEP_10_PLAN.md
-│   └── STEP_10_VERIFICATION.md
+│   ├── STEP_10_VERIFICATION.md
+│   ├── STEP_11_PLAN.md
+│   └── STEP_11_VERIFICATION.md
 ├── 05-service-bookkeeping/
 │   └── README.md                      # Steps 13–16
 ├── 06-bank-reconciliation/

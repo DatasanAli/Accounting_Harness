@@ -1,6 +1,6 @@
 # Intended architecture
 
-Status: Steps 02–10 implemented. The standard-library package contains exact money/accounts, pure validation, ledger snapshots/trial balances, SQLite persistence/reversals, immutable source registration, versioned drafts, local human approval/atomic posting, and five typed proposal tools. Nine CLI demos cover these behaviors. Resumable provider runs, authenticated roles and financial statements remain future work. SQLite serializes writes; this remains a synthetic local prototype.
+Status: Steps 02–11 implemented. The standard-library package contains exact money/accounts, pure validation, ledger snapshots/trial balances, SQLite persistence/reversals, immutable source registration, versioned drafts, local human approval/atomic posting, five typed proposal tools, and a durable bounded fake-provider run loop. Ten CLI demos cover these behaviors. Live providers, authenticated roles and financial statements remain future work. SQLite serializes writes; this remains a synthetic local prototype.
 
 
 ## Responsibility boundaries
@@ -52,7 +52,9 @@ accounting_harness/          # Introduced in Step 02
   sources.py                # Implemented separate SQLite source registry and JSON receipt loader
   agent_tools.py            # Implemented strict JSON allowlist, fixed runtime scope
   tool_evaluation.py        # Implemented scripted offline contract runner
-  agent/                    # Future run loop, provider adapter, checkpoints
+  runs.py                   # Implemented fake provider, persisted budgets/checkpoints and safe recovery
+  run_demo.py               # Reopen and acknowledge a synthetic review handoff
+  agent/                    # Future live provider adapter
   reporting/                # Statements and management calculations
   integrations/             # External accounting/provider adapters
   cli/                      # Local operator commands
@@ -63,6 +65,8 @@ data/fixtures/              # Fictional examples, including Step 01 reference mo
 The initial CLI works locally with a single fictional entity. SQLite is the implemented persistence store. Full reversals append an opposite journal and an immutable link/retry record in one transaction. Provider adapters keep accounting rules independent of any model vendor. Production storage, authentication, web UI, and hosting are decisions for their later steps.
 
 The source registry uses a separate entity-bound SQLite file with its own application ID and schema v1. The ledger keeps schema v2 and its frozen source-ID context, preserving posting retry digests and historical reports. Registration records evidence only; it does not extend an existing ledger’s source set. Review schema v1 and approval schema v1 are optional additive tables in the ledger file. Approval binds entity, revision/evidence digests, policy and posting action. Posting and audit links commit together after revalidation; evidence identities must already be provisioned in the frozen ledger context. Agent tools never receive approval/posting capabilities. The local trusted-file/CLI boundary is not production authentication.
+
+The run log is a separate entity-bound SQLite file (AHRN, schema v1). Fixed task/run scope and append-only checkpoints bind script/prompt identity and integer budgets. A durable tool intent and dispatch reservation precede each side effect; interrupted saves recover their original review receipt. A local advisory lock spans dispatch transactions on macOS/Linux. Cancellation and time enforcement occur at bounded local-call boundaries. Acknowledging review completes the run without approving or posting. Restore the run, source and ledger files consistently.
 
 ## Hard boundaries
 

@@ -9,6 +9,15 @@ RUNNER = ROOT / "scripts/run_tests.py"
 
 
 class CLITests(unittest.TestCase):
+    def test_run_demo_reopens_and_acknowledges_review_without_posting(self):
+        result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-run"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for text in ("Paused: awaiting_review", "Reopened: 16 unchanged checkpoints",
+                     "Resumed: completed; review_handoff_acknowledged",
+                     "1 unchanged draft revision; 0 posted journals", "5/10 tool calls; 5/20 simulated cost units"):
+            self.assertIn(text, result.stdout)
+
     def test_tools_demo_reports_offline_cases_and_unchanged_ledger(self):
         result = subprocess.run([sys.executable, "-m", "accounting_harness", "demo-tools"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=10)

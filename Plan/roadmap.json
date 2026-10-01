@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "current_step": "10",
-  "next_step": "11",
+  "current_step": "11",
+  "next_step": "12",
   "phases": [
     {
       "id": "01",
@@ -82,12 +82,12 @@
         {
           "id": "11",
           "title": "Resumable fake-provider run loop",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "12",
           "title": "One real provider and proposal evaluation",
-          "status": "planned"
+          "status": "ready"
         }
       ]
     },

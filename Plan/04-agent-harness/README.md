@@ -1,6 +1,6 @@
 # Phase 04: A bounded accounting agent
 
-Status: Step 10 typed tools and offline cases are implemented. Step 11 is ready; provider run loop and live models remain planned. See [contract](STEP_10_PLAN.md) and [verification](STEP_10_VERIFICATION.md).
+Status: Steps 10–11 typed tools, offline cases and the durable fake-provider run loop are implemented. Step 12 is ready; live models remain planned. See [tool verification](STEP_10_VERIFICATION.md), [run contract](STEP_11_PLAN.md) and [run verification](STEP_11_VERIFICATION.md).
 
 **Depends on:** Steps 02–09. No model provider is required for Steps 10–11.
 
@@ -28,6 +28,8 @@ Copyable prompt:
 > Build Step 10: Typed tools and offline evaluation cases. Follow Plan/04-agent-harness/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 11: Resumable fake-provider run loop
+
+Implemented: separate append-only run log, fixed scope/script identity, integer budgets, timeout/lock retry limits, cancellation, crash receipt recovery and review handoff. `demo-run` reopens all storage and preserves one draft with zero postings.
 
 - **Build:** Implement persisted run states, checkpoints, tool-call/time/cost budgets, retry limits and cancellation with a fake provider.
 - **Test:** Interrupt/resume; exhaust budgets; inject invalid output/timeouts; replay cannot duplicate a draft or any side effect.

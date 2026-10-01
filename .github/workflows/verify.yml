@@ -35,3 +35,5 @@ jobs:
         run: python3 -m accounting_harness demo-approval
       - name: Demonstrate typed tools and offline contract cases
         run: python3 -m accounting_harness demo-tools
+      - name: Demonstrate resumable bounded fake-provider run
+        run: python3 -m accounting_harness demo-run
