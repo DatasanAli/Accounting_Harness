@@ -46,3 +46,15 @@ Run `python3 scripts/verify_foundation.py` from the repository root. The checker
 ## Offline tool-contract corpus
 
 [agent-tool-cases.json](agent-tool-cases.json) contains 24 original synthetic scripts with explicit expected outcomes, proposed account/amount labels, findings and retained revision counts. Corpus v1 covers eight categories. `python3 -m accounting_harness demo-tools` runs them offline in isolated temporary databases. It verifies deterministic capabilities and denied calls, not model inference accuracy. Hostile text is intentional test data and grants no permissions.
+
+## Provider-proposal corpus
+
+[provider-proposal-cases.json](provider-proposal-cases.json) freezes 20 original
+synthetic cases (`expense-cases-v1`): clean 8, ambiguity 2, missing facts 2,
+conflicting facts 2, duplicates 2, unsupported 2, and hostile instructions 2.
+Expected accounting labels are separate from handwritten synthetic response
+decisions. Live evaluation ignores those synthetic responses and sends only
+registered evidence, account results and prior-source-use context. Neither
+labels nor category names are included in the prompt. Four clean cases are
+repeated to report nondeterminism. Any regression gets a new corpus version;
+these offline results do not establish live model accuracy.

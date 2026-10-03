@@ -1,6 +1,6 @@
 # Phase 04: A bounded accounting agent
 
-Status: Steps 10–11 typed tools, offline cases and the durable fake-provider run loop are implemented. Step 12 is ready; live models remain planned. See [tool verification](STEP_10_VERIFICATION.md), [run contract](STEP_11_PLAN.md) and [run verification](STEP_11_VERIFICATION.md).
+Status: Steps 10–11 typed tools, offline cases and the durable fake-provider run loop are implemented. Step 12 adapter and offline evaluation are implemented; its live evaluation gate remains pending API credentials. See [tool verification](STEP_10_VERIFICATION.md), [run contract](STEP_11_PLAN.md) and [run verification](STEP_11_VERIFICATION.md).
 
 **Depends on:** Steps 02–09. No model provider is required for Steps 10–11.
 
@@ -41,6 +41,10 @@ Copyable prompt:
 > Build Step 11: Resumable fake-provider run loop. Follow Plan/04-agent-harness/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 12: One real provider and proposal evaluation
+
+Offline implementation available: [contract](STEP_12_PLAN.md) and [verification](STEP_12_VERIFICATION.md).
+Pinned OpenAI adapter, 20 proposal cases, separate approval/posting demo. Live
+results are pending; this step and phase are not marked complete.
 
 - **Build:** Add a single configurable provider behind the existing interface and test a supported expense proposal plus abstention.
 - **Test:** Pass the versioned offline gate and bounded live synthetic evaluation described in TESTING_STRATEGY.md; document model/prompt versions and observed cost.

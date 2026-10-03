@@ -229,12 +229,23 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-approval", help="approve, post once and trace a fictional rent journal")
     commands.add_parser("demo-tools", help="run a scripted agent and labeled offline tool cases")
     commands.add_parser("demo-run", help="persist a bounded fake-provider run and resume its review handoff")
+    commands.add_parser("demo-provider", help="evaluate synthetic provider responses and demonstrate separate approval")
+    evaluation = commands.add_parser("eval-provider", help="evaluate 20 synthetic cases; live mode adds four repeats")
+    evaluation.add_argument("--live", action="store_true", help="billable: at most 24 requests, 5 minutes, $0.25 reserved")
     review = commands.add_parser("review-post", help="review and explicitly approve a saved draft for posting")
     for name in ("ledger", "registry", "draft", "actor"):
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "review-post":
+        if args.command == "demo-provider":
+            from accounting_harness.provider_evaluation import demo_provider
+            demo_provider()
+        elif args.command == "eval-provider":
+            from accounting_harness.provider_evaluation import evaluate_provider
+            report = evaluate_provider(live=args.live)
+            print(json.dumps(report, indent=2))
+            return 0 if report['passed'] else 1
+        elif args.command == "review-post":
             review_post(args)
         elif args.command == "demo-run":
             demo_run()

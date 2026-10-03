@@ -143,7 +143,8 @@ class SQLiteReviewStore:
         if type(expected_revision) is not int or expected_revision < 0:
             raise ValueError('expected revision must be a nonnegative integer')
 
-    def save(self, draft_id, proposal, *, evidence, expected_revision, actor_id, idempotency_key, reason):
+    def save(self, draft_id, proposal, *, evidence, expected_revision, actor_id, idempotency_key, reason,
+             require_unused_evidence=False):
         # Snapshot JSON inputs; do not accept Python objects or nonfinite numbers.
         proposal = json.loads(json.dumps(proposal, allow_nan=False))
         if not isinstance(evidence, dict):
@@ -154,15 +155,22 @@ class SQLiteReviewStore:
                 raise ValueError('evidence requires a SHA-256 digest')
         evidence = dict(evidence)
         return self._mutate('save', draft_id, expected_revision, actor_id, idempotency_key,
-                            reason, proposal, evidence)
+                            reason, proposal, evidence, require_unused_evidence=require_unused_evidence)
 
     def reject(self, draft_id, *, expected_revision, actor_id, idempotency_key, reason):
         return self._mutate('reject', draft_id, expected_revision, actor_id, idempotency_key, reason)
 
-    def _mutate(self, operation, draft_id, expected, actor, key, reason, proposal=None, evidence=None):
+    def source_used(self, source_id):
+        used = self.db.execute('SELECT 1 FROM journal_sources WHERE source_id=? LIMIT 1', (source_id,)).fetchone()
+        # ponytail: scan local draft history; index evidence when the queue grows.
+        return bool(used) or any(source_id in json.loads(row[0]) for row in
+                                self.db.execute('SELECT evidence_json FROM draft_revisions'))
+
+    def _mutate(self, operation, draft_id, expected, actor, key, reason, proposal=None, evidence=None,
+                *, require_unused_evidence=False):
         self._inputs(draft_id, expected, actor, key, reason)
         request_digest = digest([operation, draft_id, expected, actor, reason,
-                                 proposal, evidence, self.policy_version])
+                                 proposal, evidence, self.policy_version] + ([True] if require_unused_evidence else []))
         with self.ledger._transaction(write=True):
             prior = self.db.execute('SELECT digest, draft_id, revision FROM review_requests WHERE operation=? AND key=?',
                                     (operation, key)).fetchone()
@@ -170,6 +178,8 @@ class SQLiteReviewStore:
                 if prior[0] != request_digest:
                     raise ValueError('retry key binds a different request')
                 return self._get(prior[1], prior[2])
+            if require_unused_evidence and any(self.source_used(source_id) for source_id in evidence):
+                raise ValueError('duplicate evidence')
             current = self.db.execute('SELECT max(revision) FROM draft_revisions WHERE draft_id=?',
                                       (draft_id,)).fetchone()[0] or 0
             if self._is_posted(draft_id):

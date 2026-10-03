@@ -76,10 +76,11 @@ class AgentTools:
     This is not a sandbox for executing untrusted Python. Keep the application,
     ledger connection and this Python object out of model-executable code.
     """
-    def __init__(self, store, *, actor_id):
+    def __init__(self, store, *, actor_id, require_unused_evidence=False):
         _validate_text(actor_id, 'agent actor ID')
         self._store = store
         self._actor_id = actor_id
+        self._require_unused_evidence = require_unused_evidence
         self._entity_id = store.ledger._empty.catalog.entity_id
 
     @staticmethod
@@ -128,7 +129,8 @@ class AgentTools:
                     findings = self._store.validate(args['proposal'], args['evidence'])
                     return dict(valid=not findings, findings=[asdict(f) for f in findings],
                                 human_review_required=True)
-                return self._revision(self._store.save(**args, actor_id=self._actor_id))
+                return self._revision(self._store.save(**args, actor_id=self._actor_id,
+                    require_unused_evidence=self._require_unused_evidence))
             # request_review acknowledges the pending queue item already
             # committed with save_draft; it cannot grant approval or post.
             with self._store.ledger._transaction():

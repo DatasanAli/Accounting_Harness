@@ -87,7 +87,8 @@
         {
           "id": "12",
           "title": "One real provider and proposal evaluation",
-          "status": "ready"
+          "status": "ready",
+          "delivery_gate": "Adapter and offline evaluation implemented; bounded live evaluation pending local OPENAI_API_KEY."
         }
       ]
     },

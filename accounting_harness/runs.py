@@ -1,4 +1,4 @@
-"""Durable, bounded fake-provider runs over the existing proposal-only tools."""
+"""Durable bounded runs over the existing proposal-only tools."""
 
 import json
 import sqlite3
@@ -11,6 +11,7 @@ from accounting_harness.agent_tools import AgentTools, ToolError, _check
 from accounting_harness.domain.accounts import _validate_text
 from accounting_harness.persistence import PersistenceBusy, _canonical
 from accounting_harness.review import digest, protect_table
+from accounting_harness import provider as live
 
 APPLICATION_ID = 0x4148524E  # AHRN; separate from ledger and source registry files.
 SCHEMA_VERSION = 1
@@ -182,8 +183,8 @@ class SQLiteRunEngine:
 
     @staticmethod
     def _provider(provider):
-        if type(provider) is not FakeProvider:
-            raise TypeError('Step 11 supports only the offline FakeProvider')
+        if type(provider) not in (FakeProvider, live.OpenAIExpenseProvider):
+            raise TypeError('unsupported provider type')
         return provider.identity
 
     def start(self, run_id, *, task_id, provider, actor_id, limits):
@@ -322,7 +323,8 @@ class SQLiteRunEngine:
             if row is None:
                 return None
             expected = digest(['save', args['draft_id'], args['expected_revision'], config['actor_id'], args['reason'],
-                               args['proposal'], args['evidence'], self.store.policy_version])
+                               args['proposal'], args['evidence'], self.store.policy_version] +
+                              ([True] if config['provider']['provider_version'] == 'openai-responses-v1' else []))
             if row[0] != expected:
                 raise ToolError('recovery receipt does not match persisted intent')
             return AgentTools._revision(self.store._get(row[1], row[2]))
@@ -370,7 +372,90 @@ class SQLiteRunEngine:
     def advance(self, run_id, provider):
         self._provider(provider)
         with self._dispatch_lock():
+            if type(provider) is live.OpenAIExpenseProvider:
+                current = self.get(run_id)
+                if current.state in ('ready', 'requesting_provider'):
+                    return self._advance_live(run_id, provider)
             return self._advance(run_id, provider)
+
+    def _advance_live(self, run_id, provider):
+        # The OS lock excludes a second dispatcher, while cancellation can use
+        # SQLite freely during the network request. No transaction crosses I/O.
+        with self._transaction():
+            config = self._config(run_id, provider)
+            current = self._get(run_id)
+            if current.state == 'requesting_provider':
+                return self._append(current, config, state='awaiting_review',
+                                    reason='provider_completion_unknown')
+            if current.state != 'ready':
+                return current
+            remaining_ms = config['limits']['elapsed_ms'] - self._elapsed(current, config)
+            if remaining_ms <= 0:
+                return self._exhaust(current, config, 'time_budget')
+            if current.next_step:
+                # Only the application chooses the next action after save.
+                result = json.loads(current.review_json)
+                intent = dict(tool='request_review', arguments=dict(
+                    entity_id=self.store.ledger._empty.catalog.entity_id,
+                    draft_id=result['draft_id'], revision=result['revision']))
+                if current.tool_calls >= config['limits']['tool_calls']:
+                    return self._exhaust(current, config, 'tool_call_budget')
+                return self._append(current, config, state='pending_tool',
+                    tool_calls=current.tool_calls + 1, intent_json=_canonical(intent),
+                    dispatch_attempts=0, reason='tool_intent')
+            if current.tool_calls + 5 > config['limits']['tool_calls']:
+                return self._exhaust(current, config, 'tool_call_budget')
+            if current.cost_units + live.RESERVATION > config['limits']['cost_units']:
+                return self._exhaust(current, config, 'cost_budget')
+            try:
+                context = provider.context(self.store)
+                body = provider.body(context)
+            except (ToolError, live.ProviderFailure):
+                return self._append(current, config, state='awaiting_review', reason='provider_context_invalid')
+            remaining_ms = config['limits']['elapsed_ms'] - self._elapsed(current, config)
+            if remaining_ms <= 0:
+                return self._exhaust(current, config, 'time_budget')
+            reserved = self._append(current, config, state='requesting_provider',
+                provider_attempts=current.provider_attempts + 1, tool_calls=current.tool_calls + 2,
+                cost_units=current.cost_units + live.RESERVATION,
+                result_json=_canonical(dict(request_digest=digest(body.decode()),
+                                            evidence_digest=context['evidence']['content_digest'])),
+                reason='provider_reserved')
+        try:
+            remaining_ms = config['limits']['elapsed_ms'] - self._elapsed(reserved, config)
+            if remaining_ms <= 0:
+                raise live.ProviderFailure('time_budget')
+            payload = live.request_response(body, timeout_ms=min(live.TIMEOUT_MS, remaining_ms),
+                          cancelled=lambda: self.get(run_id).state == 'cancelled')
+            draft_id = 'expense-' + digest([self._path, self._scope, run_id])[:24]
+            intent, reason, usage = live.proposal_intent(payload, context, draft_id)
+        except live.ProviderFailure as error:
+            intent, reason, usage = None, str(error), None
+        with self._transaction():
+            config = self._config(run_id, provider)
+            current = self._get(run_id)
+            if current.sequence != reserved.sequence or current.state != 'requesting_provider':
+                return current  # A human cancellation wins over a late response.
+            metadata = dict(usage=usage) if usage is not None else dict(billing='unknown_reserved')
+            if self._elapsed(current, config) >= config['limits']['elapsed_ms']:
+                return self._append(current, config, state='exhausted',
+                                    result_json=_canonical(metadata), reason='time_budget_after_provider')
+            if intent is None:
+                return self._append(current, config, state='awaiting_review',
+                                    result_json=_canonical(metadata), reason=reason)
+            args = intent['arguments']
+            try:
+                validation = AgentTools(self.store, actor_id=config['actor_id']).call('validate_proposal',
+                    {k: args[k] for k in ('entity_id', 'proposal', 'evidence')})
+                if not validation['valid']:
+                    raise ToolError('invalid proposal')
+            except ToolError:
+                return self._append(current, config, state='awaiting_review',
+                    tool_calls=current.tool_calls + 1, result_json=_canonical(metadata), reason='proposal_invalid')
+            args['idempotency_key'] = 'run:' + digest([self._path, self._scope, run_id, current.next_step])
+            return self._append(current, config, state='pending_tool', tool_calls=current.tool_calls + 2,
+                intent_json=_canonical(intent), result_json=_canonical(metadata),
+                dispatch_attempts=0, reason='tool_intent')
 
     def _advance(self, run_id, provider):
         with self._transaction():
@@ -405,12 +490,15 @@ class SQLiteRunEngine:
                 return self._exhaust(current, config, 'time_budget')
             intent = json.loads(current.intent_json)
             try:
-                result = AgentTools(self.store, actor_id=config['actor_id']).call(intent['tool'], intent['arguments'])
+                result = AgentTools(self.store, actor_id=config['actor_id'],
+                    require_unused_evidence=type(provider) is live.OpenAIExpenseProvider).call(intent['tool'], intent['arguments'])
             except PersistenceBusy:
                 failed = current.dispatch_attempts >= config['limits']['retries'] + 1
                 return self._append(current, config, state='failed' if failed else 'pending_tool',
                                     reason='tool_retry_exhausted' if failed else 'tool_busy')
-            except ToolError:
+            except ToolError as error:
+                if type(provider) is live.OpenAIExpenseProvider and str(error) == 'duplicate evidence':
+                    return self._append(current, config, state='awaiting_review', reason='duplicate', intent_json=None)
                 return self._append(current, config, state='failed', reason='tool_denied')
             return self._result(current, config, result)
 

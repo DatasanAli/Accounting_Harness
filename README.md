@@ -4,7 +4,7 @@ An accounting agent harness for bookkeeping at a small service business, built o
 
 The intended workflow is: **evidence → proposed journal entry → validation → human approval → posting → reconciliation → reporting**. Accounting code owns calculations and ledger changes. The agent helps interpret evidence and propose work.
 
-**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Authenticated roles and live-provider integration are future steps.
+**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is pending local API credentials. Authenticated roles remain a future step.
 
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
 
@@ -23,6 +23,7 @@ python3 -m accounting_harness demo-review
 python3 -m accounting_harness demo-approval
 python3 -m accounting_harness demo-tools
 python3 -m accounting_harness demo-run
+python3 -m accounting_harness demo-provider
 ```
 
 The account demo prints 13 fictional accounts, including credit-normal accumulated depreciation and debit-normal owner drawings. It demonstrates `0.10 + 0.20 = 0.30 USD (30 cents)` and rejects the unsupported precision in `1.005`.
@@ -52,7 +53,7 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 203 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all ten demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 227 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all eleven demonstrations.
 
 Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting is implemented; authenticated approval is not. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
@@ -72,6 +73,36 @@ The current delivery target is this repository on GitHub with its verification w
 
 Next prompt:
 
-> Build Step 12: one real provider and proposal evaluation. Follow Plan/NEXT_STEP.md, add one bounded provider adapter behind the existing tool and run contracts, evaluate supported synthetic expense proposals and abstention against the offline gate, demonstrate a proposal stopping for separate human review, then commit and push to GitHub. Stop after this step.
+> Finish Step 12: run the bounded live synthetic provider evaluation with a locally configured OPENAI_API_KEY, record the results and any regressions, verify all checks, then commit and push to GitHub. Keep Step 13 gated until Step 12 passes. Stop after this step.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
+
+## Provider evaluation
+
+`demo-provider` exercises the real adapter/parser/runtime with handwritten
+synthetic response envelopes: eight exact proposals, twelve abstentions, and a
+separate simulated human approval followed by one rent posting and safe retry.
+These are contract results, not model accuracy. All demonstrations remain offline.
+
+The supported provider workflow is paid, incurred rent (5000) or consumed
+software services (5100), with Cash (1000). The model cannot approve or post.
+Ambiguous completion after a crash stops for review without repeating the API
+request. Duplicate-source prevention is checked atomically when saving the draft.
+
+For an explicit billable synthetic evaluation, configure `OPENAI_API_KEY` in the
+local process environment (never commit it), then run:
+
+```sh
+python3 -m accounting_harness eval-provider --live
+```
+
+This pins `gpt-4.1-mini-2025-04-14` / `expense-v1`, permits at most 24 requests,
+300 seconds and $0.25 reserved cost, and emits sanitized JSON with per-category
+results, token usage, usage-derived cost, latency, failures and four repeat
+comparisons. Individual requests have a 10-second deadline and no automatic
+network retries. Returned usage is an estimate at documented uncached rates,
+not an invoice; uncertain attempts retain the full reservation. No key means
+a nonzero exit with no calls. `eval-provider` without `--live` is offline.
+Keep any local report in ignored `.local/`; raw provider traces are not recorded.
+See the [Step 12 contract](Plan/04-agent-harness/STEP_12_PLAN.md) and
+[verification](Plan/04-agent-harness/STEP_12_VERIFICATION.md).

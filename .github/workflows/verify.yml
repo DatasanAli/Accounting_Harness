@@ -37,3 +37,5 @@ jobs:
         run: python3 -m accounting_harness demo-tools
       - name: Demonstrate resumable bounded fake-provider run
         run: python3 -m accounting_harness demo-run
+      - name: Demonstrate bounded provider adapter and offline proposal gate
+        run: python3 -m accounting_harness demo-provider
