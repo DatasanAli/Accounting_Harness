@@ -60,7 +60,7 @@ can retain cached inputs after a failed reload—is assigned to 31c/final review
 - 741 guarded application tests passed in 53.114s; zero-discovery guard retained.
 - All 39 demonstrations passed; the indicator demo was rerun after the alias fix.
 - Foundation, JavaScript syntax and diff checks passed.
-- Commit/push/exact-SHA CI pending; record observed delivery after upload.
+- Delivered commit [b7f4a3a](https://github.com/DatasanAli/Accounting_Harness/commit/b7f4a3a93ab651b1e60444c4e2904a9e7f373469) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py

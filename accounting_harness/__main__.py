@@ -219,6 +219,9 @@ def demo_source() -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    from accounting_harness.access_cli import add_access_commands
+    from accounting_harness.access import AccessBusy
+    add_access_commands(commands)
     commands.add_parser("demo-indicators", help="capture service contribution, break-even and descriptive indicators")
     commands.add_parser("demo-variance", help="compare captured actuals with static and flexible operating budgets")
     commands.add_parser("demo-budget", help="save operating and dated cash assumptions without changing actuals")
@@ -272,7 +275,13 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "serve":
+        if args.command == 'demo-access':
+            from accounting_harness.access_cli import demo_access
+            demo_access()
+        elif args.command.startswith('access-'):
+            from accounting_harness.access_cli import access_command
+            access_command(args)
+        elif args.command == "serve":
             from accounting_harness.web import serve
             serve(args)
         elif args.command == "demo-indicators":
@@ -392,7 +401,7 @@ def main(argv: list[str] | None = None) -> int:
             demo_reversal()
         elif args.command == "demo-source":
             demo_source()
-    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error, PersistenceBusy) as error:
+    except (OSError, ValueError, TypeError, KeyError, sqlite3.Error, PersistenceBusy, AccessBusy) as error:
         parser.error(str(error))
     return 0
 

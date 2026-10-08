@@ -2,9 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–28 (28 upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–28, plus identity-core 29a (upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Next:** [Step 29a identities and grants](09-integrations-and-pilot/STEP_29A_PLAN.md).
+**Next:** [Step 29b authenticated application/UI](09-integrations-and-pilot/STEP_29B_PLAN.md).
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -23,15 +23,15 @@ supported prepaid consumption and evidenced unbilled expense/revenue accruals.
 Every posted operation retains its source, effective date and actor; managed
 controls enforce their approved effects.
 
-Latest local Step 28 checks: **741 tests and 39 demonstrations passed**.
-Native versions show 60.00 contribution, 20 whole-unit break-even, exact captured
-ratios, selected indicators and explicit nonpositive-contribution unavailability.
-The native JSON reproduces offline; final-fix restart preserves every version and
-all prior actuals, time, scenarios and report bytes. Independent review found a
-shared nested policy alias; the detached-output fix and regression are approved.
-One month-control Minor is assigned to 31c. Commit/push/exact CI are pending.
-Commands are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); observations are in
-[Step 28 verification](08-service-management/STEP_28_VERIFICATION.md).
+Latest local Step 29a checks: **776 tests and 40 demonstrations passed**.
+Interactive hidden-passphrase CLI setup, two distinct entities, fixed role/entity
+denials, grant revocation, logout and fresh-process sessions passed. A real draft
+is prepared under an authenticated stable user ID with zero posting authority.
+Original financial files, prior reports and scenario versions remain unchanged.
+Independent review approved spec and quality with no findings. Commit/push/exact
+CI are pending. Observations and commands are in
+[Step 29a verification](09-integrations-and-pilot/STEP_29A_VERIFICATION.md).
+HTTP and UI remain unauthenticated until the separate Step 29b integration.
 A foundation check is not application proof.
 
 The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
@@ -43,9 +43,9 @@ agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
-Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. Authenticated roles, integration contracts,
-and verified recovery are still planned. The existing local operator is not an
-authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
+Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. The identity core now supplies credentials, sessions and fixed entity roles.
+Authenticated application/UI enforcement, integration contracts and verified
+recovery remain planned. The existing HTTP local operator is not an authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
 
 ## Delivery evidence
@@ -84,8 +84,8 @@ retained in the verification record and Git history.
 | 25 | [Versioned project costing](08-service-management/STEP_25_VERIFICATION.md) | [c95bf45](https://github.com/DatasanAli/Accounting_Harness/commit/c95bf4599fd4fa63bddd8ae72cfb8e37f500d0ad) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37845470497) |
 | 26 | [Operating and cash budgets](08-service-management/STEP_26_VERIFICATION.md) | [4affff5](https://github.com/DatasanAli/Accounting_Harness/commit/4affff50b34a527152e121fdd66a12f152312d32) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37847329847) |
 | 27 | [Captured flexible-budget variance](08-service-management/STEP_27_VERIFICATION.md) | [b5b6b02](https://github.com/DatasanAli/Accounting_Harness/commit/b5b6b02c15290b7e446a4a34a5eb881c39451c5b) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37848793541) |
-
-| 28 | [Contribution and captured indicators](08-service-management/STEP_28_VERIFICATION.md) | Local checks/review passed | Upload pending |
+| 28 | [Contribution and captured indicators](08-service-management/STEP_28_VERIFICATION.md) | [b7f4a3a](https://github.com/DatasanAli/Accounting_Harness/commit/b7f4a3a93ab651b1e60444c4e2904a9e7f373469) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480) |
+| 29a | [Local identities and entity grants](09-integrations-and-pilot/STEP_29A_VERIFICATION.md) | Local checks/review passed | Upload pending |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

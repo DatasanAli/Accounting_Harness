@@ -97,3 +97,5 @@ jobs:
         run: python3 -m accounting_harness demo-variance
       - name: Demonstrate contribution thresholds and captured indicators
         run: python3 -m accounting_harness demo-indicators
+      - name: Demonstrate local sessions and entity-scoped role grants
+        run: python3 -m accounting_harness demo-access

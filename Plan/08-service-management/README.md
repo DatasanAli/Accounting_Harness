@@ -1,6 +1,6 @@
 # Phase 08: Service costing, budgets and analysis
 
-Status: Steps 24–28 are locally verified. Step 28 passes 741 tests, 39 demos and native contribution/indicator version, download, mobile and final-fix restart checks with all prior inputs unchanged. Independent fix review approved; upload/exact CI pending. See [verification](STEP_28_VERIFICATION.md). Step 29a access controls follow after exact delivery checks.
+Status: Steps 24–28 are locally verified. Step 28 passes 741 tests, 39 demos and native contribution/indicator version, download, mobile and final-fix restart checks with all prior inputs unchanged. Independent fix review approved; commit/remote/exact CI verified. See [verification](STEP_28_VERIFICATION.md). Step 29a access controls follow after exact delivery checks.
 
 **Depends on:** Steps 02–23. These outputs read supported actuals and label assumptions separately.
 

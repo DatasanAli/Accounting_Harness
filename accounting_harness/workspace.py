@@ -5,7 +5,7 @@ import os
 import re
 import sqlite3
 from contextlib import contextmanager
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 from accounting_harness.approval import ReviewApplication
@@ -49,16 +49,28 @@ class EnrollmentPending(RuntimeError):
 
 
 class Workspace:
-    def __init__(self, directory, *, enable_providers=False, ollama_model=None):
+    def __init__(self, directory, *, enable_providers=False, ollama_model=None, entity_id=None):
+        # This is a trusted local constructor. The authenticated facade must check
+        # its server-owned mapping BEFORE calling it (construction opens stores).
         self.root = Path(directory).resolve()
+        if (self.root / 'ledger.sqlite3').exists():
+            from accounting_harness.access import stored_entity_context
+            stored_id, _ = stored_entity_context(self.root)
+            if entity_id is not None and entity_id != stored_id:
+                raise ValueError('Workspace entity cannot change its immutable identity')
+            entity_id = stored_id
         self.root.mkdir(parents=True, exist_ok=True)
         self.enable_providers = enable_providers
         self.ollama_model = ollama_model
         if ollama_model:
             OllamaExpenseProvider('configuration', ollama_model)
         self.catalog = load_account_catalog(CORPUS.parent / 'service-business-month.json')
+        if entity_id is not None:
+            self.catalog = replace(self.catalog, entity_id=entity_id)
         selected = {'rent-standard', 'software-standard', 'ambiguity-1', 'missing-1', 'hostile-1'}
         self.cases = [c for c in json.loads(CORPUS.read_text())['cases'] if c['id'] in selected]
+        for case in self.cases:
+            case['document']['entity_id'] = self.catalog.entity_id
         self.sources = {c['document']['document_id']: c for c in self.cases}
         with self.storage() as (registry, ledger, _, _, _):
             for case in self.cases:

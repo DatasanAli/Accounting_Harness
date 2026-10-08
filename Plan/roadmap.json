@@ -381,7 +381,9 @@
         {
           "id": "28",
           "title": "Contribution and operating indicators",
-          "status": "complete"
+          "status": "complete",
+          "commit": "b7f4a3a93ab651b1e60444c4e2904a9e7f373469",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480"
         }
       ]
     },
@@ -398,12 +400,12 @@
             {
               "id": "29a",
               "title": "Local identities, sessions and entity grants",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "29b",
               "title": "Authenticated application and UI",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         },

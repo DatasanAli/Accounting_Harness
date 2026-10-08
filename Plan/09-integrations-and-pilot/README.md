@@ -1,6 +1,10 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 29a is next after Step 28 exact delivery verification. No behavior in this phase is implemented yet; identities and grants precede authenticated application/UI delivery.
+Status: Step 29a identity/session/grant core is locally verified with 776 tests,
+40 demos, actual CLI/core restart checks and independent review without findings.
+Upload/exact CI are pending; see [verification](STEP_29A_VERIFICATION.md).
+Step 29b must wire every application/HTTP entry point before authenticated UI
+access is claimed. Later integration/recovery/pilot work remains planned.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 
