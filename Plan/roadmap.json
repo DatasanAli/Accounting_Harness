@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "15",
-  "next_step": "16",
+  "current_step": "16",
+  "next_step": "17",
   "phases": [
     {
       "id": "01",
@@ -178,7 +178,7 @@
         {
           "id": "16",
           "title": "Customer advances and earning",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "16a",
@@ -190,12 +190,14 @@
             {
               "id": "16b",
               "title": "Supported earning of customer advances",
-              "status": "complete"
+              "status": "complete",
+              "commit": "d57ca177a53f0b8f3e8e878d4bdc6ae0d7615270",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37807454834"
             },
             {
               "id": "16c",
               "title": "Payable approval seal and migration hardening",
-              "status": "ready"
+              "status": "complete"
             }
           ]
         }
@@ -209,7 +211,7 @@
         {
           "id": "17",
           "title": "Bank statement CSV import",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "18",

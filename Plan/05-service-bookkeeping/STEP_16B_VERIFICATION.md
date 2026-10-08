@@ -52,7 +52,7 @@ journals, Cash600.00, earned200.00, remaining400.00 and zero residual.
 The guarded suite passed **387 tests** in 20.513 seconds, including 17 new
 earning tests. All **20 demos**, foundation, JavaScript syntax and diff checks
 passed. Independent review approved spec compliance and task quality with no
-findings. Upload, remote comparison and exact-SHA GitHub CI are pending.
+findings. Delivered as [d57ca17](https://github.com/DatasanAli/Accounting_Harness/commit/d57ca177a53f0b8f3e8e878d4bdc6ae0d7615270); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37807454834). The remote main SHA matched the local commit.
 Required commands include:
 
 ```sh

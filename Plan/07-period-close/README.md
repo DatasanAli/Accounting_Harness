@@ -34,6 +34,8 @@ Build only one numbered step per request. Split a row further if it cannot be de
 
 ### Step 20: Month-end adjustment proposals
 
+Follow the [adjustment contract](STEP_20_PLAN.md), starting with [20a prepaid consumption](STEP_20A_PLAN.md); unbilled expense and revenue receive separate verified deliveries. Existing Step 16b supplies advance earning.
+
 - **Build:** Add documented prepaid consumption, accrued expense/revenue and earned-advance templates, one template at a time if needed.
 - **Test:** Reference insurance adjustment is $100.00 and advance release is $200.00; no double recognition if already posted; period cutoff and missing support fail.
 - **Verify manually:** Print the adjusted reference trial balance and supporting calculations.

@@ -250,15 +250,16 @@ def _require_reconciled(ledger, registry):
 class PayablesService:
     def __init__(self, ledger, registry):
         self.ledger, self.registry, self.db = ledger, registry, ledger._connection
-        self.store = SQLiteReviewStore(ledger, registry, policy_version='bill-v1')
-        self.app = ReviewApplication(self.store)
         with ledger._transaction(write=True):
+            self.store = SQLiteReviewStore(ledger, registry, policy_version='bill-v1')
+            self.app = ReviewApplication(self.store)
             self._initialize()
             self._initialize_payments()
+            self._initialize_seals()
 
     def _initialize(self):
         if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='payables_schema'").fetchone():
-            if self.db.execute('SELECT version FROM payables_schema').fetchall() not in ([(1,)], [(2,)]):
+            if self.db.execute('SELECT version FROM payables_schema').fetchall() not in ([(1,)], [(2,)], [(3,)]):
                 raise ValueError('unsupported payables schema version')
             return
         self.db.execute('CREATE TABLE payables_schema (version INTEGER PRIMARY KEY) STRICT')
@@ -291,49 +292,9 @@ class PayablesService:
             WHEN EXISTS (SELECT 1 FROM posting_events WHERE journal_id=NEW.journal_id)
                  OR NOT EXISTS (SELECT 1 FROM payables_context)
             BEGIN SELECT RAISE(ABORT,'bill effect requires an enabled, unsealed journal'); END''')
-        # SQL seals the exact approved operation shape; raw DB owners can still drop guards.
-        self.db.execute('''CREATE TRIGGER bill_approved_operation BEFORE INSERT ON vendor_bills
-            WHEN NOT EXISTS (
-                SELECT 1 FROM approvals a JOIN draft_revisions r USING(draft_id,revision)
-                JOIN draft_operation_intents i USING(draft_id,revision)
-                WHERE a.approval_id=NEW.approval_id AND r.policy_version='bill-v1'
-                  AND r.state='pending'
-                  AND r.revision=(SELECT max(revision) FROM draft_revisions WHERE draft_id=r.draft_id)
-                  AND json_extract(a.binding_json,'$.revision_digest')=r.content_digest
-                  AND json_extract(r.proposal_json,'$.id')=NEW.journal_id
-                  AND json_extract(i.intent_json,'$.kind')='vendor_bill'
-                  AND json_extract(i.intent_json,'$.bill_id')=NEW.bill_id
-                  AND json_extract(i.intent_json,'$.vendor_id')=NEW.vendor_id
-                  AND json_extract(i.intent_json,'$.bill_number')=NEW.bill_number
-                  AND json_extract(i.intent_json,'$.recognition_event_id')=NEW.recognition_event_id
-                  AND json_extract(i.intent_json,'$.principal_cents')=NEW.principal_cents
-                  AND json_extract(i.intent_json,'$.expense_account')=NEW.expense_account
-                  AND json_extract(i.intent_json,'$.effective_date')=NEW.effective_date
-                  AND json_extract(i.intent_json,'$.due_date')=NEW.due_date
-                  AND json_extract(i.intent_json,'$.evidence_roles.bill')=NEW.bill_source_id
-                  AND json_extract(i.intent_json,'$.evidence_roles.incurrence')=NEW.incurrence_source_id)
-            BEGIN SELECT RAISE(ABORT,'bill effect must match approved operation'); END''')
-        self.db.execute('''CREATE TRIGGER payables_post_guard BEFORE INSERT ON posting_events
-            WHEN (EXISTS (SELECT 1 FROM payables_context)
-                  AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id AND account='2000'))
-                 OR EXISTS (SELECT 1 FROM vendor_bills WHERE journal_id=NEW.journal_id)
-            BEGIN
-                SELECT CASE WHEN NOT EXISTS (
-                    SELECT 1 FROM vendor_bills b JOIN journals j ON j.id=b.journal_id
-                    WHERE b.journal_id=NEW.journal_id AND j.effective_date=b.effective_date
-                    AND (SELECT count(*) FROM lines WHERE journal_id=NEW.journal_id)=2
-                    AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id
-                        AND account='2000' AND side='credit' AND cents=b.principal_cents)
-                    AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id
-                        AND account=b.expense_account AND side='debit' AND cents=b.principal_cents)
-                    AND (SELECT count(*) FROM journal_sources WHERE journal_id=NEW.journal_id)=2
-                    AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=b.bill_source_id)
-                    AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=b.incurrence_source_id)
-                ) THEN RAISE(ABORT,'AP posting requires matching approved payable effect; correction workflow required') END;
-            END''')
 
     def _initialize_payments(self):
-        if self.db.execute('SELECT version FROM payables_schema').fetchall() == [(2,)]:
+        if self.db.execute('SELECT version FROM payables_schema').fetchall() in ([(2,)], [(3,)]):
             return
         self.db.execute("""CREATE TABLE vendor_bill_payments (
             payment_event_id TEXT PRIMARY KEY CHECK(length(trim(payment_event_id))>0 AND payment_event_id=trim(payment_event_id)),
@@ -350,34 +311,89 @@ class PayablesService:
             WHEN EXISTS (SELECT 1 FROM posting_events WHERE journal_id=NEW.journal_id)
                  OR NOT EXISTS (SELECT 1 FROM payables_context)
             BEGIN SELECT RAISE(ABORT,'payment effect requires an enabled, unsealed journal'); END""")
-        self.db.execute("""CREATE TRIGGER payment_approved_operation BEFORE INSERT ON vendor_bill_payments
-            WHEN NOT EXISTS (
+
+    @staticmethod
+    def _bill_approval_match(effect):
+        return f"""EXISTS (
                 SELECT 1 FROM approvals a JOIN draft_revisions r USING(draft_id,revision)
                 JOIN draft_operation_intents i USING(draft_id,revision)
-                JOIN vendor_bills b ON b.bill_id=NEW.bill_id
-                WHERE a.approval_id=NEW.approval_id AND r.policy_version='bill-payment-v1'
+                WHERE a.approval_id={effect}.approval_id AND r.policy_version='bill-v1'
                   AND r.state='pending'
                   AND r.revision=(SELECT max(revision) FROM draft_revisions WHERE draft_id=r.draft_id)
                   AND json_extract(a.binding_json,'$.revision_digest')=r.content_digest
-                  AND json_extract(r.proposal_json,'$.id')=NEW.journal_id
+                  AND json_extract(r.proposal_json,'$.id')={effect}.journal_id
+                  AND json_extract(i.intent_json,'$.kind')='vendor_bill'
+                  AND json_extract(i.intent_json,'$.bill_id')={effect}.bill_id
+                  AND json_extract(i.intent_json,'$.vendor_id')={effect}.vendor_id
+                  AND json_extract(i.intent_json,'$.bill_number')={effect}.bill_number
+                  AND json_extract(i.intent_json,'$.recognition_event_id')={effect}.recognition_event_id
+                  AND json_extract(i.intent_json,'$.principal_cents')={effect}.principal_cents
+                  AND json_extract(i.intent_json,'$.expense_account')={effect}.expense_account
+                  AND json_extract(i.intent_json,'$.effective_date')={effect}.effective_date
+                  AND json_extract(i.intent_json,'$.due_date')={effect}.due_date
+                  AND json_extract(i.intent_json,'$.evidence_roles.bill')={effect}.bill_source_id
+                  AND json_extract(i.intent_json,'$.evidence_roles.incurrence')={effect}.incurrence_source_id)"""
+
+    @staticmethod
+    def _payment_approval_match(effect):
+        return f"""EXISTS (
+                SELECT 1 FROM approvals a JOIN draft_revisions r USING(draft_id,revision)
+                JOIN draft_operation_intents i USING(draft_id,revision)
+                JOIN vendor_bills target ON target.bill_id={effect}.bill_id
+                JOIN posting_events target_post ON target_post.journal_id=target.journal_id
+                WHERE a.approval_id={effect}.approval_id AND r.policy_version='bill-payment-v1'
+                  AND r.state='pending'
+                  AND r.revision=(SELECT max(revision) FROM draft_revisions WHERE draft_id=r.draft_id)
+                  AND json_extract(a.binding_json,'$.revision_digest')=r.content_digest
+                  AND json_extract(r.proposal_json,'$.id')={effect}.journal_id
                   AND json_extract(i.intent_json,'$.kind')='vendor_bill_payment'
-                  AND json_extract(i.intent_json,'$.bill_id')=NEW.bill_id
-                  AND json_extract(i.intent_json,'$.vendor_id')=b.vendor_id
-                  AND json_extract(i.intent_json,'$.payment_event_id')=NEW.payment_event_id
-                  AND json_extract(i.intent_json,'$.allocated_cents')=NEW.allocated_cents
-                  AND json_extract(i.intent_json,'$.effective_date')=NEW.effective_date
-                  AND NEW.effective_date>=b.effective_date
-                  AND json_extract(i.intent_json,'$.evidence_roles.bill')=b.bill_source_id
-                  AND json_extract(i.intent_json,'$.evidence_roles.cash')=NEW.cash_source_id)
+                  AND json_extract(i.intent_json,'$.bill_id')={effect}.bill_id
+                  AND json_extract(i.intent_json,'$.vendor_id')=target.vendor_id
+                  AND json_extract(i.intent_json,'$.payment_event_id')={effect}.payment_event_id
+                  AND json_extract(i.intent_json,'$.allocated_cents')={effect}.allocated_cents
+                  AND json_extract(i.intent_json,'$.effective_date')={effect}.effective_date
+                  AND {effect}.effective_date>=target.effective_date
+                  AND json_extract(i.intent_json,'$.evidence_roles.bill')=target.bill_source_id
+                  AND json_extract(i.intent_json,'$.evidence_roles.cash')={effect}.cash_source_id)"""
+
+    def _initialize_seals(self):
+        """Atomically replace published schema 1/2 guards with explicit schema 3 SQL."""
+        if self.db.execute('SELECT version FROM payables_schema').fetchall() == [(3,)]:
+            return
+        for trigger in ('bill_approved_operation', 'payment_approved_operation', 'payables_post_guard'):
+            self.db.execute(f'DROP TRIGGER IF EXISTS {trigger}')
+        self.db.execute(f"""CREATE TRIGGER bill_approved_operation BEFORE INSERT ON vendor_bills
+            WHEN NOT {self._bill_approval_match('NEW')}
+            BEGIN SELECT RAISE(ABORT,'bill effect must match approved operation'); END""")
+        self.db.execute(f"""CREATE TRIGGER payment_approved_operation BEFORE INSERT ON vendor_bill_payments
+            WHEN NOT {self._payment_approval_match('NEW')}
             BEGIN SELECT RAISE(ABORT,'payment effect must match approved operation'); END""")
-        sql = self.db.execute("SELECT sql FROM sqlite_master WHERE name='payables_post_guard'").fetchone()[0]
-        self.db.execute('DROP TRIGGER payables_post_guard')
-        sql = sql.replace('            BEGIN\n',
-            '                 OR EXISTS (SELECT 1 FROM vendor_bill_payments WHERE journal_id=NEW.journal_id)\n            BEGIN\n', 1)
-        sql = sql.replace(") THEN RAISE(ABORT,'AP posting", """ ) AND NOT EXISTS (
+        self.db.execute(f"""CREATE TRIGGER payables_post_guard BEFORE INSERT ON posting_events
+            WHEN (EXISTS (SELECT 1 FROM payables_context)
+                  AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id AND account='2000'))
+                 OR EXISTS (SELECT 1 FROM vendor_bills WHERE journal_id=NEW.journal_id)
+                 OR EXISTS (SELECT 1 FROM vendor_bill_payments WHERE journal_id=NEW.journal_id)
+            BEGIN
+                SELECT CASE WHEN NOT EXISTS (
+                    SELECT 1 FROM vendor_bills b JOIN journals j ON j.id=b.journal_id
+                    WHERE b.journal_id=NEW.journal_id AND j.effective_date=b.effective_date
+                    AND {self._bill_approval_match('b')}
+                    AND NOT EXISTS (SELECT 1 FROM vendor_bill_payments WHERE journal_id=NEW.journal_id)
+                    AND (SELECT count(*) FROM lines WHERE journal_id=NEW.journal_id)=2
+                    AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id
+                        AND account='2000' AND side='credit' AND cents=b.principal_cents)
+                    AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id
+                        AND account=b.expense_account AND side='debit' AND cents=b.principal_cents)
+                    AND (SELECT count(*) FROM journal_sources WHERE journal_id=NEW.journal_id)=2
+                    AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=b.bill_source_id)
+                    AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=b.incurrence_source_id)
+                ) AND NOT EXISTS (
                     SELECT 1 FROM vendor_bill_payments p JOIN vendor_bills b USING(bill_id)
                     JOIN journals j ON j.id=p.journal_id
                     WHERE p.journal_id=NEW.journal_id AND j.effective_date=p.effective_date
+                    AND {self._payment_approval_match('p')}
+                    -- Include unsealed competing effects; every effect must eventually seal.
+                    AND (SELECT sum(allocated_cents) FROM vendor_bill_payments WHERE bill_id=p.bill_id)<=b.principal_cents
                     AND NOT EXISTS (SELECT 1 FROM vendor_bills WHERE journal_id=NEW.journal_id)
                     AND (SELECT count(*) FROM lines WHERE journal_id=NEW.journal_id)=2
                     AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id
@@ -387,10 +403,10 @@ class PayablesService:
                     AND (SELECT count(*) FROM journal_sources WHERE journal_id=NEW.journal_id)=2
                     AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=b.bill_source_id)
                     AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=p.cash_source_id)
-                ) THEN RAISE(ABORT,'AP posting""")
-        self.db.execute(sql)
+                ) THEN RAISE(ABORT,'AP posting requires matching approved payable effect; correction workflow required') END;
+            END""")
         self.db.execute('DROP TRIGGER payables_schema_no_update')
-        self.db.execute('UPDATE payables_schema SET version=2')
+        self.db.execute('UPDATE payables_schema SET version=3')
         self.db.execute("""CREATE TRIGGER payables_schema_no_update BEFORE UPDATE ON payables_schema
             BEGIN SELECT RAISE(ABORT,'payables schema is immutable'); END""")
 

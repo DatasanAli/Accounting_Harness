@@ -12,6 +12,30 @@ Status: planned; no behavior in this phase is implemented yet.
 
 Confirm actual entity, framework, jurisdiction, accounting policies, ledger ownership, connector target and authorized external actions before real-data use. Break broad integration work into independently tested operations. Start in a provider sandbox. Every service enforces entity scope and permissions; UI hiding alone is insufficient.
 
+For the expanded 2026-10-08 request, complete offline implementation and synthetic
+acceptance while deferring live provider/external-account connections and actual
+real-data pilot acceptance. Steps 30 and 32 must distinguish transport contract
+tests from a verified remote sandbox import/export. Step 34 must distinguish a
+synthetic rehearsal from actual entity policies, users and data permission.
+Deferred live gates never become passed because their offline tests pass.
+
+The earlier localhost app already supplies a review screen. Step 31 must integrate
+the later authenticated services and accounting workflows rather than deliver a
+second disconnected screen. Before declaring the user's LLM-connected workspace
+ready, audit the provider/tool scope: the delivered adapters initially propose
+only bounded receipt expenses. Extend safe read/proposal tools to the supported
+operational workflows where required, with deterministic offline cases and the
+same exact human approval boundary; no model receives approval/posting authority.
+Keep unsupported actions explicit and retain old run/model/prompt contracts.
+
+The workbench also needs usable entry paths for the reference month's owner
+contribution, owner drawings and prepaid purchase. If they still exist only as
+core ledger fixtures, plan a small reviewed non-control cash template delivery
+before the final browser acceptance. Do not smuggle these entries through an
+expense policy or bypass AP/AR/advance controls. Split distinct new policies,
+agent-tool coverage and authenticated UI integration into independently verified
+substeps when detailed Step 31 planning makes that necessary.
+
 ## Small build steps
 
 Build only one numbered step per request. Split a row further if it cannot be demonstrated and reviewed as one small change.

@@ -3,6 +3,7 @@ import copy
 import json
 import sqlite3
 import unittest
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
@@ -351,15 +352,11 @@ class PaymentMigrationTests(unittest.TestCase):
         self.setup_bill()
         db=self.service.db
         # Simulate the shipped v2 review seal and v1 payables guard with genuine posted bill rows.
-        seal=db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0]
-        old_seal=seal.replace("NOT IN ('bill-v1','bill-payment-v1','invoice-v1','invoice-collection-v1')", "!= 'bill-v1'").replace("IN ('bill-v1','bill-payment-v1','invoice-v1','invoice-collection-v1')", "= 'bill-v1'")
-        guard=db.execute("SELECT sql FROM sqlite_master WHERE name='payables_post_guard'").fetchone()[0]
-        old_guard=guard.replace('                 OR EXISTS (SELECT 1 FROM vendor_bill_payments WHERE journal_id=NEW.journal_id)\n','')
-        start=old_guard.index(' ) AND NOT EXISTS (\n                    SELECT 1 FROM vendor_bill_payments')
-        end=old_guard.index(" THEN RAISE(ABORT,'AP posting",start)
-        old_guard=old_guard[:start]+')'+old_guard[end:]
-        db.execute('DROP TRIGGER intent_required_at_seal'); db.execute(old_seal)
+        self.store._replace_intent_seal("'bill-v1'")
+        old_seal=db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0]
+        old_guard=(Path(__file__).parent/'fixtures/step14a-payables-post-guard.sql').read_text()
         db.execute('DROP TRIGGER payables_post_guard'); db.execute(old_guard)
+        old_guard=db.execute("SELECT sql FROM sqlite_master WHERE name='payables_post_guard'").fetchone()[0]
         db.execute('DROP TABLE vendor_bill_payments')
         for table,version in (('review_schema',2),('payables_schema',1)):
             db.execute(f'DROP TRIGGER {table}_no_update'); db.execute(f'UPDATE {table} SET version=?',(version,))
@@ -387,7 +384,7 @@ class PaymentMigrationTests(unittest.TestCase):
         self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='vendor_bill_payments'").fetchone())
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='payables_post_guard'").fetchone()[0],old_guard)
         self.service=PayablesService(self.ledger,self.registry)
-        self.assertEqual(db.execute('SELECT version FROM payables_schema').fetchall(),[(2,)])
+        self.assertEqual(db.execute('SELECT version FROM payables_schema').fetchall(),[(3,)])
         self.assertEqual({t:db.execute(f'SELECT * FROM {t}').fetchall() for t in tables},before)
         self.assertEqual(self.post(self.service.app,self.bill).entry.id,json.loads(self.bill.proposal_json)['id'])
         self.post(self.payment_app,self.payment())

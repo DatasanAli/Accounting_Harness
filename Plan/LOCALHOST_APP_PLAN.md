@@ -109,4 +109,6 @@ linked reversals, not deletion or a database reset.
 - Step 15b: `f29ac946ae743c630100feae42ebc1d3c458136a`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37802605944). 345 tests, 18 demos, browser collection/aging and review without findings.
 - Step 16a: delivered as `8deae9b`, exact CI run 37805104017 passed; 370 tests/19 demos, browser advance/restart and review without findings. See [verification](05-service-bookkeeping/STEP_16A_VERIFICATION.md).
 
-- Step 16b: locally verified, 387 tests/20 demos, browser earning/restart and independent review without findings; upload/exact CI pending. See [verification](05-service-bookkeeping/STEP_16B_VERIFICATION.md).
+- Step 16b: delivered as `d57ca17`, exact CI run 37807454834 passed; 387 tests/20 demos, browser earning/restart and independent review without findings. See [verification](05-service-bookkeeping/STEP_16B_VERIFICATION.md).
+
+- Step 16c: locally verified, 398 tests/20 demos, preserved payable-workspace browser upgrade and independent review without findings; upload/exact CI pending. See [verification](05-service-bookkeeping/STEP_16C_VERIFICATION.md).

@@ -1,6 +1,6 @@
 # Step 17: immutable synthetic bank CSV import
 
-> **For agentic workers:** Use subagent-driven-development or executing-plans after verified Step 16b.
+> **For agentic workers:** Use subagent-driven-development or executing-plans after verified Step 16c.
 
 **Goal:** Import a documented fictional statement twice with one unchanged audit
 receipt, list exact rows and prove no journal or account balance changed.
@@ -24,8 +24,8 @@ Steps 18 and 19; no generic import framework or live bank adapter.
   evidence, proposes, approves or changes an existing journal.
 - Preserve immutable ledger/review/provider context and prior retry bytes. Bank
   schema initialization and each import are transactional and fail closed.
-- No real financial documents, databases or raw CSV are committed. Fixtures are
-  explicitly fictional. No new network dependency or external account connection.
+- No real financial documents, databases or real bank CSV are committed. Committed
+  CSV fixtures are explicitly fictional. No new network dependency or external account connection.
 
 ## Format and identity
 
