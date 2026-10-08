@@ -1,6 +1,6 @@
 # Phase 08: Service costing, budgets and analysis
 
-Status: Steps 24–26 are locally verified. Step 26 passes 702 tests, 37 demos, native cash/operating version controls and mobile/restart checks with unchanged actuals. Independent review approved with no findings. Commit/push/exact CI are pending; see [verification](STEP_26_VERIFICATION.md). Step 27 variance reporting follows.
+Status: Steps 24–27 are locally verified. Step 27 passes 719 tests, 38 demos, native exact variance bridges, retained JSON and mobile/restart checks with unchanged inputs. Independent review approved with no findings. Commit/push/exact CI are pending; see [verification](STEP_27_VERIFICATION.md). Step 28 contribution and indicators follows.
 
 **Depends on:** Steps 02–23. These outputs read supported actuals and label assumptions separately.
 

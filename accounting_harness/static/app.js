@@ -2099,6 +2099,7 @@ $('add-budget-operating').addEventListener('click',() => addBudgetOperating());
 $('add-budget-cash').addEventListener('click',() => addBudgetCash());
 function renderBudget(result) {
   const report = result.report, node = $('budget-report'); node.replaceChildren();
+  $('variance-version').value = result.version_id;
   const card = add(el('article',null,'card'),el('h3',report.name + ' · version ' + report.version),el('p',report.scope,'callout'),
     metadata([['Scenario',report.scenario_id],['Month',report.month],['Dates',report.period_start + ' through ' + report.period_end],
       ['Policy',report.policy],['Assumed activity',report.planned_minutes + ' service minutes · 60 minutes / hour'],
@@ -2180,4 +2181,49 @@ function renderBudgetReview() {
   }); save.disabled = budgetBusy;
   const edit = button('Edit budget review',() => { pendingBudget = null; setBudgetBusy(false); renderBudgetReview(); }); edit.disabled = budgetBusy || budgetUncertain;
   node.append(add(el('div',null,'actions'),save,edit));
+}
+
+let varianceBusy = false;
+$('variance-form').addEventListener('submit', async event => {
+  event.preventDefault(); if (varianceBusy) return;
+  varianceBusy = true; $('capture-variance').disabled = true;
+  try {
+    const report = await request('/api/variance?version_id=' + encodeURIComponent($('variance-version').value));
+    renderVariance(report); notify('Whole-month variance captured. Recorded actuals and budget versions are unchanged.');
+  } catch (error) { notify(error.message + ' The previous comparison remains displayed.', 'error'); }
+  finally { varianceBusy = false; $('capture-variance').disabled = false; }
+});
+function renderVariance(report) {
+  const node = $('variance-report'); node.replaceChildren();
+  const percent = value => value.display === null ? 'Unavailable · zero base' : value.display;
+  const rows = report.accounts.map(r => [r.account + ' · ' + r.name + ' · ' + r.status,r]);
+  for (const kind of ['revenue','expense','income']) rows.push([kind === 'income' ? 'Net income' : 'Total ' + kind,report.totals[kind]]);
+  const card = add(el('article',null,'card'),el('h3','Budget variance · ' + report.name + ' · version ' + report.version),
+    el('p',report.scope,'callout'),metadata([['Month',report.month],['Budget version',report.version_id],
+      ['Planned service minutes',String(report.planned_minutes)],['Observed service minutes',String(report.actual_minutes)],
+      ['Rate unit',report.unit_policy.rate_unit],['Rounding',report.rounding_policy]]),
+    table(['Account / total','Static · USD','Flexible · USD','Actual · USD','Actual − static · USD','Favorable impact · USD','Assessment','% of absolute static base','% of absolute flexible base'],
+      rows.map(([name,r]) => [name,r.static_amount,r.flexible_amount,r.actual_amount,r.variance_amount,r.favorable_impact_amount,r.label,percent(r.static_percent),percent(r.flexible_percent)])),
+    el('p',report.percentage_policy),el('h4','Activity plus remaining bridge'),
+    table(['Account / total','Flexible − static · USD','Activity assessment','Actual − flexible · USD','Remaining assessment','Sum: actual − static · USD'],
+      rows.map(([name,r]) => [name,r.activity_amount,r.activity_label,r.remaining_amount,r.remaining_label,r.variance_amount])),
+    el('p',report.remaining_policy),el('p',report.reconciled ? 'Every account and total bridge reconciles exactly.' : 'Unreconciled comparison','action-hint'));
+  for (const finding of report.findings) card.append(el('p',finding,'callout'));
+  card.append(el('h4','Selected budget line contributions'),
+    table(['Line / account','Behavior','Assumption · USD','Static · USD','Flexible · USD','Activity · USD','Flexible numerator / denominator','Rounding delta numerator'],
+      report.budget_lines.map(r => [r.line_id + ' / ' + r.account,r.behavior,r.amount + (r.behavior === 'variable' ? ' / hour' : ' fixed'),
+        r.static_amount,r.flexible_amount,r.activity_amount,r.flexible_numerator + ' / ' + r.flexible_denominator,r.flexible_rounding_delta_numerator])),
+    el('h4','Observed service time references'),table(['Record','Project','Worker','Work date','Minutes','Recorded by'],
+      report.time_records.map(r => [r.record_id,r.project_id,r.worker_id,r.work_date,String(r.minutes),r.actor_id])));
+  for (const row of report.accounts) card.append(jsonDetails(row.account + ' · captured actual journals and evidence',row.actual_drilldown));
+  card.append(el('h4','Attributed operator note'),metadata([['Note',report.operator_note.text || 'None'],['Source',report.operator_note.source],
+    ['Recorded by',report.operator_note.actor_id],['Recorded at',report.operator_note.recorded_at]]));
+  digest(card,'Comparison SHA-256',report.report_digest); digest(card,'Captured inputs SHA-256',report.snapshot_digest);
+  card.append(jsonDetails('Complete retained comparison and policy',report));
+  card.append(button('Download displayed variance JSON',() => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(report,null,2) + '\n'],{type:'application/json'}));
+    const link = el('a'); link.href = url; link.download = 'variance-' + report.month + '.json'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url),1000);
+  }));
+  node.append(card);
 }

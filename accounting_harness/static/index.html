@@ -83,6 +83,16 @@
           <p id="budget-result" class="digest" aria-live="polite"></p>
         </div>
         <div id="budget-report" class="stack"></div>
+        <div class="card setup-card">
+          <h3>Captured budget variance</h3>
+          <p>Choose an immutable version above or enter its ID. Compare the whole month with posted ordinary revenue and expenses and active service time. Later changes require a new capture; Refresh preserves this displayed report.</p>
+          <form id="variance-form" class="receipt-form">
+            <label>Budget version ID <input id="variance-version" name="version_id" required maxlength="200"></label>
+            <button id="capture-variance" class="button" type="submit">Capture budget variance</button>
+          </form>
+          <p>Download the complete capture to retain it across browser sessions and reproduce it offline. The download uses the displayed inputs.</p>
+        </div>
+        <div id="variance-report" class="stack"></div>
       </section>
       <section id="view-projects" class="view" aria-labelledby="projects-heading" hidden>
         <div class="section-heading"><h2 id="projects-heading">Project attribution</h2><span class="muted">Recorded actuals · management metadata</span></div>

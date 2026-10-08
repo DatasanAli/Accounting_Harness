@@ -93,3 +93,5 @@ jobs:
         run: python3 -m accounting_harness demo-project-cost
       - name: Demonstrate versioned operating and dated cash budgets
         run: python3 -m accounting_harness demo-budget
+      - name: Demonstrate captured static and flexible budget variance
+        run: python3 -m accounting_harness demo-variance

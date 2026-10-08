@@ -77,14 +77,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(409, dict(error=str(error)))
             except (sqlite3.Error, PersistenceBusy):
                 return self.respond(503, dict(error='workspace busy or unavailable; retry export'))
-        if urlsplit(self.path).path in ('/api/budget', '/api/budget-inputs'):
+        if urlsplit(self.path).path in ('/api/budget', '/api/budget-inputs', '/api/variance'):
             try:
                 is_inputs = urlsplit(self.path).path == '/api/budget-inputs'
                 field = 'month' if is_inputs else 'version_id'
                 values = parse_qs(urlsplit(self.path).query, strict_parsing=True, keep_blank_values=True, max_num_fields=1)
                 if set(values) != {field} or len(values[field]) != 1:
                     raise ValueError('budget requires ' + field + ' exactly once')
-                method = self.server.workspace.budget_inputs if is_inputs else self.server.workspace.budget
+                method = (self.server.workspace.budget_inputs if is_inputs else self.server.workspace.variance
+                          if urlsplit(self.path).path == '/api/variance' else self.server.workspace.budget)
                 return self.respond(200, method(values[field][0]))
             except (ValueError, TypeError) as error:
                 return self.respond(409, dict(error=str(error)))

@@ -49,7 +49,7 @@ page overflow.
 - Guarded full suite: 702 tests passed in 50.620s; zero-discovery guard retained.
 - All 37 demonstrations, foundation, JavaScript syntax and diff checks passed.
 - Independent review approved spec and quality with no findings.
-- Commit/push/remote/exact CI checks are pending.
+- Delivered commit [4affff5](https://github.com/DatasanAli/Accounting_Harness/commit/4affff50b34a527152e121fdd66a12f152312d32) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37847329847) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py

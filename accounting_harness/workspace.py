@@ -158,6 +158,12 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             return ProjectCostService(ledger).get(version_id)
 
+    def variance(self, version_id):
+        from accounting_harness.variance import capture_variance, variance_report
+        with self.storage() as (_,ledger,_,_,_):
+            capture = capture_variance(ledger, version_id)
+        return variance_report(capture)
+
     def budget_inputs(self, month):
         from accounting_harness.budget import BudgetService
         with self.storage() as (_, ledger, _, _, _):
