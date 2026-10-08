@@ -36,7 +36,11 @@ not authorize recognition or bypass a managed control account.
    service debits a fixed Accrued Service Revenue asset, not AR. Plan its exact
    fact/intent/account activation contract before implementation.
 
-The latter two use the audited account-extension mechanism delivered in Step 19a
+4. [20d adjusted operational fixture](STEP_20D_PLAN.md): assemble the supported
+   month and verify every balance before reporting, with its explicit Jan1
+   insurance-purchase variant and no new accounting policy.
+
+The expense and revenue accruals use the audited account-extension mechanism delivered in Step 19a
 for concrete trusted definitions, not a general account editor. Their event
 claims share expense_recognition/service_revenue_recognition with earlier
 workflows. One whole supported amount accrues once; settlement, conversion into

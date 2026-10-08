@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  'expense-accrual': ['Expense accruals', 'Supported unbilled expenses and their recorded cutoff obligations.'],
   prepaid: ['Prepaid insurance', 'Coverage, supported consumption and the remaining recorded asset.'],
   evidence: ['Evidence', 'Start with a receipt. Keep every decision connected to its evidence.'],
   review: ['Review queue', 'Your judgment is the last step between a proposal and the books.'],
@@ -199,7 +200,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderBank(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderBank(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -298,7 +299,7 @@ $('receipt-form').addEventListener('submit', async event => {
 });
 
 function renderCashChoices() {
-  for (const [id, kinds] of [['prepaid-coverage-select', ['prepaid_coverage']], ['cash-source-select', ['cash_movement']],
+  for (const [id, kinds] of [['expense-accrual-incurrence-select', ['incurred_expense']], ['expense-accrual-basis-select', ['expense_accrual_basis']], ['prepaid-coverage-select', ['prepaid_coverage']], ['cash-source-select', ['cash_movement']],
     ['recognition-source-select', ['incurred_expense', 'service_completion']],
     ['earning-completion-select', ['advance_completion']],
     ['prepayment-source-select', ['customer_prepayment']], ['advance-cash-select', ['cash_movement']],
@@ -1295,4 +1296,60 @@ function renderPrepaid() {
     node.append(card);
   }
   node.append(el('p', report.report_policy + ' · Snapshot ' + report.snapshot_digest, 'action-hint'));
+}
+
+$('expense-accrual-facts-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const input = Object.fromEntries(new FormData(event.target));
+  if (input.incurrence_source_id === input.basis_source_id) {
+    notify('Incurrence and cutoff basis require distinct document IDs.', 'error'); return;
+  }
+  const common = {schema_version: 2, synthetic: true, entity_id: state.entity_id, currency: 'USD',
+    event_id: input.event_id, counterparty_id: input.counterparty_id, counterparty: input.counterparty, amount: input.amount};
+  const incurrence = {...common, document_id: input.incurrence_source_id, kind: 'incurred_expense',
+    document_date: input.incurred_date, incurred_date: input.incurred_date,
+    expense_account: input.expense_account, description: input.incurrence_description};
+  const basis = {...common, document_id: input.basis_source_id, kind: 'expense_accrual_basis',
+    document_date: '2026-01-31', cutoff_date: '2026-01-31', status: 'unbilled_unpaid', description: input.basis_description};
+  busy = true; render();
+  try {
+    await request('/api/operation-sources', {document: incurrence});
+    await request('/api/operation-sources', {document: basis});
+    await refresh();
+    $('expense-accrual-incurrence-select').value = incurrence.document_id;
+    $('expense-accrual-basis-select').value = basis.document_id;
+    $('expense-accrual-proposal-panel').open = true;
+    notify('Both expense facts registered. Prepare the supported accrual, then review and confirm it separately.');
+  } catch (error) { await refresh(); notify(error.message + ' Resubmit the same facts to recover any pending enrollment.', 'error'); }
+  finally { busy = false; render(); }
+});
+$('expense-accrual-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.target));
+  payload.expected_revision = Number(payload.expected_revision);
+  busy = true; render();
+  try {
+    await request('/api/expense-accrual-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Expense accrual draft prepared. Review its two sources and confirm the exact January 31 journal separately.');
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+function renderExpenseAccruals() {
+  const node = $('expense-accrual-report'); node.replaceChildren();
+  const report = state.expense_accruals;
+  node.append(add(el('div', null, 'card'), el('h3', 'Recognized unbilled obligations'),
+    metadata([['Supported accruals', money(report.principal_amount)], ['2050 control', report.control_amount + ' USD'],
+      ['Unassigned control residual', report.unassigned_control_amount + ' USD'], ['Cutoff', report.as_of]])));
+  if (!report.obligations.length) node.append(empty('No posted expense accruals', 'Register two supported facts, prepare a draft, and confirm it separately.'));
+  for (const item of report.obligations) {
+    node.append(add(el('article', null, 'card'), el('h3', item.vendor_name),
+      metadata([['Vendor ID', item.vendor_id], ['Expense event', item.event_id], ['Accrued amount', money(item.principal_amount)],
+        ['Expense account', item.expense_account], ['Cutoff', item.cutoff_date], ['Incurrence evidence', item.incurrence_source_id],
+        ['Unbilled/unpaid evidence', item.basis_source_id], ['Posted journal', item.journal_id], ['Approval', item.approval_id]]),
+      add(el('details'), el('summary', 'Evidence, exact amount and approval trace'), el('pre', item.trace_json))));
+  }
+  node.append(el('p', report.report_policy + ' · Snapshot ' + report.snapshot_digest + ' · Report ' + report.report_digest, 'action-hint'));
 }

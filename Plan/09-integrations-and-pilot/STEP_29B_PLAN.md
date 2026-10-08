@@ -21,6 +21,13 @@ coverage failure. Protect direct facade calls as well as HTTP. Do not retain an
 unauthenticated fallback triggered by a missing cookie or a `local-operator`
 string. Internal fixture/demonstration helpers are explicitly trusted local code.
 
+Account activation can be an implicit side effect of a proposal service (notably
+new accrual controls). Inventory that behavior too: a preparer proposal must not
+activate an account merely because `prepare` is allowed. Require a separate owner
+activation first, or an explicitly authorized owner action, and enforce this in
+the facade before calling the service. Reads must not create a human activation.
+Provide the smallest fixed-account owner action needed; no general chart editor.
+
 Pass the resolved user ID through evidence registration, proposal preparation,
 review/rejection, approval/posting, account activation, bank actions, scenarios,
 close and export authorization. Agent runs retain a distinct runtime actor plus

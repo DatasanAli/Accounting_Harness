@@ -263,8 +263,23 @@ class BankFeeTests(unittest.TestCase):
     def test_review7_fee_migration_rolls_back_ddl_and_preserves_all_legacy_records(self):
         from accounting_harness.bank_fees import BankFeeService
         from accounting_harness.review import SQLiteReviewStore
+        from accounting_harness.approval import ReviewApplication
+        from accounting_harness.persistence import SQLiteLedger
+        from accounting_harness.sources import SQLiteSourceRegistry
+        from accounting_harness.bank import BankStatementService
         from accounting_harness.bank_fees import protect_table as real_protect
-        with self.workspace.storage() as (registry,ledger,store,app,_):
+        # Modern Workspace.storage opts into ledger5; this historical migration
+        # must start from a real ledger4 file, not a downgraded modern version tag.
+        with SQLiteSourceRegistry(self.workspace.root/'sources.sqlite3',self.workspace.catalog.entity_id) as registry, SQLiteLedger(
+                self.workspace.root/'legacy-fee-ledger.sqlite3',self.workspace.catalog,'2026-01-01','2026-01-31',
+                known_source_ids=set(self.workspace.sources)) as ledger:
+            store=SQLiteReviewStore(ledger,registry);app=ReviewApplication(store)
+            ledger.ensure_bank_fee_account(actor_id='legacy-operator')
+            BankStatementService(ledger).import_statement(statement([bank_row('fee','-10.00')]),actor_id='legacy-operator')
+            ledger.admit(dict(id='book',entity_id=self.workspace.catalog.entity_id,currency='USD',effective_date='2026-01-05',
+                description='Fictional owner contribution',source_ids=['synthetic-receipt-002'],
+                lines=[dict(account='1000',side='debit',amount='1000.00'),dict(account='3000',side='credit',amount='1000.00')]),
+                actor_id='fixture-operator',idempotency_key='book')
             document=json.loads(registry.get('synthetic-receipt-002').canonical_content)
             proposal=dict(id='old-receipt',entity_id=self.workspace.catalog.entity_id,currency='USD',
                 effective_date=document['document_date'],description='Existing original receipt',source_ids=['synthetic-receipt-002'],
@@ -279,6 +294,9 @@ class BankFeeTests(unittest.TestCase):
                 db.execute('DROP TRIGGER review_schema_no_update')
                 db.execute('UPDATE review_schema SET version=7')
                 db.execute("CREATE TRIGGER review_schema_no_update BEFORE UPDATE ON review_schema BEGIN SELECT RAISE(ABORT,'immutable'); END")
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone(),(4,))
+            self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='expense_accrual_schema'").fetchone())
+            schema=db.execute('SELECT type,name,sql FROM sqlite_master ORDER BY name').fetchall()
             names=[r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name!='review_schema'")]
             before={name:db.execute('SELECT * FROM '+name+' ORDER BY 1').fetchall() for name in names}
             seal=db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()
@@ -287,11 +305,14 @@ class BankFeeTests(unittest.TestCase):
                 return real_protect(db,table,conflict)
             with patch('accounting_harness.bank_fees.protect_table',side_effect=fail),self.assertRaises(sqlite3.OperationalError):
                 BankFeeService(ledger,registry)
+            self.assertEqual(db.execute('PRAGMA user_version').fetchone(),(4,))
+            self.assertEqual(db.execute('SELECT type,name,sql FROM sqlite_master ORDER BY name').fetchall(),schema)
+            self.assertEqual({name:db.execute('SELECT * FROM '+name+' ORDER BY 1').fetchall() for name in names},before)
             self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(7,)])
             self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone(),seal)
             self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='bank_fee_schema'").fetchone())
             BankFeeService(ledger,registry)
-            self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(9,)])
+            self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(10,)])
             self.assertEqual(db.execute('PRAGMA user_version').fetchone(),(4,))
             self.assertEqual({name:db.execute('SELECT * FROM '+name+' ORDER BY 1').fetchall() for name in names},before)
             self.assertEqual(store.get('old-draft'),draft)

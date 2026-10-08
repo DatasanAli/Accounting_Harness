@@ -268,16 +268,22 @@
               "id": "20a",
               "title": "Supported prepaid insurance consumption",
               "status": "complete",
-              "delivery_gate": "Local checks/browser/independent review passed; exact upload/CI pending."
+              "commit": "ab557e4581a705a776d613a4790e384eb71b038b",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37823178380"
             },
             {
               "id": "20b",
               "title": "Evidenced unbilled expense accrual",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "20c",
               "title": "Evidenced unbilled service revenue",
+              "status": "ready"
+            },
+            {
+              "id": "20d",
+              "title": "Verified adjusted operational fixture",
               "status": "planned"
             }
           ]

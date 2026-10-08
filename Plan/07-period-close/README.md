@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: Step 20a prepaid consumption passes local/browser checks; independent review approved with no findings; exact delivery is pending. See [verification](STEP_20A_VERIFICATION.md). Step 20b expense accrual follows separately.
+Status: Step20b expense accrual passes528 tests,27 demos, browser/restart and independent review after migration fixes; upload/exact CI follow. See [verification](STEP_20B_VERIFICATION.md). Step20c revenue accrual follows separately.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 
@@ -90,3 +90,7 @@ Copyable prompt:
 The phase is complete only when each of its steps has its own observed verification and GitHub delivery evidence. Apply the [shared testing rules](../TESTING_STRATEGY.md) and [GitHub workflow](../GITHUB_WORKFLOW.md).
 
 Do not reopen a locked period by editing dates. Reopening and prior-period corrections require an explicit future policy and audited operation. A software rollback must preserve journal history.
+
+The [Step20d adjusted operational fixture](STEP_20D_PLAN.md) precedes statements.
+It preserves the original fixture and explicitly records its own Jan1 insurance
+purchase so the delivered coverage policy applies; January31 expected totals match.

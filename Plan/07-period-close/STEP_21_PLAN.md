@@ -66,13 +66,14 @@ while a captured catalog keeps its original labels and account set.
 ## Task 1: captured statements and traceable localhost reports
 
 **Files:** New focused financial report module/tests, workspace/HTTP/CLI/static
-integration and a shared synthetic reference builder only if existing helpers
-cannot supply the posted month. Do not redesign operational services.
+integration using the [verified Step20d builder](STEP_20D_PLAN.md). Do not
+redesign operational services or recreate a second fixture builder.
 
 - [ ] RED: independently asserted reference revenue2,700.00, expenses1,600.00,
   income1,100.00; opening capital0.00, contributions10,000.00, drawings200.00,
   ending equity10,900.00; assets11,500.00 and liabilities600.00; residual0.00.
-- [ ] Use the verified Step 20 adjusted reference month. Operational fixture
+- [ ] Use the verified Step20d adjusted operational month, including its explicit
+  Jan1 prepaid-purchase date variant. Operational fixture
   setup must obey active AP/AR/advance guards and approval paths; do not disable
   triggers or fabricate subsidiary effects to make report totals pass.
 - [ ] Implement the three linked pure statements with account/journal/source

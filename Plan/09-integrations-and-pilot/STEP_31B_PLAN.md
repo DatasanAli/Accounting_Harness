@@ -38,6 +38,12 @@ and numeric reports display server-calculated values. Model prose is labeled as
 an unverified explanation with cited input references; invented references or
 unsupported causal claims cannot become validated accounting facts.
 
+Check service side effects as well as tool names. If a supported proposal would
+implicitly activate a missing account, the agent must hand off until an authorized
+human activates it; wrapping an activating service in `propose_operation` does not
+make activation an allowed model action. Tests must exercise a fresh inactive
+accrual account, not only an already prepared demonstration workspace.
+
 No tools for evidence enrollment, account activation, approval, posting, bank
 completion, closing, permission changes, backup restore or export authorization.
 The model cannot name its actor or gain a reviewer role from the initiating user.

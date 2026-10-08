@@ -94,9 +94,7 @@ browser and delivery. Inspect the final delivered 20b interfaces before coding.
 - [ ] Run focused then guarded suite/foundation/all demos/JS/diff and parent
   browser exercise; freeze for independent review, commit/push/exact CI.
 
-Before Step 21 statement acceptance, build the adjusted reference month from the
-delivered operations in a fresh synthetic workspace, including prepaid 100.00 and
-the existing advance-earning 200.00 policy. Reuse a small fixture helper if needed;
-never disable active subsidiary guards or insert fabricated effects. If this
-integration requires independent behavior beyond fixture assembly, plan it as
-Step 20d before implementation rather than expanding this accrual task silently.
+Before Step21, deliver the separate [Step20d operational fixture](STEP_20D_PLAN.md).
+The original T03 Jan3 purchase conflicts with the delivered Jan1 coverage-start
+policy, so that new fixture explicitly uses a Jan1 purchase and distinct identity;
+original fixture bytes and all month-end expected amounts remain unchanged.

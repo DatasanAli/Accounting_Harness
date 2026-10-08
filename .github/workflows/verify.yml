@@ -69,3 +69,5 @@ jobs:
         run: python3 -m accounting_harness demo-reconciliation
       - name: Demonstrate reviewed prepaid insurance consumption
         run: python3 -m accounting_harness demo-prepaid-consumption
+      - name: Demonstrate evidenced unbilled expense accrual
+        run: python3 -m accounting_harness demo-expense-accrual

@@ -38,7 +38,7 @@ balance JSON exactly: consumed 100.00, remaining 1,100.00, residual 0.00.
   observed 102 Markdown files/349 links before this verification record was added.
 - `node --check accounting_harness/static/app.js` and `git diff --check`: passed.
 - Independent review approved spec compliance and task quality with no findings.
-  Exact GitHub delivery remains pending.
+  Delivered as [ab557e4](https://github.com/DatasanAli/Accounting_Harness/commit/ab557e4581a705a776d613a4790e384eb71b038b); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37823178380). Remote main matched the local commit.
 
 Focused coverage includes quotient/remainder cents, leap/full-month boundaries,
 zero allocations, immutable first coverage, current month claims, shared original

@@ -22,6 +22,7 @@ from accounting_harness.receivables import ReceivablesService, receivables_repor
 from accounting_harness.advances import AdvancesService, advances_report
 from accounting_harness.reconciliation import ReconciliationService
 from accounting_harness.prepaid import PrepaidService, prepaid_report
+from accounting_harness.expense_accrual import ExpenseAccrualService, expense_accrual_report
 from accounting_harness.bank import BankStatementService
 from accounting_harness.bank_fees import BankFeeService, bank_evidence, fee_operation, require_available
 from accounting_harness.domain.money import Money
@@ -73,6 +74,9 @@ class Workspace:
         with SQLiteSourceRegistry(self.root / 'sources.sqlite3', self.catalog.entity_id) as registry:
             with SQLiteLedger(self.root / 'ledger.sqlite3', self.catalog, '2026-01-01', '2026-01-31',
                               known_source_ids=set(self.sources)) as ledger:
+                # The accrual service owns ledger/review/approval/accrual schema setup
+                # in one transaction, before generic review handles can commit a migration.
+                ExpenseAccrualService(ledger, registry)
                 store = SQLiteReviewStore(ledger, registry)
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
@@ -169,6 +173,9 @@ class Workspace:
             WHERE draft_id=? ORDER BY revision DESC LIMIT 1''', (draft_id,)).fetchone()
         if row is None:
             raise KeyError(draft_id)
+        if row[0] == 'expense-accrual-v1':
+            accrual = ExpenseAccrualService(store.ledger, store.registry)
+            return accrual.store, accrual.app
         if row[0] == 'prepaid-consumption-v1':
             prepaid = PrepaidService(store.ledger, store.registry)
             return prepaid.store, prepaid.app
@@ -202,6 +209,15 @@ class Workspace:
             raise ValueError('unknown stored draft policy')
         cash = SQLiteReviewStore(store.ledger, store.registry, policy_version='cash-v1')
         return cash, ReviewApplication(cash)
+
+    def prepare_expense_accrual(self, data):
+        fields(data, dict(incurrence_source_id=str, basis_source_id=str, expected_revision=int))
+        with self.storage() as (registry, ledger, _, _, _):
+            service = ExpenseAccrualService(ledger, registry)
+            draft = service.propose(**data, actor_id='expense-accrual-template',
+                idempotency_key='web-expense-accrual:' + digest(data))
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
 
     def prepare_prepaid(self, data):
         fields(data, dict(coverage_source_id=str, allocation_month=str, expected_revision=int))
@@ -337,6 +353,7 @@ class Workspace:
                     attempts=checkpoint.provider_attempts, reserved_nanodollars=checkpoint.cost_units,
                     trace=[dict(sequence=c.sequence, state=c.state, reason=c.reason,
                                 recorded_at_ms=c.recorded_at_ms) for c in engine.trace(run_id)]))
+            expense_accruals = expense_accrual_report(ExpenseAccrualService(ledger, registry).snapshot(), as_of='2026-01-31')
             prepaid = prepaid_report(PrepaidService(ledger, registry).snapshot(), as_of='2026-01-31')
             advances = advances_report(AdvancesService(ledger, registry).snapshot(), as_of='2026-01-31')
             for item in [advances, *advances['customers'], *advances['advances'], *advances['earnings']]:
@@ -387,7 +404,7 @@ class Workspace:
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
                 bank_fee_account_activation=self._account_activation(ledger),
                 bank_statements=BankStatementService(ledger).list_statements(),
-                journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid,
+                journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid, expense_accruals=expense_accruals,
                 trial_balance=dict(as_of=report.as_of.isoformat(), policy=report.policy,
                     snapshot_digest=digest(report_identity), catalog=catalog,
                     included_entry_ids=list(report.included_entry_ids),
@@ -399,6 +416,8 @@ class Workspace:
         if action in ('bank-timing', 'bank-reconcile'):
             with self.storage() as (_, ledger, _, _, _):
                 return ReconciliationService(ledger).action(action.removeprefix('bank-'), data, actor_id='local-operator')
+        if action == 'expense-accrual-proposals':
+            return self.prepare_expense_accrual(data)
         if action == 'prepaid-proposals':
             return self.prepare_prepaid(data)
         if action == 'bank-fee-proposals':

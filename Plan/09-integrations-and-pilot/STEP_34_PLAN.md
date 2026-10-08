@@ -29,7 +29,8 @@ reports and recovery checks. Add no unrelated accounting features or live transp
 ## Rehearsal scope
 
 Start from a fresh authenticated synthetic workspace with preparer and reviewer.
-Register the reference month's ordinary evidence and prepare/post through supported
+Register the Step20d operational variant's ordinary evidence (its insurance purchase
+is explicitly Jan1, while the original fixture remains untouched) and prepare/post through supported
 application workflows; do not seed authoritative journals or managed effects by
 SQL. Reproduce T01–T09 plus the supported 100.00 insurance allocation and 200.00
 advance earning, keeping the separate accrual/bank-fee examples outside those
