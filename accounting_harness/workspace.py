@@ -422,6 +422,7 @@ class Workspace:
                 report_identity.append(catalog)
             return dict(entity_id=self.catalog.entity_id, period='January 2026', currency='USD',
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
+                period_close=(json.loads(row[0]) if (row := ledger._connection.execute('SELECT result_json FROM period_closes').fetchone()) else None),
                 bank_fee_account_activation=self._account_activation(ledger),
                 bank_statements=BankStatementService(ledger).list_statements(),
                 journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid, expense_accruals=expense_accruals, revenue_accruals=revenue_accruals, accruals=accruals,
@@ -433,6 +434,11 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action in ('close-preview', 'close-confirm'):
+            from accounting_harness.closing import CloseService
+            with self.storage() as (registry, ledger, _, _, _):
+                service = CloseService(ledger, registry)
+                return service.preview(data) if action == 'close-preview' else service.confirm(data, actor_id='local-operator')
         if action in ('bank-timing', 'bank-reconcile'):
             with self.storage() as (_, ledger, _, _, _):
                 return ReconciliationService(ledger).action(action.removeprefix('bank-'), data, actor_id='local-operator')

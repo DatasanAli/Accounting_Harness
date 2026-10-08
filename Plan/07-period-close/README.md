@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: Step 21 captured statements pass 569 tests, 30 demos, browser/cutoff/mobile/restart checks and independent review with no findings. Upload/exact CI follow; see [verification](STEP_21_VERIFICATION.md). Step 22 close and date locks follows.
+Status: Step22 close/date locks pass588 tests,31 demos, native close/retry/backdate/mobile/restart checks and independent review with no findings. Upload/exact CI follow; see [verification](STEP_22_VERIFICATION.md). Step23a captured cash flow follows.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 

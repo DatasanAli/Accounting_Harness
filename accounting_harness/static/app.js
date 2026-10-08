@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  close: ['Period close', 'Review the complete January books, then explicitly close temporary balances and lock posting dates.'],
   reports: ['Reports', 'Income, owner’s equity and assets linked to one captured set of books.'],
   'revenue-accrual': ['Revenue accruals', 'Completed unbilled services and their recorded cutoff assets.'],
   'expense-accrual': ['Expense accruals', 'Supported unbilled expenses and their recorded cutoff obligations.'],
@@ -21,6 +22,10 @@ const sampleNames = {'rent-standard': 'January office rent', 'software-standard'
 const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'awaiting_review']);
 let state = null;
 let financialReport = null;
+let closePreview = null;
+let closeBusy = false;
+let closeSelections = [];
+let pendingClose = null;
 let capturingFinancialReport = false;
 let bankDetail = null;
 let bankMatchView = null;
@@ -204,7 +209,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderFinancialReports(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderFinancialReports(); renderClose(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -1271,11 +1276,124 @@ $('financial-report-form').addEventListener('submit', async event => {
 });
 $('financial-statement').addEventListener('change', renderFinancialReports);
 
+async function captureClose() {
+  if (closeBusy) return;
+  closeBusy = true; renderClose();
+  try {
+    closePreview = await request('/api/close-preview', {period_start: '2026-01-01', period_end: '2026-01-31', selections: closeSelections});
+    pendingClose = null;
+    notify(closePreview.can_close ? 'Close preview captured. Review the statements and closing lines before confirmation.' : 'Close is blocked. Resolve the readiness findings and capture again.');
+  } catch (error) { notify(error.message, 'error'); }
+  finally { closeBusy = false; renderClose(); }
+}
+async function confirmClose() {
+  if (closeBusy || !closePreview) return;
+  closeBusy = true;
+  pendingClose ??= {period_start: closePreview.period_start, period_end: closePreview.period_end,
+    selections: closePreview.selections, confirmed_digest: closePreview.digest, confirmed: true, idempotency_key: crypto.randomUUID()};
+  renderClose();
+  try {
+    const result = await request('/api/close-confirm', pendingClose);
+    state.period_close = result; pendingClose = null;
+    notify('January is closed. Posting dates are locked; statements and the complete approval trace remain available.');
+    await refresh();
+  } catch (error) {
+    if (!error.uncertain) pendingClose = null;
+    notify(error.message + (error.uncertain ? ' Retry the same confirmation or Refresh to inspect the recorded outcome.' : ' Capture a new preview if the books changed.'), 'error');
+  } finally { closeBusy = false; renderClose(); }
+}
+function renderClose() {
+  const node = $('close-content'); node.replaceChildren();
+  const recorded = state.period_close;
+  if (recorded) {
+    const card = add(el('div', null, 'card setup-card'), el('h3', 'January 2026 · Closed and locked'),
+      metadata([['Locked dates', recorded.period_start + ' through ' + recorded.period_end], ['Confirmed by', recorded.actor_id],
+        ['Recorded at', recorded.recorded_at], ['Closing journal', recorded.journal_id || 'No entry · all temporary balances were zero'],
+        ['Approval', recorded.approval_id]]),
+      el('p', 'Read access remains available. Reopening and prior-period corrections require a later audited policy and are unavailable here.'));
+    digest(card, 'Confirmed preview SHA-256', recorded.confirmed_digest);
+    card.append(jsonDetails('Complete close, approval, captured statements and evidence trace', recorded));
+    node.append(card);
+    const preview = recorded.preview;
+    node.append(closeSummary(preview));
+    return;
+  }
+  const setup = add(el('div', null, 'card setup-card'), el('h3', 'Prepare the complete January close'),
+    el('p', 'Temporary revenue, expense and drawings balances transfer to Owner Capital. Permanent asset and liability balances stay open.'));
+  const accounts = [...new Set(state.bank_statements.filter(s => s.period_start <= '2026-01-01' && s.period_end >= '2026-01-31').map(s => s.bank_account_id))];
+  for (const account of accounts) {
+    const label = el('label', 'Statement and completion for ' + account + ' ');
+    const select = el('select'); select.setAttribute('aria-label', 'Statement for ' + account);
+    select.append(new Option('Choose a statement explicitly', ''));
+    state.bank_statements.filter(s => s.bank_account_id === account && s.period_start <= '2026-01-01' && s.period_end >= '2026-01-31').forEach(s => select.append(new Option(s.statement_id, s.statement_id)));
+    const selected = closeSelections.find(s => s.bank_account_id === account);
+    select.value = selected?.statement_id || ''; select.disabled = closeBusy;
+    select.addEventListener('change', async () => {
+      closeSelections = closeSelections.filter(s => s.bank_account_id !== account); closePreview = null; pendingClose = null;
+      if (!select.value) { renderClose(); return; }
+      try {
+        const view = await request('/api/bank-reconciliation?bank_account_id=' + encodeURIComponent(account) + '&statement_id=' + encodeURIComponent(select.value));
+        const choices = add(el('div'), el('p', 'Select a recorded completion for ' + select.value + ':'));
+        if (!view.completions.length) choices.append(el('p', 'No recorded completion. Resolve and complete this reconciliation in Bank statements first.'));
+        for (const item of view.completions) {
+          choices.append(button(item.completion.completion_id + (item.current_state_drift ? ' · stale' : ' · current'), () => {
+            closeSelections.push({bank_account_id: account, statement_id: select.value, completion_id: item.completion.completion_id});
+            renderClose();
+          }));
+        }
+        label.append(choices);
+      } catch (error) { notify(error.message, 'error'); }
+    });
+    label.append(select);
+    if (selected) label.append(el('p', 'Selected completion: ' + selected.completion_id, 'digest'));
+    setup.append(label);
+  }
+  const capture = button('Capture close preview', captureClose); capture.disabled = closeBusy;
+  setup.append(capture); node.append(setup);
+  if (!closePreview) return;
+  node.append(closeSummary(closePreview));
+  const confirmation = add(el('div', null, 'card setup-card'), el('h3', 'Separate human confirmation'),
+    el('p', 'Close and lock prevents all later postings and reversals dated January 1–31. Reopening and prior-period corrections are unavailable until a later audited policy. The books and original statements remain readable.'));
+  for (const finding of closePreview.findings) confirmation.append(el('p', finding, 'message error'));
+  digest(confirmation, 'Exact preview SHA-256', closePreview.digest);
+  const label = el('label'); const check = el('input'); check.type = 'checkbox';
+  check.disabled = closeBusy || !closePreview.can_close;
+  label.append(check, document.createTextNode(' I reviewed these captured statements, temporary balances, evidence and exact closing journal.'));
+  const confirm = button(pendingClose ? 'Retry same close confirmation' : 'Close and lock January', confirmClose, 'button');
+  confirm.disabled = closeBusy || !closePreview.can_close || !pendingClose;
+  check.addEventListener('change', () => { confirm.disabled = closeBusy || !closePreview.can_close || !check.checked; });
+  confirmation.append(label, confirm); node.append(confirmation);
+}
+function closeSummary(preview) {
+  const statements = preview.statements;
+  const card = add(el('div', null, 'card setup-card'), el('h3', 'Captured close calculation'),
+    metadata([['Period', preview.period_start + ' through ' + preview.period_end], ['Closing effective date', preview.effective_date],
+      ['Net income / loss', signedMoney(statements.income_statement.net_income_amount)],
+      ['Ending owner’s equity', signedMoney(statements.owners_equity.ending_equity_amount)],
+      ['Assets', signedMoney(statements.balance_sheet.assets_amount)], ['Liabilities', signedMoney(statements.balance_sheet.liabilities_amount)],
+      ['Capital transfer', signedMoney(preview.capital_transfer_amount)], ['Policy', preview.policy]]),
+    table(['Temporary account', 'Name', 'Net debit · USD'], preview.temporary_balances.map(r => [r.account, r.name, r.amount]), 'Signed balances to clear'));
+  if (preview.journal) card.append(journalLines(preview.journal.lines, 'Exact proposed closing journal · January 31'));
+  else card.append(el('p', 'No closing journal is needed: every temporary balance is zero. Confirmation still records an audited close and date lock.'));
+  for (const [key,title] of [['income_statement','Pre-close income statement'],['owners_equity','Pre-close owner’s equity'],['balance_sheet','Pre-close balance sheet']]) {
+    const statement = statements[key];
+    const details = add(el('details'), el('summary', title));
+    const rows = key === 'income_statement' ? [...statement.revenue, ...statement.expenses] : key === 'owners_equity' ? [statement.contributions, statement.drawings] : [...statement.assets, ...statement.liabilities];
+    rows.forEach(row => details.append(financialAccount(row)));
+    details.append(jsonDetails('Captured statement and cross-links', statement)); card.append(details);
+  }
+  digest(card, 'Ledger snapshot SHA-256', statements.snapshot_digest);
+  card.append(jsonDetails('Readiness and overlapping bank statements', preview.readiness),
+    jsonDetails('Input journals and source references', {journal_ids: preview.journal_ids, source_ids: preview.source_ids}),
+    jsonDetails('Generated calculation evidence · no posting permission', preview.artifact));
+  return card;
+}
+
 function renderLedger() {
   const node = $('ledger-content'); node.replaceChildren();
   const report = state.trial_balance;
   const card = el('section', null, 'card');
-  card.append(add(el('div', null, 'card-heading'), el('h3', 'Unadjusted trial balance'), status(report.total_debits === report.total_credits ? 'balanced' : 'mismatch')));
+  card.append(add(el('div', null, 'card-heading'), el('h3', state.period_close ? 'Post-close trial balance' : 'Trial balance'), status(report.total_debits === report.total_credits ? 'balanced' : 'mismatch')));
   const body = el('div', null, 'ledger-body');
   body.append(table(['Account', 'Account name', 'Debit · USD', 'Credit · USD'],
     report.rows.map(row => [row.account, row.name, money(row.debit), money(row.credit)]),

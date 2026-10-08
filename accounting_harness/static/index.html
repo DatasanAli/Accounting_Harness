@@ -17,6 +17,7 @@
       <button class="nav-item active" data-view="evidence" aria-current="page"><span aria-hidden="true">▤</span>Evidence</button>
       <button class="nav-item" data-view="review"><span aria-hidden="true">✓</span>Review queue<span id="review-count" class="nav-count">0</span></button>
       <button class="nav-item" data-view="ledger"><span aria-hidden="true">▥</span>Ledger</button>
+      <button class="nav-item" data-view="close"><span aria-hidden="true">◷</span>Period close</button>
       <button class="nav-item" data-view="reports"><span aria-hidden="true">▥</span>Reports</button>
       <button class="nav-item" data-view="receivables"><span aria-hidden="true">▣</span>Customer invoices</button>
       <button class="nav-item" data-view="advances"><span aria-hidden="true">▣</span>Customer advances</button>
@@ -42,6 +43,10 @@
         <div class="metric"><span>Needs your review</span><strong id="metric-review">—</strong><small>Human decisions come next</small></div>
         <div class="metric"><span>Posted journals</span><strong id="metric-journals">—</strong><small>Approved, permanent entries</small></div>
         <div class="metric"><span>Trial balance</span><strong id="metric-balance" class="money">—</strong><small id="balance-caption">USD per debit / credit column</small></div>
+      </section>
+      <section id="view-close" class="view" aria-labelledby="close-heading" hidden>
+        <div class="section-heading"><h2 id="close-heading">Close January 2026</h2><span class="muted">Review → Confirm → Lock</span></div>
+        <div id="close-content"></div>
       </section>
       <section id="view-evidence" class="view" aria-labelledby="evidence-heading">
         <div class="section-heading"><h2 id="evidence-heading">Evidence workspace</h2><span class="muted">01 Evidence → 02 Proposal → 03 Human review</span></div>

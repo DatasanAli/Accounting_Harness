@@ -77,3 +77,5 @@ jobs:
         run: python3 -m accounting_harness demo-adjusted-month
       - name: Demonstrate captured financial statements
         run: python3 -m accounting_harness demo-statements
+      - name: Demonstrate confirmed period close and durable date lock
+        run: python3 -m accounting_harness demo-close

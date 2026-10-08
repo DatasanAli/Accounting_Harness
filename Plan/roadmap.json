@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "21",
-  "next_step": "22",
+  "current_step": "22",
+  "next_step": "23",
   "phases": [
     {
       "id": "01",
@@ -297,22 +297,24 @@
         {
           "id": "21",
           "title": "Core financial statements",
-          "status": "complete"
+          "status": "complete",
+          "commit": "511d93203a82227b00794462267b372a2e275178",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37832868799"
         },
         {
           "id": "22",
           "title": "Closing entries and date locks",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "23",
           "title": "Cash flow and reproducible exports",
-          "status": "planned",
+          "status": "ready",
           "substeps": [
             {
               "id": "23a",
               "title": "Captured direct cash-flow statement",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "23b",

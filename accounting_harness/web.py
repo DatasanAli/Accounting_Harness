@@ -118,7 +118,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
-        if self.path not in ('/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
+        if self.path not in ('/api/close-preview', '/api/close-confirm', '/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
                              '/api/revenue-accrual-proposals', '/api/expense-accrual-proposals', '/api/prepaid-proposals', '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals', '/api/invoice-proposals', '/api/advance-proposals', '/api/advance-earning-proposals', '/api/invoice-collection-proposals', '/api/bill-payment-proposals'):
             return self.respond(404, dict(error='not found'))
         try:

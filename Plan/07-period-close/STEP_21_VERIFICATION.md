@@ -35,7 +35,7 @@ unchanged journal/trial-balance JSON, and the same 11 journals.
 - All **30 demonstrations** passed, including `demo-statements`.
 - Foundation, JavaScript syntax and diff whitespace checks passed.
 - Independent review approved spec compliance and task quality with no findings.
-- Exact commit/remote/CI checks follow local acceptance.
+- Delivered commit [511d932](https://github.com/DatasanAli/Accounting_Harness/commit/511d93203a82227b00794462267b372a2e275178) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37832868799) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py

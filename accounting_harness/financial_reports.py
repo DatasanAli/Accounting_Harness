@@ -61,26 +61,25 @@ def _validate(capture):
 
 def capture_financials(ledger, as_of, *, basis='accrual', equity_model='owner_capital_and_drawings',
                        opening_balances='all_zero', currency='USD'):
-    """Capture catalog, ledger and classification/actor/reversal context in one read.
-
-    Step 21 has no closing storage. Step 22 must populate classifications HERE,
-    in the same transaction as the ledger read; pure reports never read storage.
-    Source identities are retained on the immutable entries, not re-resolved from
-    the mutable source registry. Historical LedgerSnapshot formats stay intact.
-    """
-    cutoff = accounting_date(as_of)
+    """Capture ledger and durable closing classifications in one read transaction."""
     policy = FinancialPolicy(basis=basis, equity_model=equity_model,
                              opening_balances=opening_balances, currency=currency)
     with ledger._transaction():
-        snapshot = ledger._snapshot()
-        journals = []
-        for entry in snapshot.entries:
-            receipt = ledger._receipt(entry.id)
-            journals.append(JournalContext(entry.id, 'ordinary', receipt.actor_id,
-                                           receipt.recorded_at.isoformat(), receipt.original_entry_id))
-        capture = FinancialCapture(snapshot, cutoff, tuple(journals), policy)
-        _validate(capture)
-        return capture
+        return _capture_financials(ledger, as_of, policy)
+
+
+def _capture_financials(ledger, as_of, policy=FinancialPolicy()):
+    """Shared transaction boundary for financial reports and close confirmation."""
+    snapshot = ledger._snapshot()
+    closing = {r[0] for r in ledger._connection.execute('SELECT journal_id FROM period_closes WHERE journal_id IS NOT NULL')}
+    journals = []
+    for entry in snapshot.entries:
+        receipt = ledger._receipt(entry.id)
+        journals.append(JournalContext(entry.id, 'closing' if entry.id in closing else 'ordinary', receipt.actor_id,
+                                       receipt.recorded_at.isoformat(), receipt.original_entry_id))
+    capture = FinancialCapture(snapshot, accounting_date(as_of), tuple(journals), policy)
+    _validate(capture)
+    return capture
 
 
 def _amount(cents):

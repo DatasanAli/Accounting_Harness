@@ -242,9 +242,12 @@ class PrepaidService:
 
     def snapshot(self):
         with self.ledger._transaction():
-            policies=tuple(r[0] for r in self.db.execute('SELECT policy_json FROM prepaid_policies ORDER BY original_journal_id'))
-            effects=tuple(self.db.execute('SELECT * FROM prepaid_effects ORDER BY original_journal_id,allocation_month'))
-            return PrepaidSnapshot(self.ledger._snapshot(),policies,effects,self.ledger._context)
+            return self._snapshot()
+
+    def _snapshot(self):
+        policies=tuple(r[0] for r in self.db.execute('SELECT policy_json FROM prepaid_policies ORDER BY original_journal_id'))
+        effects=tuple(self.db.execute('SELECT * FROM prepaid_effects ORDER BY original_journal_id,allocation_month'))
+        return PrepaidSnapshot(self.ledger._snapshot(),policies,effects,self.ledger._context)
 
 
 def prepare_prepaid_post(store,approval,revision,entry):

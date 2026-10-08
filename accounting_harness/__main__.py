@@ -220,6 +220,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("demo-adjusted-month", help="assemble the supported adjusted reference month with explicit synthetic approvals")
+    commands.add_parser("demo-close", help="explicitly close January and refuse backdated entries")
     commands.add_parser("demo-statements", help="capture linked income, owner equity and balance-sheet statements")
     commands.add_parser("demo-accounts", help="show the fictional account catalog and exact arithmetic")
     commands.add_parser("demo-journal", help="validate balanced and unbalanced fictional entries")
@@ -267,6 +268,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "demo-adjusted-month":
             from accounting_harness.adjusted_month import demo_adjusted_month
             demo_adjusted_month()
+        elif args.command == "demo-close":
+            from accounting_harness.closing import demo_close
+            demo_close()
         elif args.command == "demo-statements":
             from accounting_harness.financial_reports import demo_statements
             demo_statements()

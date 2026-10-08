@@ -228,6 +228,8 @@ class SQLiteLedger:
             self._migrate_v3()
         if self._connection.execute("PRAGMA user_version").fetchone()[0] == 3:
             self._migrate_v4()
+        from accounting_harness.closing import initialize_close
+        initialize_close(self)
 
     def admit(self, proposal: object, *, idempotency_key: str, actor_id: str) -> PostingReceipt:
         """Validate and store one entry atomically, or return its original receipt.
@@ -587,8 +589,13 @@ class SQLiteLedger:
                                      [(entry.id, i, l.account, l.side, l.amount.cents)
                                       for i, l in enumerate(entry.lines)])
         # Every journal, including a reversing journal, gets its own posting event.
-        self._connection.execute("INSERT INTO posting_events VALUES (?, ?, ?, ?)",
-                                 (entry.id, actor_id, recorded_at.isoformat(), OPERATION))
+        try:
+            self._connection.execute("INSERT INTO posting_events VALUES (?, ?, ?, ?)",
+                                     (entry.id, actor_id, recorded_at.isoformat(), OPERATION))
+        except sqlite3.IntegrityError as error:
+            if 'period is closed' in str(error):
+                raise ValueError(str(error)) from error
+            raise
         return PostingReceipt(entry, actor_id, recorded_at)
 
     def reverse(

@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'close_calculation': {'calculation_json', 'calculation_digest'},
     'revenue_accrual_basis': {'event_id', 'counterparty_id', 'cutoff_date', 'status'},
     'expense_accrual_basis': {'event_id', 'counterparty_id', 'cutoff_date', 'status'},
     'prepaid_coverage': {'original_journal_id', 'original_source_id', 'coverage_start', 'coverage_end', 'allocation_policy'},
@@ -74,6 +75,10 @@ def _content(document: object, entity_id: str) -> tuple[str, str]:
                 raise ValueError('invalid original bank text')
         else:
             _validate_text(document[field], field)
+    if kind == 'close_calculation':
+        from accounting_harness.review import digest
+        if digest(json.loads(document['calculation_json'])) != document['calculation_digest']:
+            raise ValueError('invalid close calculation digest')
     if kind == 'bank_fee':
         from accounting_harness.bank import signed_cents
         if signed_cents(document['signed_amount'], movement=True) != -Money.parse(document['amount']).cents:
