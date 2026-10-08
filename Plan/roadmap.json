@@ -127,7 +127,9 @@
             {
               "id": "13b",
               "title": "Reviewed cash receipts and expenses",
-              "status": "complete"
+              "status": "complete",
+              "commit": "887cc4e974c196913432c0006bf7d1e24e5af096",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37791223746"
             }
           ]
         },
@@ -139,12 +141,12 @@
             {
               "id": "14a",
               "title": "Reviewed vendor bill recognition",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "14b",
               "title": "Recorded partial settlement",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         },

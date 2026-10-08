@@ -1,7 +1,6 @@
 # Accounting Harness implementation plan
 
-Steps 01–11 establish the plan and implement exact money/accounts, a durable ledger, source registration, versioned drafts, local approval/posting and typed agent tools with offline cases and a bounded resumable fake-provider loop. The active delivery is **Step 12a: the localhost workspace**; Step 12's live
-provider evaluation is explicitly deferred. The user authorized the wider
+Steps 01–11 establish the plan and implement exact money/accounts, a durable ledger, source registration, versioned drafts, local approval/posting and typed agent tools with offline cases and a bounded resumable fake-provider loop. The localhost workspace and reviewed cash workflows are delivered. See [current status](STATUS.md) and [the next implementation](NEXT_STEP.md) for the active delivery; Step 12's live provider evaluation is explicitly deferred. The user authorized the wider
 roadmap too; follow [the current working plan](LOCALHOST_APP_PLAN.md). The selected initial workflow is bookkeeping for a small service business.
 
 An agent harness is the application around an agent: its task state, evidence context, allowed tools, execution limits, approvals, and recorded results. Our ledger and accounting rules must be testable independently of the model.

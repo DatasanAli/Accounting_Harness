@@ -89,4 +89,4 @@ for Step 14; do not implement bill behavior in this slice.
 - [x] Add UI evidence/operation forms and per-draft policy routing with human-only approval/posting.
 - [x] Add `demo-cash` and update CI/documentation.
 - [x] Run foundation, guarded suite, all demos and browser flow.
-- [ ] Commit, push and verify exact SHA/CI after the clean task review, then continue Step 14a.
+- [x] Commit, push and verify exact SHA/CI after the clean task review, then continue Step 14a.

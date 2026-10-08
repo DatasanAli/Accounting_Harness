@@ -75,6 +75,4 @@ corrections rather than deleting entries or restoring over valid history.
 
 ## Delivery evidence
 
-Local verification is recorded above. The delivery response and next status
-update record the exact commit and GitHub Actions run after remote verification;
-this document does not infer CI success from local tests.
+Delivered as [887cc4e974c196913432c0006bf7d1e24e5af096](https://github.com/DatasanAli/Accounting_Harness/commit/887cc4e974c196913432c0006bf7d1e24e5af096). Local HEAD and remote `main` matched. [GitHub Actions run 37791223746](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37791223746) completed successfully for that exact SHA, including the guarded suite and all 14 demonstrations. The reviewed enrollment-helper extraction passed the affected 22 tests and two demos locally before upload.

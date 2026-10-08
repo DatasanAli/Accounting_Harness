@@ -4,7 +4,7 @@ An accounting agent harness for bookkeeping at a small service business, built o
 
 The intended workflow is: **evidence → proposed journal entry → validation → human approval → posting → reconciliation → reporting**. Accounting code owns calculations and ledger changes. The agent helps interpret evidence and propose work.
 
-**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Step 13b adds typed cash/recognition facts and reviewed cash expense and earned-service templates. Authenticated roles remain a future step.
+**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Step 13b adds typed cash/recognition facts and reviewed cash expense and earned-service templates. Step 14a adds vendor bill recognition and AP reconciliation. Authenticated roles remain a future step.
 
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
 
@@ -70,6 +70,7 @@ python3 -m accounting_harness demo-provider
 python3 -m accounting_harness demo-web
 python3 -m accounting_harness demo-enrollment
 python3 -m accounting_harness demo-cash
+python3 -m accounting_harness demo-bill
 ```
 
 The account demo prints 13 fictional accounts, including credit-normal accumulated depreciation and debit-normal owner drawings. It demonstrates `0.10 + 0.20 = 0.30 USD (30 cents)` and rejects the unsupported precision in `1.005`.
@@ -99,7 +100,7 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 268 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all fourteen demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 287 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all fifteen demonstrations.
 
 Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting is implemented; authenticated approval is not. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
@@ -119,7 +120,7 @@ The delivery target is this repository on GitHub with its verification workflow 
 
 Next prompt:
 
-> Build Step 14a: Reviewed vendor bill recognition with separate incurrence evidence, an immutable payable subledger, and control-account reconciliation in the localhost UI. Follow Plan/05-service-bookkeeping/STEP_14A_PLAN.md. Keep live connections deferred; verify, commit, push and check exact CI, then continue through the authorized roadmap.
+> Build Step 14b: Record partial vendor settlement with exact intent-bound review and atomic payment allocations. Follow Plan/05-service-bookkeeping/STEP_14B_PLAN.md. A 300.00 bill and 100.00 payment must leave 200.00 payable, with expense unchanged. Keep live connections deferred; verify, commit, push and check exact CI, then continue through the authorized roadmap.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 
@@ -171,3 +172,13 @@ transfers, advances and settlement cash cannot use these recognition templates.
 Event claims remain reserved after rejection; correcting an existing cash draft
 is not yet offered by the UI. Provider receipt proposals retain their existing
 policy and scope. See the [Step 13b contract](Plan/05-service-bookkeeping/STEP_13B_PLAN.md).
+
+`demo-bill` recognizes a 300.00 software bill only after matching separate
+incurrence evidence and human approval. The **Vendor bills** screen shows
+principal, due date, outstanding and reconciliation to Accounts Payable. New AP
+postings require the matching approved bill record once the payable workflow is
+activated; unexplained opening AP blocks activation. Registration or preparation
+does not post. The existing `review-post` CLI remains receipt-only; review bills and cash drafts
+in the localhost UI or direct services. Partial payments follow in Step 14b; managed bill reversals are
+currently refused because they require linked subledger corrections. See the
+[Step 14a verification](Plan/05-service-bookkeeping/STEP_14A_VERIFICATION.md).

@@ -41,6 +41,8 @@ class DraftRevision:
     findings: tuple[Finding, ...]
     current_findings: tuple[Finding, ...]
 
+    operation_intent_json: str | None = None
+
     @property
     def reviewable(self):
         return self.state == 'pending' and not self.findings and not self.current_findings
@@ -57,6 +59,7 @@ class SQLiteReviewStore:
         self.db = ledger._connection
         with ledger._transaction(write=True):
             self._initialize()
+            self._initialize_intents()
             self._initialize_claims()
 
     def _initialize_claims(self):
@@ -73,7 +76,7 @@ class SQLiteReviewStore:
 
     def _initialize(self):
         if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='review_schema'").fetchone():
-            if self.db.execute('SELECT version FROM review_schema').fetchall() != [(1,)]:
+            if self.db.execute('SELECT version FROM review_schema').fetchall() not in ([(1,)], [(2,)]):
                 raise ValueError('unsupported review schema version')
             return
         self.db.execute('CREATE TABLE review_schema (version INTEGER PRIMARY KEY) STRICT')
@@ -106,7 +109,34 @@ class SQLiteReviewStore:
         ):
             protect_table(self.db, table, conflict)
 
-    def validate(self, proposal, evidence):
+    def _initialize_intents(self):
+        if self.db.execute('SELECT version FROM review_schema').fetchall() == [(2,)]:
+            return
+        self.db.execute("""CREATE TABLE draft_operation_intents (
+            draft_id TEXT NOT NULL, revision INTEGER NOT NULL, intent_json TEXT NOT NULL,
+            PRIMARY KEY(draft_id, revision),
+            FOREIGN KEY(draft_id, revision) REFERENCES draft_revisions(draft_id, revision)
+        ) STRICT, WITHOUT ROWID""")
+        protect_table(self.db, 'draft_operation_intents', 'draft_id=NEW.draft_id AND revision=NEW.revision')
+        self.db.execute("""CREATE TRIGGER intent_before_seal BEFORE INSERT ON draft_operation_intents
+            WHEN EXISTS (SELECT 1 FROM review_events WHERE draft_id=NEW.draft_id AND revision=NEW.revision)
+            BEGIN SELECT RAISE(ABORT, 'revision intent is sealed'); END""")
+        self.db.execute("""CREATE TRIGGER intent_required_at_seal BEFORE INSERT ON review_events
+            WHEN (SELECT policy_version FROM draft_revisions
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision) = 'bill-v1'
+                 AND NOT EXISTS (SELECT 1 FROM draft_operation_intents
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision)
+              OR (SELECT policy_version FROM draft_revisions
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision) != 'bill-v1'
+                 AND EXISTS (SELECT 1 FROM draft_operation_intents
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision)
+            BEGIN SELECT RAISE(ABORT, 'missing or unexpected operation intent'); END""")
+        self.db.execute('DROP TRIGGER review_schema_no_update')
+        self.db.execute('UPDATE review_schema SET version=2')
+        self.db.execute("""CREATE TRIGGER review_schema_no_update BEFORE UPDATE ON review_schema
+            BEGIN SELECT RAISE(ABORT, 'review records are append-only'); END""")
+
+    def validate(self, proposal, evidence, *, operation_intent=None, draft_id=None):
         """Read-only validation against registered evidence and the frozen ledger."""
         result = validate_journal(proposal, self.ledger._empty.catalog, known_source_ids=self.ledger.known_source_ids())
         findings = list(result.findings)
@@ -143,8 +173,13 @@ class SQLiteReviewStore:
         elif self.policy_version == 'cash-v1':
             from accounting_harness.operations import validate_cash_evidence
             findings.extend(validate_cash_evidence(proposal, records))
+        elif self.policy_version == 'bill-v1':
+            from accounting_harness.payables import validate_bill
+            findings.extend(validate_bill(self, proposal, records, operation_intent, draft_id))
         else:
             findings.append(Finding('unsupported_policy', 'policy_version', 'unknown review policy'))
+        if operation_intent is not None and self.policy_version != 'bill-v1':
+            findings.append(Finding('unexpected_intent', 'operation_intent', 'policy does not accept an intent'))
         try:
             effective = accounting_date(proposal.get('effective_date'))
             if not self.ledger._empty.period_start <= effective <= self.ledger._empty.period_end:
@@ -173,9 +208,11 @@ class SQLiteReviewStore:
             raise ValueError('expected revision must be a nonnegative integer')
 
     def save(self, draft_id, proposal, *, evidence, expected_revision, actor_id, idempotency_key, reason,
-             require_unused_evidence=False):
+             require_unused_evidence=False, operation_intent=None):
         # Snapshot JSON inputs; do not accept Python objects or nonfinite numbers.
         proposal = json.loads(json.dumps(proposal, allow_nan=False))
+        if operation_intent is not None:
+            operation_intent = json.loads(json.dumps(operation_intent, allow_nan=False))
         if not isinstance(evidence, dict):
             raise TypeError('evidence must map source identities to digests')
         for source_id, value in evidence.items():
@@ -184,7 +221,8 @@ class SQLiteReviewStore:
                 raise ValueError('evidence requires a SHA-256 digest')
         evidence = dict(evidence)
         return self._mutate('save', draft_id, expected_revision, actor_id, idempotency_key,
-                            reason, proposal, evidence, require_unused_evidence=require_unused_evidence)
+                            reason, proposal, evidence, require_unused_evidence=require_unused_evidence,
+                            operation_intent=operation_intent)
 
     def reject(self, draft_id, *, expected_revision, actor_id, idempotency_key, reason):
         return self._mutate('reject', draft_id, expected_revision, actor_id, idempotency_key, reason)
@@ -196,10 +234,12 @@ class SQLiteReviewStore:
                                 self.db.execute('SELECT evidence_json FROM draft_revisions'))
 
     def _mutate(self, operation, draft_id, expected, actor, key, reason, proposal=None, evidence=None,
-                *, require_unused_evidence=False):
+                *, require_unused_evidence=False, operation_intent=None):
         self._inputs(draft_id, expected, actor, key, reason)
         request_digest = digest([operation, draft_id, expected, actor, reason,
-                                 proposal, evidence, self.policy_version] + ([True] if require_unused_evidence else []))
+                                 proposal, evidence, self.policy_version] + ([True] if require_unused_evidence else [])
+                                 + ([{'operation_intent_v1': operation_intent}]
+                                    if operation_intent is not None and operation == 'save' else []))
         with self.ledger._transaction(write=True):
             prior = self.db.execute('SELECT digest, draft_id, revision FROM review_requests WHERE operation=? AND key=?',
                                     (operation, key)).fetchone()
@@ -222,17 +262,23 @@ class SQLiteReviewStore:
                 if previous.state != 'pending':
                     raise ValueError('only pending revisions may be rejected')
                 proposal, evidence = json.loads(previous.proposal_json), json.loads(previous.evidence_json)
-            findings = self.validate(proposal, evidence)
+                operation_intent = (json.loads(previous.operation_intent_json)
+                                    if previous.operation_intent_json is not None else None)
+            findings = self.validate(proposal, evidence, operation_intent=operation_intent, draft_id=draft_id)
             revision = current + 1
             self.db.execute('INSERT INTO draft_revisions VALUES (?,?,?,?,?,?,?,?,?,?,?)', (
                 draft_id, revision, _canonical(proposal), _canonical(evidence), self.policy_version,
-                digest([proposal, evidence, self.policy_version]),
+                digest([proposal, evidence, self.policy_version] +
+                       ([{'operation_intent_v1': operation_intent}] if operation_intent is not None else [])),
                 'rejected' if operation == 'reject' else 'pending', reason, actor,
                 datetime.now(timezone.utc).isoformat(), _canonical([asdict(f) for f in findings])))
+            if operation_intent is not None:
+                self.db.execute('INSERT INTO draft_operation_intents VALUES (?,?,?)',
+                                (draft_id, revision, _canonical(operation_intent)))
             self.db.execute('INSERT INTO review_events VALUES (?,?,?)', (draft_id, revision, operation))
             self.db.execute('INSERT INTO review_requests VALUES (?,?,?,?,?)',
                             (operation, key, request_digest, draft_id, revision))
-            if self.policy_version == 'cash-v1':
+            if self.policy_version in ('cash-v1', 'bill-v1'):
                 from accounting_harness.operations import economic_claims
                 records = []
                 for source_id in evidence:
@@ -256,10 +302,19 @@ class SQLiteReviewStore:
                               (draft_id, draft_id if revision is None else revision)).fetchone()
         if row is None:
             raise KeyError(draft_id)
-        current = self.validate(json.loads(row[2]), json.loads(row[3]))
+        intent_row = self.db.execute('SELECT intent_json FROM draft_operation_intents WHERE draft_id=? AND revision=?',
+                                     (row[0], row[1])).fetchone()
+        intent_json = intent_row[0] if intent_row else None
+        intent = json.loads(intent_json) if intent_json is not None else None
+        current = self.validate(json.loads(row[2]), json.loads(row[3]), operation_intent=intent, draft_id=row[0])
+        content = [json.loads(row[2]), json.loads(row[3]), row[4]]
+        if intent is not None:
+            content += [{'operation_intent_v1': intent}]
+        if digest(content) != row[5]:
+            current += (Finding('content_digest', 'content_digest', 'stored revision content does not match digest'),)
         if row[4] != self.policy_version:
             current += (Finding('changed_policy', 'policy_version', 'revision uses a different policy'),)
-        return DraftRevision(*row[:10], tuple(Finding(**f) for f in json.loads(row[10])), current)
+        return DraftRevision(*row[:10], tuple(Finding(**f) for f in json.loads(row[10])), current, intent_json)
 
     def get(self, draft_id, revision=None):
         with self.ledger._transaction():

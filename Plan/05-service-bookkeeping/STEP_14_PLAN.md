@@ -260,15 +260,15 @@ A future separate correction slice must atomically write inverse allocation reco
 
 14a:
 
-- [ ] Independent 300.00 bill expectation: Software expense debit 30000 cents, AP credit 30000; one vendor/bill with principal/outstanding 30000, no payments, zero residual. Before explicit approval there are zero posted journals and zero vendor bill rows.
-- [ ] Same vendor/bill number under a different source ID conflicts; a different vendor with the same number is valid; same incurrence event with a different number or a prior cash expense conflicts.
-- [ ] Missing incurrence, cash-only evidence, mismatched vendor/event/amount/currency, wrong account, unsupported date and invalid due date cannot approve/post.
-- [ ] Changing only intent due date, bill target/identity, source roles or principal changes digest; prior approval becomes unusable. Missing or late-inserted intent cannot post.
-- [ ] Capture historical receipt/cash revision, approval and retry rows before review migration; compare bytes and returned receipts afterward. Existing provider run resume/recovery passes unchanged.
-- [ ] Direct `ledger.admit` and generic review-v1 AP posting fail after activation, including from a connection opened before activation; an unlinked direct-SQL AP posting event fails. No partial journals survive.
-- [ ] Existing unassigned AP of 10000 cents blocks activation with unchanged ledger and no invented vendor. Existing non-AP journals/approvals remain usable.
-- [ ] Fault injection at intent/event/retry creation, bill effect, journal line/event, review posting and post retry leaves the intended atomic unit absent; retry succeeds once with original actor/time.
-- [ ] Bill reversal is refused without mutation; ordinary expense reversal still works. All new table UPDATE/DELETE/REPLACE attempts fail.
+- [x] Independent 300.00 bill expectation: Software expense debit 30000 cents, AP credit 30000; one vendor/bill with principal/outstanding 30000, no payments, zero residual. Before explicit approval there are zero posted journals and zero vendor bill rows.
+- [x] Same vendor/bill number under a different source ID conflicts; a different vendor with the same number is valid; same incurrence event with a different number or a prior cash expense conflicts.
+- [x] Missing incurrence, cash-only evidence, mismatched vendor/event/amount/currency, wrong account, unsupported date and invalid due date cannot approve/post.
+- [x] Changing only intent due date, bill target/identity, source roles or principal changes digest; prior approval becomes unusable. Missing or late-inserted intent cannot post.
+- [x] Capture historical receipt/cash revision, approval and retry rows before review migration; compare bytes and returned receipts afterward. Existing provider run resume/recovery passes unchanged.
+- [x] Direct `ledger.admit` and generic review-v1 AP posting fail after activation, including from a connection opened before activation; an unlinked direct-SQL AP posting event fails. No partial journals survive.
+- [x] Existing unassigned AP of 10000 cents blocks activation with unchanged ledger and no invented vendor. Existing non-AP journals/approvals remain usable.
+- [x] Fault injection at intent/event/retry creation, bill effect, journal line/event, review posting and post retry leaves the intended atomic unit absent; retry succeeds once with original actor/time.
+- [x] Bill reversal is refused without mutation; ordinary expense reversal still works. All new table UPDATE/DELETE/REPLACE attempts fail.
 
 14b:
 

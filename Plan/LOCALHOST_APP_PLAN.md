@@ -102,5 +102,6 @@ linked reversals, not deletion or a database reset.
 
 - Step 12a: `ddf53f93846ec92edf179b62b4523f72c497e2f7`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37786950606). 243 tests, 12 demos and browser checks. Live providers remain unconnected.
 - Step 13a: `67ca31ca8afcd12d42810d8e3690830c96488fc7`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37788816873). 257 tests, 13 demos, browser registration/retry.
-- Step 13b: locally verified under [the cash-template plan](05-service-bookkeeping/STEP_13B_PLAN.md); 268 tests, 14 demos and browser flow. Remote/CI checks follow the reviewed commit.
-- Step 14a: next under [the vendor-bill plan](05-service-bookkeeping/STEP_14A_PLAN.md).
+- Step 13b: `887cc4e974c196913432c0006bf7d1e24e5af096`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37791223746). 268 tests, 14 demos and browser cash review/posting.
+- Step 14a: locally verified and reviewed under [the vendor-bill plan](05-service-bookkeeping/STEP_14A_PLAN.md); 287 tests, 15 demos and browser review/posting. Exact remote/CI evidence follows upload.
+- Step 14b: next under [the partial-settlement plan](05-service-bookkeeping/STEP_14B_PLAN.md).

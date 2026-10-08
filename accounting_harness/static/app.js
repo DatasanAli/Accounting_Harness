@@ -5,6 +5,7 @@ const views = {
   evidence: ['Evidence', 'Start with a receipt. Keep every decision connected to its evidence.'],
   review: ['Review queue', 'Your judgment is the last step between a proposal and the books.'],
   ledger: ['Ledger', 'Exact balances and a complete trail back to each approved receipt.'],
+  payables: ['Vendor bills', 'Reviewed vendor expenses and the amount still payable.'],
   runs: ['Agent runs', 'See what was requested, what happened, and where the agent stopped.'],
   providers: ['Providers', 'Choose how proposals are prepared. You control every request.']
 };
@@ -186,7 +187,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -221,7 +222,7 @@ function renderSourceDetail() {
   digest(node, 'Evidence SHA-256 · retained with the proposal', source.content_digest);
   if (document.schema_version === 2) {
     add(node, el('h4', 'Typed fictional facts'), el('pre', JSON.stringify(document, null, 2)),
-      el('p', 'Use Prepare a reviewed cash proposal below to pair cash and recognition evidence.', 'action-hint'));
+      el('p', 'Use the matching proposal form below to pair this evidence with its separate recognition fact.', 'action-hint'));
     return;
   }
   const form = el('div', null, 'proposal-form');
@@ -286,7 +287,8 @@ $('receipt-form').addEventListener('submit', async event => {
 
 function renderCashChoices() {
   for (const [id, kinds] of [['cash-source-select', ['cash_movement']],
-    ['recognition-source-select', ['incurred_expense', 'service_completion']]]) {
+    ['recognition-source-select', ['incurred_expense', 'service_completion']],
+    ['bill-source-select', ['vendor_bill']], ['incurrence-source-select', ['incurred_expense']]]) {
     const select = $(id);
     const prior = select.value;
     select.replaceChildren(el('option', 'Choose registered evidence'));
@@ -299,9 +301,81 @@ function renderCashChoices() {
     });
     select.value = prior;
   }
+  $('prepare-bill').disabled = busy;
+  $('register-bill-evidence').disabled = busy;
   $('prepare-cash').disabled = busy;
   $('register-cash-evidence').disabled = busy;
 }
+$('bill-evidence-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const input = Object.fromEntries(new FormData(event.currentTarget));
+  const common = {schema_version: 2, synthetic: true, entity_id: state.entity_id, currency: 'USD',
+    event_id: input.event_id, counterparty_id: input.counterparty_id, counterparty: input.counterparty,
+    document_date: input.document_date, amount: input.amount};
+  const bill = {...common, document_id: input.bill_source_id, kind: 'vendor_bill',
+    bill_number: input.bill_number, due_date: input.due_date, description: input.bill_description};
+  const incurred = {...common, document_id: input.incurrence_source_id, kind: 'incurred_expense',
+    incurred_date: input.document_date, expense_account: input.expense_account,
+    description: input.incurrence_description};
+  if (bill.document_id === incurred.document_id) {
+    notify('Use distinct bill and incurrence document IDs.', 'error'); return;
+  }
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/operation-sources', {document: bill});
+    await request('/api/operation-sources', {document: incurred});
+    selectedSource = bill.document_id; remember('source', selectedSource);
+    await refresh();
+    $('bill-source-select').value = bill.document_id;
+    $('incurrence-source-select').value = incurred.document_id;
+    $('bill-proposal-panel').open = true;
+    notify('Both fictional facts are registered. Prepare the bill draft, then review and approve separately.');
+  } catch (error) {
+    await refresh();
+    notify(error.message + ' One document may be registered. Retry with the same IDs and unchanged facts.', 'error');
+  } finally { busy = false; if (state) renderCashChoices(); }
+});
+$('bill-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/bill-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Bill proposal recorded. Inspect both documents, the due date and exact expense/AP journal before approval.');
+  } catch (error) {
+    await refresh(); notify(error.message + ' Retry the same pair to recover an existing proposal.', 'error');
+  } finally { busy = false; if (state) render(); }
+});
+
+function renderPayables() {
+  const node = $('payables-content'); node.replaceChildren();
+  const report = state.payables;
+  if (!report) return;
+  const amounts = value => value.startsWith('-') ? '-' + money(value.slice(1)) : money(value);
+  const summary = el('section', null, 'card draft-body');
+  summary.append(metadata([['As of', report.as_of], ['AP control', amounts(report.ap_control_amount)],
+    ['Vendor outstanding', amounts(report.subledger_amount)], ['Unassigned residual', amounts(report.unassigned_control_amount)],
+    ['Reconciliation', report.reconciled ? 'Reconciled' : 'Unassigned AP: correction workflow required']]));
+  summary.append(el('p', report.enabled ? 'New AP postings require an approved vendor bill. Managed bill corrections are unavailable.'
+    : 'Bill setup requires zero existing unassigned AP. Preparing the first valid bill activates the control guard.', 'action-hint'));
+  digest(summary, 'Captured snapshot · ' + report.policy, report.snapshot_digest);
+  digest(summary, 'Reproducible report digest', report.report_digest);
+  node.append(summary);
+  if (!report.bills.length) node.append(empty('No posted vendor bills', 'Register the bill and separate incurrence evidence, prepare a proposal, then approve it in the review queue.'));
+  for (const bill of report.bills) {
+    const card = el('article', null, 'card draft-body');
+    card.append(el('h3', bill.vendor_name + ' · ' + bill.bill_number),
+      metadata([['Vendor ID', bill.vendor_id], ['Recognition date', bill.effective_date], ['Due date', bill.due_date],
+        ['Principal', money(bill.principal_amount)], ['Paid', money(bill.paid_amount)], ['Outstanding', money(bill.outstanding_amount)]]),
+      el('p', 'Bill evidence: ' + bill.bill_source_id + ' · Incurrence evidence: ' + bill.incurrence_source_id));
+    card.append(add(el('details'), el('summary', 'Bill and approval trace'), el('pre', bill.trace_json)));
+    node.append(card);
+  }
+}
+
 $('cash-operation').addEventListener('change', () => {
   $('expense-account-label').hidden = $('cash-operation').value !== 'cash_expense';
 });
@@ -404,6 +478,9 @@ function renderDrafts() {
       ['Evidence policy', draft.policy_version],
       ['Effective date', draft.proposal.effective_date], ['Description', draft.proposal.description]]),
       el('p', draft.reason, 'draft-reason'), journalLines(draft.proposal.lines));
+    if (draft.operation_intent) body.append(add(el('div', null, 'document-description'),
+      el('h4', 'Bound bill operation · review vendor, due date and evidence roles'),
+      el('pre', draft.operation_intent_json)));
     for (const id of Object.keys(draft.evidence)) {
       const fact = state.sources.find(item => item.source_id === id);
       if (fact) body.append(add(el('div', null, 'document-description'), el('h4', 'Evidence · ' + id),

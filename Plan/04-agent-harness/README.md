@@ -1,6 +1,6 @@
 # Phase 04: A bounded accounting agent
 
-Status: Steps 10–11 typed tools, offline cases and the durable fake-provider run loop are implemented. Step 12 adapter and offline evaluation are implemented; its live evaluation gate remains pending API credentials. See [tool verification](STEP_10_VERIFICATION.md), [run contract](STEP_11_PLAN.md) and [run verification](STEP_11_VERIFICATION.md).
+Status: Steps 10–11 typed tools, offline cases and the durable fake-provider run loop are implemented. Step 12 adapter and offline evaluation are implemented; its live evaluation gate is explicitly deferred by the user. See [tool verification](STEP_10_VERIFICATION.md), [run contract](STEP_11_PLAN.md) and [run verification](STEP_11_VERIFICATION.md).
 
 **Depends on:** Steps 02–09. No model provider is required for Steps 10–11.
 

@@ -1,6 +1,6 @@
 # Phase 05: Daily service-business operations
 
-Status: Step 13a is delivered; Step 13b cash templates are locally verified with delivery checks in progress. See [13a verification](STEP_13A_VERIFICATION.md) and [13b verification](STEP_13B_VERIFICATION.md). Next is Step 14a vendor bill recognition.
+Status: Step 13a is delivered; Step 13b cash templates are delivered with verified CI. See [13a verification](STEP_13A_VERIFICATION.md) and [13b verification](STEP_13B_VERIFICATION.md). Step 14a vendor bill recognition is locally verified and reviewed; remote/CI delivery follows. Step 14b partial settlement is next.
 
 **Depends on:** Steps 02–11 and Step 12 offline contracts. Live model connection is deferred by user. Each workflow uses existing evidence, approval, and posting services.
 
@@ -34,7 +34,7 @@ Copyable prompt:
 
 ### Step 14: Vendor bills and partial settlement
 
-Split into [14a bill recognition](STEP_14A_PLAN.md) and 14b recorded partial settlement under [the Step 14 contract](STEP_14_PLAN.md). Each has independent verification and delivery.
+Split into [14a bill recognition](STEP_14A_PLAN.md) and [14b recorded partial settlement](STEP_14B_PLAN.md) under [the Step 14 contract](STEP_14_PLAN.md). Each has independent verification and delivery.
 
 - **Build:** Add a vendor subledger, expense bill, due date and allocation of recorded payments.
 - **Test:** A $300.00 bill and $100.00 payment leave $200.00 payable; duplicate bill and over-allocation fail; AP equals vendor totals.

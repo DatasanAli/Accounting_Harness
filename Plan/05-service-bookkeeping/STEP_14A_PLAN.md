@@ -29,13 +29,13 @@
 
 **Interfaces:** Consume delivered source enrollment, typed incurred-expense evidence, semantic operation claims, stored-policy routing and existing atomic approval/post transaction. Produce explicit `bill-v1` intent validation; `PayablesService.ensure_enabled`, `.propose_bill`, `.snapshot`; `prepare_payable_post`; pure `payables_report`; and `demo-bill`. The full contract gives exact fields and transaction order.
 
-- [ ] Write failing behavior tests for the independent 30000-cent expense/AP outcome, zero pre-approval effects, bill identity and cross-policy duplicate recognition, invalid evidence, intent binding, old digest compatibility, AP activation/bypass guards, atomic rollback, immutable history and unsupported managed reversals.
-- [ ] Implement exact typed `vendor_bill` evidence and deterministic bill identity/journal/intent. Do not infer incurrence from text, due date or invoice amount.
-- [ ] Add optional immutable operation intent side table and atomic review schema migration. Missing/unexpected/unbound intent blocks approval. Legacy hashes and retry envelopes remain byte-compatible; rejected bill revisions retain the intent.
-- [ ] Add payables activation and immutable bill effect table, approved atomic posting hook and mandatory AP posting-event guard. An already-open ledger connection cannot bypass it. Existing unassigned AP blocks activation without inventing opening bills.
-- [ ] Add single-snapshot payable report with cutoff, vendor/bill detail, control total, subledger total, signed unassigned residual and reproducible digest. Historical unmanaged residuals are shown honestly.
-- [ ] Add native evidence/proposal forms and payables list through existing localhost HTTP controls. Derive actor, amount, accounts and policy server-side. Show both documents and exact proposal before separate human confirmation.
-- [ ] Add `demo-bill`: 300.00 software expense/AP, outstanding 300.00, zero residual, traceable evidence and approval, no network.
-- [ ] Run targeted tests, then foundation/guarded full suite/all demos; report commands/results, compatibility checks and limitations for parent review. Parent performs browser flow, final delivery and exact-SHA CI.
+- [x] Write failing behavior tests for the independent 30000-cent expense/AP outcome, zero pre-approval effects, bill identity and cross-policy duplicate recognition, invalid evidence, intent binding, old digest compatibility, AP activation/bypass guards, atomic rollback, immutable history and unsupported managed reversals.
+- [x] Implement exact typed `vendor_bill` evidence and deterministic bill identity/journal/intent. Do not infer incurrence from text, due date or invoice amount.
+- [x] Add optional immutable operation intent side table and atomic review schema migration. Missing/unexpected/unbound intent blocks approval. Legacy hashes and retry envelopes remain byte-compatible; rejected bill revisions retain the intent.
+- [x] Add payables activation and immutable bill effect table, approved atomic posting hook and mandatory AP posting-event guard. An already-open ledger connection cannot bypass it. Existing unassigned AP blocks activation without inventing opening bills.
+- [x] Add single-snapshot payable report with cutoff, vendor/bill detail, control total, subledger total, signed unassigned residual and reproducible digest. Historical unmanaged residuals are shown honestly.
+- [x] Add native evidence/proposal forms and payables list through existing localhost HTTP controls. Derive actor, amount, accounts and policy server-side. Show both documents and exact proposal before separate human confirmation.
+- [x] Add `demo-bill`: 300.00 software expense/AP, outstanding 300.00, zero residual, traceable evidence and approval, no network.
+- [x] Run targeted tests, then foundation/guarded full suite/all demos; report commands/results, compatibility checks and limitations for parent review. Parent performs browser flow, final delivery and exact-SHA CI.
 
 No actual payment is sent. Step 14b records payments that occurred; its separately verified implementation follows this delivery.

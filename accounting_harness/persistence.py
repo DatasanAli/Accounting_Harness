@@ -407,6 +407,12 @@ class SQLiteLedger:
                 "SELECT 1 FROM reversals WHERE original_id=?", (original_id,),
             ).fetchone():
                 raise ValueError("original journal is already reversed")
+            if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='vendor_bills'").fetchone():
+                if self._connection.execute('SELECT 1 FROM vendor_bills WHERE journal_id=?', (original_id,)).fetchone():
+                    raise ValueError('operational_reversal_not_supported: managed bills require a linked correction workflow')
+                if any(line.account == '2000' for line in entry.lines) and self._connection.execute(
+                        'SELECT 1 FROM payables_context').fetchone():
+                    raise ValueError('AP reversal requires a linked correction workflow; unassigned residual is not allowed')
             receipt = self._store_entry(entry, actor_id)
             self._connection.execute("INSERT INTO reversals VALUES (?, ?, ?, ?, ?, ?)",
                                      (original_id, entry.id, entity_id, REVERSAL_OPERATION,
@@ -454,10 +460,14 @@ class SQLiteLedger:
     def snapshot(self) -> LedgerSnapshot:
         # ponytail: load all entries for local fixtures; add bounded queries when scale requires it.
         with self._transaction():
-            rows = self._connection.execute(
-                "SELECT id, entity_id, currency, effective_date, description FROM journals "
-                "ORDER BY effective_date, id").fetchall()
-            return replace(self._empty, entries=tuple(self._entry(row) for row in rows))
+            return self._snapshot()
+
+    def _snapshot(self):
+        """Capture inside an existing ledger transaction (also used by subledgers)."""
+        rows = self._connection.execute(
+            "SELECT id, entity_id, currency, effective_date, description FROM journals "
+            "ORDER BY effective_date, id").fetchall()
+        return replace(self._empty, entries=tuple(self._entry(row) for row in rows))
 
     def trial_balance(self, as_of: date | str):
         return trial_balance(self.snapshot, as_of)

@@ -17,6 +17,7 @@
       <button class="nav-item active" data-view="evidence" aria-current="page"><span aria-hidden="true">▤</span>Evidence</button>
       <button class="nav-item" data-view="review"><span aria-hidden="true">✓</span>Review queue<span id="review-count" class="nav-count">0</span></button>
       <button class="nav-item" data-view="ledger"><span aria-hidden="true">▥</span>Ledger</button>
+      <button class="nav-item" data-view="payables"><span aria-hidden="true">▣</span>Vendor bills</button>
       <button class="nav-item" data-view="runs"><span aria-hidden="true">↗</span>Agent runs</button>
       <button class="nav-item" data-view="providers"><span aria-hidden="true">⌘</span>Providers</button>
     </nav>
@@ -38,6 +39,32 @@
       <section id="view-evidence" class="view" aria-labelledby="evidence-heading">
         <div class="section-heading"><h2 id="evidence-heading">Evidence workspace</h2><span class="muted">01 Evidence → 02 Proposal → 03 Human review</span></div>
         <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered evidence"><div class="card-heading"><h3>Registered evidence</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">Inspect registered evidence and its enrollment state. New receipts use the form below.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
+        <details class="card setup-card" id="bill-evidence-panel"><summary>Register a vendor bill and expense incurrence</summary>
+          <p>Receiving an invoice alone does not establish an expense. Assert the separate incurrence fact only when the fictional service or expense was incurred. Both facts must share a January 2026 date.</p>
+          <form id="bill-evidence-form" class="receipt-form">
+            <label>Recognition event ID <input name="event_id" required maxlength="1000" placeholder="software-incurred-001"></label>
+            <label>Vendor ID <input name="counterparty_id" required maxlength="1000" placeholder="vendor-synthetic-1"></label>
+            <label>Vendor name <input name="counterparty" required maxlength="1000"></label>
+            <label>Bill number <input name="bill_number" required maxlength="1000" placeholder="B-001"></label>
+            <label>Bill document ID <input name="bill_source_id" required maxlength="1000" placeholder="source-bill-001"></label>
+            <label>Incurrence document ID <input name="incurrence_source_id" required maxlength="1000" placeholder="source-incurrence-001"></label>
+            <label>Bill issue and incurrence date <input name="document_date" type="date" min="2026-01-01" max="2026-01-31" required></label>
+            <label>Due date <input name="due_date" type="date" min="2026-01-01" required></label>
+            <label>Principal (USD) <input name="amount" inputmode="decimal" pattern="[0-9]+\.[0-9]{2}" required placeholder="300.00"></label>
+            <label>Incurred expense <select name="expense_account"><option value="5100">Software expense · 5100</option><option value="5000">Rent expense · 5000</option></select></label>
+            <label>Bill description <textarea name="bill_description" required maxlength="1000" rows="2"></textarea></label>
+            <label>Separate incurrence evidence <textarea name="incurrence_description" required maxlength="1000" rows="2" placeholder="Describe the fictional service or expense incurred"></textarea></label>
+            <button id="register-bill-evidence" class="button" type="submit">Register both fictional bill facts</button>
+          </form>
+        </details>
+        <details class="card setup-card" id="bill-proposal-panel"><summary>Prepare a reviewed vendor bill</summary>
+          <form id="bill-proposal-form" class="receipt-form">
+            <label>Vendor bill evidence <select name="bill_source_id" id="bill-source-select" required></select></label>
+            <label>Expense incurrence evidence <select name="incurrence_source_id" id="incurrence-source-select" required></select></label>
+            <button id="prepare-bill" class="button" type="submit">Prepare bill draft</button>
+            <p class="action-hint">Accounts, amount, dates and vendor come from the matched facts. Review both documents and approve the exact journal separately. Existing unassigned AP blocks setup. Rejected drafts retain their event claim; corrections require the local service API.</p>
+          </form>
+        </details>
         <details class="card setup-card" id="cash-evidence-panel"><summary>Register cash and recognition facts</summary>
           <p>Enter two fictional assertions for one economic event: money moved, and an expense was incurred or a service completed. Both must have the same amount, counterparty and January date. Cash alone does not establish revenue or expense.</p>
           <form id="cash-evidence-form" class="receipt-form">
@@ -82,6 +109,7 @@
       </section>
       <section id="view-review" class="view" aria-labelledby="review-heading" hidden><div class="section-heading"><h2 id="review-heading">Your review queue</h2><span class="muted">Inspect the evidence, then decide.</span></div><div id="draft-list" class="stack"></div></section>
       <section id="view-ledger" class="view" aria-labelledby="ledger-heading" hidden><div class="section-heading"><h2 id="ledger-heading">Trial balance &amp; audit trail</h2><span class="muted">Recorded actuals · USD</span></div><div id="ledger-content" class="stack"></div></section>
+      <section id="view-payables" class="view" aria-labelledby="payables-heading" hidden><div class="section-heading"><h2 id="payables-heading">Vendor bills &amp; AP reconciliation</h2><span class="muted">January 31, 2026 · USD</span></div><div id="payables-content" class="stack"></div></section>
       <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><div id="run-list" class="stack"></div></section>
       <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>
       <footer>Accounting Harness <span>Evidence preserved. Decisions recorded. Books kept exact.</span></footer>
