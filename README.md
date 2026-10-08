@@ -4,9 +4,52 @@ An accounting agent harness for bookkeeping at a small service business, built o
 
 The intended workflow is: **evidence → proposed journal entry → validation → human approval → posting → reconciliation → reporting**. Accounting code owns calculations and ledger changes. The agent helps interpret evidence and propose work.
 
-**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is pending local API credentials. Authenticated roles remain a future step.
+**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Authenticated roles remain a future step.
 
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
+
+## Open the localhost workspace
+
+```sh
+python3 -m accounting_harness serve
+```
+
+Open **http://127.0.0.1:8765**. Python 3.12+ is enough; there are no packages to
+install. Records persist in ignored `.local/workspace/`. The initial workspace
+contains five fictional January 2026 receipts. Select a receipt, run the offline
+proposal, inspect the review, then explicitly approve/post or reject it. The
+ledger and run history survive restart. Stop the server with Ctrl-C.
+
+Offline demo mode uses fixed fixture responses; it is not a model. Provider
+choices are shown but disabled by default. No health check, model download or
+provider request runs on startup. Real API connection/evaluation is deferred at
+your request. The [localhost and wider roadmap](Plan/LOCALHOST_APP_PLAN.md) records
+remaining work and the expanded authorization to continue through it.
+
+When you later choose to connect a provider:
+
+```sh
+# Ollama must already be running locally with your chosen model installed.
+python3 -m accounting_harness serve --enable-providers --ollama-model YOUR_LOCAL_MODEL
+
+# OpenAI: set OPENAI_API_KEY privately in the launching environment first.
+python3 -m accounting_harness serve --enable-providers
+```
+
+Choose the provider and press **Prepare proposal** in the UI. Ollama targets only
+`127.0.0.1:11434`; API support initially uses the existing pinned OpenAI model.
+Each click allows one bounded request without network retries. OpenAI requests
+are billable and reserve at most $0.007372800 per request under the existing
+adapter's configured rates; verify current rates before use. Credentials stay
+in the server environment. Neither provider has been connected/evaluated live by
+this work. Local model usage records zero provider billing, excluding your own
+hardware/energy costs. Unknown completion after interruption requires review.
+
+The server binds only to loopback and checks Host, Origin and a browser CSRF
+token. It is a single-operator fictional prototype; the operator label is not
+multi-user authentication. Arbitrary receipt uploads and wider workflows are
+subsequent roadmap deliveries. `--workspace PATH` selects another local directory;
+`--port PORT` changes the loopback port. Preserve ledger, sources and runs together.
 
 ## Run the demonstration
 
@@ -24,6 +67,7 @@ python3 -m accounting_harness demo-approval
 python3 -m accounting_harness demo-tools
 python3 -m accounting_harness demo-run
 python3 -m accounting_harness demo-provider
+python3 -m accounting_harness demo-web
 ```
 
 The account demo prints 13 fictional accounts, including credit-normal accumulated depreciation and debit-normal owner drawings. It demonstrates `0.10 + 0.20 = 0.30 USD (30 cents)` and rejects the unsupported precision in `1.005`.
@@ -53,7 +97,7 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 227 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all eleven demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 243 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all twelve demonstrations.
 
 Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting is implemented; authenticated approval is not. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
@@ -61,7 +105,7 @@ See [Step 02 verification and API examples](Plan/02-ledger-core/STEP_02_VERIFICA
 
 ## Delivery
 
-The current delivery target is this repository on GitHub with its verification workflow. Run the CLI locally after cloning; a hosted service and deployment platform are not configured at this stage.
+The delivery target is this repository on GitHub with its verification workflow and the localhost workspace. Run `python3 -m accounting_harness serve` after cloning; a hosted deployment is not configured.
 
 ## Our build cycle
 
@@ -69,11 +113,11 @@ The current delivery target is this repository on GitHub with its verification w
 2. Implement that step and test its promised behavior and relevant failure cases.
 3. Demonstrate the result with fictional data.
 4. Update the plan and next-step prompt, commit, and push to GitHub.
-5. Verify the remote commit and CI result, report the evidence, and stop until you request the next step.
+5. Verify the remote commit and CI result and report the evidence. The expanded 2026-10-08 request authorizes continuing through the wider roadmap; otherwise stop until the next request.
 
 Next prompt:
 
-> Finish Step 12: run the bounded live synthetic provider evaluation with a locally configured OPENAI_API_KEY, record the results and any regressions, verify all checks, then commit and push to GitHub. Keep Step 13 gated until Step 12 passes. Stop after this step.
+> Build Step 13a: Additive synthetic evidence enrollment and a receipt input form in the localhost workspace. Preserve immutable ledger context and old approval bindings. Keep live API/model connections deferred; verify, commit, push and check CI, then continue through the authorized roadmap.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 

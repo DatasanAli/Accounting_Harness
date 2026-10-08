@@ -12,6 +12,9 @@ from accounting_harness.domain.accounts import _validate_text
 from accounting_harness.persistence import PersistenceBusy, _canonical
 from accounting_harness.review import digest, protect_table
 from accounting_harness import provider as live
+from accounting_harness.local_providers import OfflineExpenseProvider, OllamaExpenseProvider
+
+EXPENSE_PROVIDERS = (live.OpenAIExpenseProvider, OfflineExpenseProvider, OllamaExpenseProvider)
 
 APPLICATION_ID = 0x4148524E  # AHRN; separate from ledger and source registry files.
 SCHEMA_VERSION = 1
@@ -183,7 +186,7 @@ class SQLiteRunEngine:
 
     @staticmethod
     def _provider(provider):
-        if type(provider) not in (FakeProvider, live.OpenAIExpenseProvider):
+        if type(provider) not in (FakeProvider, *EXPENSE_PROVIDERS):
             raise TypeError('unsupported provider type')
         return provider.identity
 
@@ -324,7 +327,7 @@ class SQLiteRunEngine:
                 return None
             expected = digest(['save', args['draft_id'], args['expected_revision'], config['actor_id'], args['reason'],
                                args['proposal'], args['evidence'], self.store.policy_version] +
-                              ([True] if config['provider']['provider_version'] == 'openai-responses-v1' else []))
+                              ([True] if config['provider']['provider_version'] != 'fake-v1' else []))
             if row[0] != expected:
                 raise ToolError('recovery receipt does not match persisted intent')
             return AgentTools._revision(self.store._get(row[1], row[2]))
@@ -372,7 +375,7 @@ class SQLiteRunEngine:
     def advance(self, run_id, provider):
         self._provider(provider)
         with self._dispatch_lock():
-            if type(provider) is live.OpenAIExpenseProvider:
+            if type(provider) in EXPENSE_PROVIDERS:
                 current = self.get(run_id)
                 if current.state in ('ready', 'requesting_provider'):
                     return self._advance_live(run_id, provider)
@@ -405,7 +408,7 @@ class SQLiteRunEngine:
                     dispatch_attempts=0, reason='tool_intent')
             if current.tool_calls + 5 > config['limits']['tool_calls']:
                 return self._exhaust(current, config, 'tool_call_budget')
-            if current.cost_units + live.RESERVATION > config['limits']['cost_units']:
+            if current.cost_units + config['provider']['reservation'] > config['limits']['cost_units']:
                 return self._exhaust(current, config, 'cost_budget')
             try:
                 context = provider.context(self.store)
@@ -417,7 +420,7 @@ class SQLiteRunEngine:
                 return self._exhaust(current, config, 'time_budget')
             reserved = self._append(current, config, state='requesting_provider',
                 provider_attempts=current.provider_attempts + 1, tool_calls=current.tool_calls + 2,
-                cost_units=current.cost_units + live.RESERVATION,
+                cost_units=current.cost_units + config['provider']['reservation'],
                 result_json=_canonical(dict(request_digest=digest(body.decode()),
                                             evidence_digest=context['evidence']['content_digest'])),
                 reason='provider_reserved')
@@ -425,10 +428,10 @@ class SQLiteRunEngine:
             remaining_ms = config['limits']['elapsed_ms'] - self._elapsed(reserved, config)
             if remaining_ms <= 0:
                 raise live.ProviderFailure('time_budget')
-            payload = live.request_response(body, timeout_ms=min(live.TIMEOUT_MS, remaining_ms),
+            payload = provider.request(body, timeout_ms=min(provider.timeout_ms, remaining_ms),
                           cancelled=lambda: self.get(run_id).state == 'cancelled')
             draft_id = 'expense-' + digest([self._path, self._scope, run_id])[:24]
-            intent, reason, usage = live.proposal_intent(payload, context, draft_id)
+            intent, reason, usage = provider.intent(payload, context, draft_id)
         except live.ProviderFailure as error:
             intent, reason, usage = None, str(error), None
         with self._transaction():
@@ -491,13 +494,13 @@ class SQLiteRunEngine:
             intent = json.loads(current.intent_json)
             try:
                 result = AgentTools(self.store, actor_id=config['actor_id'],
-                    require_unused_evidence=type(provider) is live.OpenAIExpenseProvider).call(intent['tool'], intent['arguments'])
+                    require_unused_evidence=type(provider) in EXPENSE_PROVIDERS).call(intent['tool'], intent['arguments'])
             except PersistenceBusy:
                 failed = current.dispatch_attempts >= config['limits']['retries'] + 1
                 return self._append(current, config, state='failed' if failed else 'pending_tool',
                                     reason='tool_retry_exhausted' if failed else 'tool_busy')
             except ToolError as error:
-                if type(provider) is live.OpenAIExpenseProvider and str(error) == 'duplicate evidence':
+                if type(provider) in EXPENSE_PROVIDERS and str(error) == 'duplicate evidence':
                     return self._append(current, config, state='awaiting_review', reason='duplicate', intent_json=None)
                 return self._append(current, config, state='failed', reason='tool_denied')
             return self._result(current, config, result)

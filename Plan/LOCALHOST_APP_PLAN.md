@@ -1,0 +1,99 @@
+# Localhost accounting workspace plan
+
+Updated: 2026-10-08. User direction: defer API connection and build toward a
+localhost UI with a local Ollama model or a frontier API provider.
+
+## Design and scope
+
+Reuse the Python ledger, evidence registry, review application and durable run
+engine. Serve a small HTML/CSS/JavaScript interface from a loopback-only Python
+server. This avoids a second application stack and keeps money and permission
+decisions in the existing application. A desktop wrapper adds packaging without
+needed behavior; a separate React/API stack adds deployment and dependencies.
+
+The first deliverable is **Step 12a**, an independently verifiable extension of
+Step 12: a persistent synthetic workspace from receipt to proposal, human review,
+posting, audit and trial balance. Offline fixture mode works immediately.
+Ollama and the existing pinned OpenAI adapter are selectable but network use is
+disabled unless the operator explicitly enables it at startup. No provider will
+be connected or called during this delivery. A provider error or abstention is
+visible in the run history and never posts a journal.
+
+The existing ledger freezes its source identities and accounting period. Step
+12a therefore uses a fixed set of registered fictional January 2026 receipts;
+it does not pretend to accept arbitrary uploads or real books. Custom evidence
+onboarding must preserve old context/approval bindings and gets its own step.
+
+## Remaining path and acceptance
+
+| Order | Deliverable | Acceptance |
+| --- | --- | --- |
+| 12a (this request) | Localhost workspace; offline/Ollama/OpenAI selection; review, reject, post, audit and trial balance | Offline browser walkthrough; persistent restart; stale/duplicate approval refusal; network disabled by default; adapter contract tests |
+| 13a | Register new structured synthetic receipts through the UI | Additive evidence enrollment without rewriting ledger context or old approvals; import retry/conflict/restart tests |
+| 13b | Cash receipts and expenses in the UI | Supported income/expense forms, exact cents, review before posting, negative and duplicate cases |
+| 14–16 | Bills, invoices, partial settlement and customer advances | Subledger/control-account reconciliation, overpayment and duplicate protection |
+| 17–19 | Bank CSV, matching and reviewed reconciliation | Ambiguity queue, timing differences, no unexplained completion |
+| 20–23 | Adjustments, statements, close/locks and exports | Reference-month expected results, frozen snapshots/policies, reproducible exports |
+| 24–28 | Service costs, budgets and scenarios | Recorded actuals separated from plans; deterministic comparisons |
+| 29–34 | Authenticated roles, selected integrations, recovery and pilot | Scoped human permissions, restore exercise, selected real-data policies and pilot checks |
+| 12b (when requested) | Connect and evaluate the chosen actual model | Bounded synthetic live evaluation, observed accuracy/latency/usage; no offline score substituted |
+
+Steps 13 onward may proceed offline under the user's new direction. The deferred
+live evaluation remains a requirement for claiming model readiness and for a
+real-data pilot. The numbered accounting roadmap remains intact; lettered
+substeps record independently reviewable deliveries without renumbering history.
+The user explicitly expanded this request to **complete the wider accounting
+roadmap too**. This overrides the default stop-between-requests cadence for this
+request: continue through the numbered steps/substeps, with a separate reviewed
+commit and verified CI per delivery. Do not claim deferred live connections or
+actual pilot acceptance have occurred.
+
+## Step 12a implementation plan
+
+**Execution:** execute inline using the executing-plans workflow; existing solo
+checkout and main delivery follow the repository's GitHub workflow.
+
+**Stack:** Python 3.12+, standard-library HTTP/SQLite/unittest, browser-native UI.
+**Spec:** this document's design and scope.
+
+**Constraints:** exact integer cents; immutable journals; evidence/digest-bound
+human approval; fictional fixtures only; no keys or raw provider traces stored;
+no outbound requests during delivery; default bind 127.0.0.1; one local operator.
+
+- [x] Write failing tests in `tests/test_local_providers.py` for schema parsing,
+  provider identity, valid/review/invalid outcomes, input limits, duplicate source
+  prevention and uncertainty recovery. Use real runtime/storage with only the
+  external transport substituted.
+- [x] Add `accounting_harness/local_providers.py`; extend `provider.py` and
+  `runs.py` with explicit adapters that share bounded request processing. Ollama
+  uses local `/api/chat`, a JSON schema, no streaming, bounded output and timeout;
+  fixture mode uses exact frozen responses and reports no live-model accuracy.
+- [x] Write failing HTTP tests in `tests/test_web.py`: loopback/Host/Origin/CSRF
+  boundaries, bounded JSON, disabled provider denial, end-to-end review/post and
+  exact balances, retry, stale confirmation, restart and rendered hostile data.
+- [x] Add `accounting_harness/workspace.py` for storage and trusted actions;
+  `web.py` for local HTTP and `static/` for accessible receipt/review/ledger UI.
+  `GET /api/state` returns evidence/drafts/runs/snapshot; explicit POST actions
+  run, cancel, reject and approve/post. Each request owns its SQLite connections.
+- [x] Add `serve` and `demo-web` CLI commands, update CI and startup documentation.
+  Run `python3 -m unittest discover -s tests -p 'test_local_providers.py' -v`
+  and the equivalent `test_web.py` command during red/green development.
+- [x] Run foundation, guarded full suite, all prior demos and `demo-web`; use a
+  real browser for desktop/mobile layout and the proposal/review/post flow.
+- [ ] Record results and limitations, inspect/stage only intended paths, commit,
+  push and inspect the exact remote SHA/Actions run. Then continue with Step 13a
+  under the user's expanded authorization.
+
+## Provider references
+
+Ollama's [chat API](https://docs.ollama.com/api/chat) and
+[structured outputs](https://docs.ollama.com/capabilities/structured-outputs)
+were checked on 2026-10-08. Live compatibility is unverified until 12b; supported
+models must produce the strict decision schema. Frontier support initially means
+the existing OpenAI adapter, not every provider or arbitrary compatible endpoint.
+
+## Rollback
+
+Revert published code with a new commit. Preserve the workspace's ledger,
+source registry and run log together. Posted accounting corrections still use
+linked reversals, not deletion or a database reset.

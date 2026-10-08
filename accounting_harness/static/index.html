@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Accounting Harness · Local workspace</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to workspace</a>
+  <aside class="sidebar" aria-label="Workspace navigation">
+    <a class="brand" href="#evidence"><span class="brand-mark" aria-hidden="true">a</span><span>Accounting<br><strong>Harness</strong></span></a>
+    <div class="workspace-label">LOCAL WORKSPACE</div>
+    <nav>
+      <button class="nav-item active" data-view="evidence" aria-current="page"><span aria-hidden="true">▤</span>Evidence</button>
+      <button class="nav-item" data-view="review"><span aria-hidden="true">✓</span>Review queue<span id="review-count" class="nav-count">0</span></button>
+      <button class="nav-item" data-view="ledger"><span aria-hidden="true">▥</span>Ledger</button>
+      <button class="nav-item" data-view="runs"><span aria-hidden="true">↗</span>Agent runs</button>
+      <button class="nav-item" data-view="providers"><span aria-hidden="true">⌘</span>Providers</button>
+    </nav>
+    <div class="sidebar-note"><span class="status-dot" aria-hidden="true"></span>One local operator<p>Fictional books. Real accounting rules.</p></div>
+    <div class="operator"><span class="avatar" aria-hidden="true">LO</span><div>Local operator<small>Human review &amp; approval</small></div></div>
+  </aside>
+  <div class="shell">
+    <header class="topbar"><span id="entity-label">Synthetic service business</span><div><span class="local-badge">● Localhost</span><span id="period-label">January 2026 · USD</span></div></header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading"><div><p class="eyebrow">YOUR ACCOUNTING WORKSPACE</p><h1 id="page-title">Evidence</h1><p id="page-description">Start with a receipt. Keep every decision connected to its evidence.</p></div><button id="refresh" class="button secondary">↻ Refresh</button></div>
+      <div class="demo-banner"><span class="banner-icon" aria-hidden="true">i</span><div><strong>A safe place to work through the books.</strong><span>Registered fictional January receipts · Offline demo by default · Every posting requires your approval.</span></div><span class="tag">SYNTHETIC</span></div>
+      <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+      <section class="metrics" aria-label="Workspace summary">
+        <div class="metric"><span>Registered receipts</span><strong id="metric-sources">—</strong><small>Evidence ready to inspect</small></div>
+        <div class="metric"><span>Needs your review</span><strong id="metric-review">—</strong><small>Human decisions come next</small></div>
+        <div class="metric"><span>Posted journals</span><strong id="metric-journals">—</strong><small>Approved, permanent entries</small></div>
+        <div class="metric"><span>Trial balance</span><strong id="metric-balance" class="money">—</strong><small id="balance-caption">USD per debit / credit column</small></div>
+      </section>
+      <section id="view-evidence" class="view" aria-labelledby="evidence-heading">
+        <div class="section-heading"><h2 id="evidence-heading">Receipt workspace</h2><span class="muted">01 Evidence → 02 Proposal → 03 Human review</span></div>
+        <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered receipts"><div class="card-heading"><h3>Registered receipts</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">These samples are already registered. New receipt imports are a later step.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
+      </section>
+      <section id="view-review" class="view" aria-labelledby="review-heading" hidden><div class="section-heading"><h2 id="review-heading">Your review queue</h2><span class="muted">Inspect the evidence, then decide.</span></div><div id="draft-list" class="stack"></div></section>
+      <section id="view-ledger" class="view" aria-labelledby="ledger-heading" hidden><div class="section-heading"><h2 id="ledger-heading">Trial balance &amp; audit trail</h2><span class="muted">Recorded actuals · USD</span></div><div id="ledger-content" class="stack"></div></section>
+      <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><div id="run-list" class="stack"></div></section>
+      <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>
+      <footer>Accounting Harness <span>Evidence preserved. Decisions recorded. Books kept exact.</span></footer>
+    </main>
+  </div>
+</body>
+</html>

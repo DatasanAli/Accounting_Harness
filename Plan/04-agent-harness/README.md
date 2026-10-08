@@ -55,6 +55,15 @@ Copyable prompt:
 
 > Build Step 12: One real provider and proposal evaluation. Follow Plan/04-agent-harness/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
+## Step 12a: localhost workspace (reprioritized on 2026-10-08)
+
+Locally verified under the [localhost and wider roadmap](../LOCALHOST_APP_PLAN.md); see [observed verification](STEP_12A_VERIFICATION.md).
+Expose existing evidence, review, posting, ledger and run services in a local UI.
+Offline fixture mode works without a key; selectable Ollama and OpenAI adapters
+stay disabled until explicit startup opt-in. No live connections are performed.
+The user explicitly deferred Step 12's live gate and authorized remaining
+accounting work; the live gate does not block Step 13.
+
 ## Phase acceptance and rollback
 
 The phase is complete only when each of its steps has its own observed verification and GitHub delivery evidence. Apply the [shared testing rules](../TESTING_STRATEGY.md) and [GitHub workflow](../GITHUB_WORKFLOW.md).

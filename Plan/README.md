@@ -1,6 +1,8 @@
 # Accounting Harness implementation plan
 
-Steps 01–11 establish the plan and implement exact money/accounts, a durable ledger, source registration, versioned drafts, local approval/posting and typed agent tools with offline cases and a bounded resumable fake-provider loop. The next small build is **Step 12: one real provider and proposal evaluation**. The selected initial workflow is bookkeeping for a small service business.
+Steps 01–11 establish the plan and implement exact money/accounts, a durable ledger, source registration, versioned drafts, local approval/posting and typed agent tools with offline cases and a bounded resumable fake-provider loop. The active delivery is **Step 12a: the localhost workspace**; Step 12's live
+provider evaluation is explicitly deferred. The user authorized the wider
+roadmap too; follow [the current working plan](LOCALHOST_APP_PLAN.md). The selected initial workflow is bookkeeping for a small service business.
 
 An agent harness is the application around an agent: its task state, evidence context, allowed tools, execution limits, approvals, and recorded results. Our ledger and accounting rules must be testable independently of the model.
 
@@ -90,4 +92,4 @@ Every phase contains implementation guidance, per-step tests, a manual demonstra
 
 The initial harness prepares, reviews and records supported bookkeeping activity. Payment execution, tax filing/calculation, payroll processing, manufacturing, inventory, complex revenue contracts, and external customer/vendor messaging are deferred. The [source map](SOURCE_MAP.md) and [extension backlog](10-deferred-extensions/README.md) preserve the broader textbook coverage.
 
-**Next action:** use the exact prompt and acceptance criteria in [NEXT_STEP.md](NEXT_STEP.md). After that one step is built, tested, committed, pushed and verified, stop.
+**Next action:** use the exact prompt and acceptance criteria in [NEXT_STEP.md](NEXT_STEP.md). During the expanded 2026-10-08 request, continue after each verified delivery; the default stop-between-requests cadence resumes afterward.

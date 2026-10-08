@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
-  "current_step": "11",
-  "next_step": "12",
+  "schema_version": 2,
+  "current_step": "12",
+  "next_step": "13",
   "phases": [
     {
       "id": "01",
@@ -87,8 +87,21 @@
         {
           "id": "12",
           "title": "One real provider and proposal evaluation",
-          "status": "ready",
-          "delivery_gate": "Adapter and offline evaluation implemented; bounded live evaluation pending local OPENAI_API_KEY."
+          "status": "deferred",
+          "delivery_gate": "Bounded live synthetic evaluation remains deferred and does not block independent accounting/UI work.",
+          "deferred_reason": "User deferred live API/model connection on 2026-10-08; adapter/offline work is implemented and Step12a localhost implementation is locally verified. This is not a live evaluation pass.",
+          "substeps": [
+            {
+              "id": "12a",
+              "title": "Persistent localhost workspace and selectable provider adapters",
+              "status": "verified_local"
+            },
+            {
+              "id": "12b",
+              "title": "Connect and evaluate chosen live model",
+              "status": "deferred"
+            }
+          ]
         }
       ]
     },
@@ -100,7 +113,7 @@
         {
           "id": "13",
           "title": "Cash receipts and expenses",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "14",

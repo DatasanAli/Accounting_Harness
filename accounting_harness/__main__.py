@@ -230,6 +230,12 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-tools", help="run a scripted agent and labeled offline tool cases")
     commands.add_parser("demo-run", help="persist a bounded fake-provider run and resume its review handoff")
     commands.add_parser("demo-provider", help="evaluate synthetic provider responses and demonstrate separate approval")
+    commands.add_parser("demo-web", help="exercise the persistent offline workspace and human posting")
+    web = commands.add_parser("serve", help="open a persistent fictional accounting workspace on localhost")
+    web.add_argument("--workspace", default=".local/workspace", help="local storage directory")
+    web.add_argument("--port", type=int, default=8765)
+    web.add_argument("--enable-providers", action="store_true", help="allow explicit Ollama/OpenAI requests from the UI")
+    web.add_argument("--ollama-model", help="installed local Ollama model name; no downloads or automatic calls")
     evaluation = commands.add_parser("eval-provider", help="evaluate 20 synthetic cases; live mode adds four repeats")
     evaluation.add_argument("--live", action="store_true", help="billable: at most 24 requests, 5 minutes, $0.25 reserved")
     review = commands.add_parser("review-post", help="review and explicitly approve a saved draft for posting")
@@ -237,7 +243,13 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "demo-provider":
+        if args.command == "serve":
+            from accounting_harness.web import serve
+            serve(args)
+        elif args.command == "demo-web":
+            from accounting_harness.web import demo_web
+            demo_web()
+        elif args.command == "demo-provider":
             from accounting_harness.provider_evaluation import demo_provider
             demo_provider()
         elif args.command == "eval-provider":

@@ -43,16 +43,21 @@ class ProviderFailure(ValueError):
     """Safe reason code only; raw service bodies must never enter audit logs."""
 
 
-def _http_worker(pipe, body, key, timeout):
+def _http_worker(pipe, body, key, timeout, url='https://api.openai.com/v1/responses'):
     """Process-isolated transport; parent can kill DNS/TLS/read stalls."""
     try:
-        request = urllib.request.Request('https://api.openai.com/v1/responses', data=body,
-                  headers={'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'})
+        headers = {'Content-Type': 'application/json'}
+        if key:
+            headers['Authorization'] = 'Bearer ' + key
+        request = urllib.request.Request(url, data=body, headers=headers)
         # Refuse redirects so credentials cannot be forwarded to another origin.
         class NoRedirect(urllib.request.HTTPRedirectHandler):
             def redirect_request(self, *args, **kwargs):
                 return None
-        with urllib.request.build_opener(NoRedirect).open(request, timeout=timeout) as stream:
+        handlers = [NoRedirect]
+        if url.startswith('http://127.0.0.1:'):
+            handlers.append(urllib.request.ProxyHandler({}))
+        with urllib.request.build_opener(*handlers).open(request, timeout=timeout) as stream:
             raw = stream.read(65537)
         if len(raw) > 65536:
             pipe.send(('error', 'provider_response_too_large'))
@@ -70,9 +75,15 @@ def request_response(body, *, timeout_ms, cancelled):
     key = os.environ.get('OPENAI_API_KEY')
     if not key:
         raise ProviderFailure('provider_not_configured')
+    return bounded_request(_http_worker, (body, key, timeout_ms / 1000),
+                           timeout_ms=timeout_ms, cancelled=cancelled)
+
+
+def bounded_request(worker, arguments, *, timeout_ms, cancelled):
+    """Shared process deadline/cancellation boundary; no automatic retries."""
     context = multiprocessing.get_context('spawn')
     receive, send = context.Pipe(duplex=False)
-    process = context.Process(target=_http_worker, args=(send, body, key, timeout_ms / 1000))
+    process = context.Process(target=worker, args=(send, *arguments))
     deadline = time.monotonic_ns() + timeout_ms * 1_000_000
     try:
         process.start()
@@ -166,6 +177,7 @@ def proposal_intent(payload, context, draft_id):
 @dataclass(frozen=True, slots=True)
 class OpenAIExpenseProvider:
     source_id: str
+    timeout_ms = TIMEOUT_MS
 
     def __post_init__(self):
         _validate_text(self.source_id, 'source ID')
@@ -198,3 +210,9 @@ class OpenAIExpenseProvider:
         if len(body) > MAX_BYTES:
             raise ProviderFailure('provider_input_too_large')
         return body
+
+    def request(self, body, *, timeout_ms, cancelled):
+        return request_response(body, timeout_ms=timeout_ms, cancelled=cancelled)
+
+    def intent(self, payload, context, draft_id):
+        return proposal_intent(payload, context, draft_id)

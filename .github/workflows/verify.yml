@@ -39,3 +39,5 @@ jobs:
         run: python3 -m accounting_harness demo-run
       - name: Demonstrate bounded provider adapter and offline proposal gate
         run: python3 -m accounting_harness demo-provider
+      - name: Demonstrate persistent offline localhost workspace
+        run: python3 -m accounting_harness demo-web

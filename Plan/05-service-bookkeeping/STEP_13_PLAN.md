@@ -1,7 +1,8 @@
 # Step 13 brief: cash receipts and expenses
 
-Status: planned, gated on completion of Step 12's live provider evaluation.
-This brief does not authorize implementation before the user requests Step 13.
+Status: authorized by the user's 2026-10-08 expanded roadmap request, with live
+provider connection deferred. Implement Step 13a additive evidence enrollment
+first, then Step 13b reviewed cash templates. Each is a separate verified delivery.
 
 ## Copyable prompt after the gate passes
 

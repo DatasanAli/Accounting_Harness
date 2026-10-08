@@ -59,6 +59,7 @@ def check_plan():
             checked += 1
 
     roadmap = read_json(ROOT / "Plan/roadmap.json")
+    require(roadmap['schema_version'] in (1, 2), 'Unsupported roadmap schema')
     steps = []
     for index, phase in enumerate(roadmap["phases"], 1):
         require(phase["id"] == f"{index:02}", "Phases must be ordered")
@@ -75,6 +76,10 @@ def check_plan():
     require(roadmap["next_step"] == next_id, "Next step must follow completed work")
     for index, step in enumerate(steps, 1):
         expected = "complete" if index <= current else "ready" if index == current + 1 else "planned"
+        if roadmap['schema_version'] == 2 and index <= current and step['status'] == 'deferred':
+            require(isinstance(step.get('deferred_reason'), str) and step['deferred_reason'].strip(),
+                    f"Deferred Step {step['id']} needs an explicit reason")
+            continue
         require(step["status"] == expected, f"Unexpected status for Step {step['id']}")
     print(f"PASS: {len(files)} Markdown files, {checked} local links, {len(steps)} ordered steps")
 
