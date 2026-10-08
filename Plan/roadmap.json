@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "24",
-  "next_step": "25",
+  "current_step": "25",
+  "next_step": "26",
   "phases": [
     {
       "id": "01",
@@ -351,19 +351,21 @@
             {
               "id": "24b",
               "title": "Auditable project time facts",
-              "status": "complete"
+              "status": "complete",
+              "commit": "d74554063e385b57b66d69301e7fa7cac1d93d73",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37843247067"
             }
           ]
         },
         {
           "id": "25",
           "title": "Service project costing",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "26",
           "title": "Versioned operating and cash budgets",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "27",

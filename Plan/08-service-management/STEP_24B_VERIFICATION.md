@@ -44,7 +44,7 @@ state/report/download comparison exactly.
 - All 35 demonstrations, foundation, JavaScript syntax and diff checks passed.
 - Initial missing-module/CLI and missing-native-route failures preceded implementation.
 - Independent review approved spec and quality with no findings.
-- Commit/remote/exact CI checks follow local acceptance.
+- Delivered commit [d745540](https://github.com/DatasanAli/Accounting_Harness/commit/d74554063e385b57b66d69301e7fa7cac1d93d73) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37843247067) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py

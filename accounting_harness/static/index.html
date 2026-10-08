@@ -124,6 +124,34 @@
           <p id="project-time-void-result" class="digest" aria-live="polite"></p>
         </div>
         <div id="project-time-report" class="stack"></div>
+        <article class="card setup-card">
+          <h3>Service project costing</h3>
+          <p>Capture actuals and time, select direct nonlabor portions, and enter explicit hourly assumptions. Every saved version retains its original cost sheet. This management model does not post wages, overhead or financial entries.</p>
+          <form id="project-cost-capture-form" class="receipt-form">
+            <label>Costing cutoff <input id="project-cost-cutoff" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-31"></label>
+            <button id="capture-project-cost" class="button" type="submit">Capture costing inputs and versions</button>
+          </form>
+          <div id="project-cost-versions" class="stack"></div>
+          <form id="project-cost-form" action="/api/project-cost" class="receipt-form">
+            <fieldset id="project-cost-fields" disabled>
+              <label>Project <select id="project-cost-project" name="project_id" required></select></label>
+              <label>Scenario ID <input id="project-cost-scenario" name="scenario_id" required maxlength="200" placeholder="project-A-service-cost"></label>
+              <label>Scenario name <input id="project-cost-name" name="name" required maxlength="200" placeholder="Project A service costing"></label>
+              <label>Prior version ID (blank for a new scenario) <input id="project-cost-prior" name="prior_version_id" maxlength="200" placeholder="Choose a saved version below"></label>
+              <label>Assumed labor rate · USD/hour <input id="project-cost-labor" name="labor_rate" required inputmode="decimal" pattern="(0|[1-9][0-9]*)\.[0-9]{2}" value="40.00" maxlength="20"></label>
+              <label>Assumed overhead rate · USD/hour <input id="project-cost-overhead" name="overhead_rate" required inputmode="decimal" pattern="(0|[1-9][0-9]*)\.[0-9]{2}" value="20.00" maxlength="20"></label>
+              <p id="project-cost-input-context" class="callout"></p>
+              <p>Choose each direct nonlabor portion to include. Eligible categories: software, materials, travel, subcontractor, other-nonlabor. Actual labor and indirect expense remain visible in the cost sheet and are excluded from this direct component.</p>
+              <div id="project-cost-portions" class="stack"></div>
+              <label>Version reason <input id="project-cost-reason" name="reason" required maxlength="1000" placeholder="Initial model, revised assumptions, or refreshed inputs"></label>
+              <label>Explanation (optional) <textarea id="project-cost-explanation" name="explanation" maxlength="2000"></textarea></label>
+              <button id="review-project-cost" class="button" type="submit">Review immutable costing version</button>
+            </fieldset>
+          </form>
+          <div id="project-cost-review" aria-live="polite"></div>
+          <p id="project-cost-result" class="digest" aria-live="polite"></p>
+        </article>
+        <div id="project-cost-report" class="stack"></div>
       </section>
       <section id="view-close" class="view" aria-labelledby="close-heading" hidden>
         <div class="section-heading"><h2 id="close-heading">Close January 2026</h2><span class="muted">Review → Confirm → Lock</span></div>

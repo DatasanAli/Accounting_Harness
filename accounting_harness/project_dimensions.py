@@ -154,14 +154,18 @@ class DimensionsCapture:
 def capture_dimensions(ledger, as_of):
     """Capture current attribution knowledge and financial activity in one read."""
     with ledger._transaction():
-        financial = _capture_financials(ledger,as_of)
-        projects = [json.loads(r[0]) for r in ledger._connection.execute('SELECT result_json FROM management_projects ORDER BY project_id')]
-        revisions = [json.loads(r[0]) for r in ledger._connection.execute('''SELECT r.result_json
-            FROM project_assignment_revisions r WHERE NOT EXISTS(
-                SELECT 1 FROM project_assignment_revisions newer WHERE newer.journal_id=r.journal_id
-                AND newer.line_number=r.line_number AND newer.revision>r.revision)
-            ORDER BY r.journal_id,r.line_number''')]
-        return DimensionsCapture(financial,_canonical(projects),_canonical(revisions))
+        return _capture_dimensions(ledger, as_of)
+
+
+def _capture_dimensions(ledger, as_of):
+    financial = _capture_financials(ledger,as_of)
+    projects = [json.loads(r[0]) for r in ledger._connection.execute('SELECT result_json FROM management_projects ORDER BY project_id')]
+    revisions = [json.loads(r[0]) for r in ledger._connection.execute('''SELECT r.result_json
+        FROM project_assignment_revisions r WHERE NOT EXISTS(
+            SELECT 1 FROM project_assignment_revisions newer WHERE newer.journal_id=r.journal_id
+            AND newer.line_number=r.line_number AND newer.revision>r.revision)
+        ORDER BY r.journal_id,r.line_number''')]
+    return DimensionsCapture(financial,_canonical(projects),_canonical(revisions))
 
 
 def _source_rows(financial, statements=None):

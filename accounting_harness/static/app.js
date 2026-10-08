@@ -1923,3 +1923,130 @@ for (const [formId,isVoid] of [['project-time-form',false],['project-time-void-f
     finally { setProjectTimeBusy(false); }
   });
 }
+
+let projectCostInputs = null;
+let projectCostBusy = false;
+let pendingProjectCost = null;
+let projectCostUncertain = false;
+function setProjectCostBusy(value) {
+  projectCostBusy = value;
+  $('capture-project-cost').disabled = value || !!pendingProjectCost;
+  $('project-cost-fields').disabled = value || !!pendingProjectCost || !projectCostInputs?.actuals.projects.length;
+  $('project-cost-versions').querySelectorAll('button').forEach(node => { node.disabled = value || !!pendingProjectCost; });
+}
+function renderProjectCostPortions(selected = []) {
+  const node = $('project-cost-portions'); node.replaceChildren();
+  if (!projectCostInputs) return;
+  const project = $('project-cost-project').value;
+  const records = projectCostInputs.time.active_intervals.filter(r => r.project_id === project);
+  const minutes = records.reduce((sum,r) => sum + r.minutes,0);
+  $('project-cost-input-context').textContent = 'Captured through ' + projectCostInputs.actuals.as_of + ': ' + minutes + ' active minutes from ' + records.length + ' recorded intervals. Labor and overhead round half-up once per total component.';
+  const portions = projectCostInputs.eligible_direct_costs.filter(r => r.project_id === project);
+  for (const row of portions) {
+    const input = el('input'); input.type = 'checkbox'; input.name = 'direct_cost_portion'; input.value = JSON.stringify(row.reference);
+    input.checked = selected.some(r => r.revision_id === row.revision_id && r.allocation_number === row.allocation_number);
+    node.append(add(el('label'),input,el('span', row.category + ' · ' + row.signed_amount + ' USD · ' + row.journal_id + ' line ' + row.line_number + ', portion ' + row.allocation_number),
+      el('span',row.revision_id,'digest')));
+  }
+  if (!portions.length) node.append(el('p','No eligible direct nonlabor portions in this project capture.'));
+}
+function renderProjectCostSheet(result) {
+  const sheet = result.cost_sheet, node = $('project-cost-report'); node.replaceChildren();
+  const card = add(el('article',null,'card'),el('h3',sheet.name + ' · version ' + sheet.version),el('p',sheet.scope,'callout'),
+    metadata([['Project',sheet.project_id],['Period',sheet.period_start + ' through ' + sheet.as_of],['Recorded active time',sheet.total_minutes + ' minutes · ' + sheet.duration],
+      ['Modeled project cost',signedMoney(sheet.total_cost_amount)],['Modeled project margin',signedMoney(sheet.margin_amount)],
+      ['Recorded by',sheet.actor_id],['Recorded at',sheet.recorded_at],['Reason',sheet.reason],['Prior version',sheet.prior_version_id || 'Initial version']]));
+  card.append(table(['Component','Basis','USD'],[
+    ['Modeled direct labor',sheet.total_minutes + ' minutes × ' + sheet.calculations.labor.rate_amount + ' USD/hour',sheet.labor_amount],
+    ['Selected actual direct nonlabor','Explicit allocation portions',sheet.direct_nonlabor_amount],
+    ['Modeled overhead',sheet.total_minutes + ' minutes × ' + sheet.calculations.overhead.rate_amount + ' USD/hour',sheet.overhead_amount],
+    ['Total modeled cost','Labor + selected direct actual + overhead',sheet.total_cost_amount],
+    ['Attributed actual revenue','Captured posted revenue portions',sheet.revenue_amount],
+    ['Modeled project margin','Attributed revenue − modeled cost',sheet.margin_amount]],'Facts and assumptions are separate'));
+  card.append(table(['Actual journal / portion','Category / traceability','Signed actual · USD','Treatment','Reason'],
+    sheet.actuals_bridge.map(r => [r.journal_id + ' / ' + r.line_number + ':' + r.allocation_number,r.category + ' / ' + r.traceability,r.signed_amount,r.treatment,r.reason]),'Every attributed actual; excluded actuals are retained'));
+  card.append(metadata([['Total attributed actual expense',signedMoney(sheet.actual_expense_amount)],['Actual expense excluded from direct component',signedMoney(sheet.excluded_actual_expense_amount)],
+    ['Modeled cost minus attributed actual expense',signedMoney(sheet.model_minus_actual_amount)]]),
+    el('p','Model-to-actual differences reflect the stated assumptions and selections; they are not accounting errors.'),
+    table(['Ledger type','Actual · USD','Allocated · USD','Unallocated · USD','Residual · USD'],Object.entries(sheet.actuals.totals).map(([kind,r]) => [kind,r.actual_amount,r.allocated_amount,r.unallocated_amount,r.residual_amount]),'Captured whole-ledger actuals reconciliation'));
+  if (sheet.findings.length) card.append(add(el('div',null,'callout'),el('h4','Input findings'),...sheet.findings.map(f => el('p',f))));
+  card.append(table(['Component','Exact numerator / denominator · cents','Rounded · cents','Rounding delta · cents'],
+    Object.entries(sheet.calculations).map(([name,r]) => [name,r.numerator + ' / ' + r.denominator,r.rounded_cents,r.rounding_delta_numerator + ' / ' + r.rounding_delta_denominator]),'Half-up once per total component; no per-row rounding'),
+    table(['Record ID','Worker','Date','Minutes'],sheet.time_records.map(r => [r.record_id,r.worker_id,r.work_date,r.minutes]),'Active recorded time references'),
+    jsonDetails('Category policy and explicit assumptions',sheet.category_policy));
+  digest(card,'Scenario version',sheet.version_id); digest(card,'Actual input capture SHA-256',sheet.actual_snapshot_digest);
+  digest(card,'Time input capture SHA-256',sheet.time_snapshot_digest); digest(card,'Cost sheet SHA-256',sheet.report_digest);
+  card.append(jsonDetails('Complete sealed scenario, input evidence, journals, revisions and time history',result)); node.append(card);
+}
+function renderProjectCostVersions() {
+  const node = $('project-cost-versions'); node.replaceChildren();
+  if (!projectCostInputs?.versions.length) return;
+  node.append(el('h4','Saved immutable versions'));
+  for (const version of projectCostInputs.versions) {
+    const row = add(el('div'),el('p',version.name + ' · ' + version.scenario_id + ' · version ' + version.version + ' · ' + version.as_of));
+    const load = async edit => {
+      if (projectCostBusy || pendingProjectCost) return; setProjectCostBusy(true);
+      try {
+        const result = await request('/api/project-cost?version_id=' + encodeURIComponent(version.version_id));
+        renderProjectCostSheet(result);
+        if (edit) {
+          for (const field of ['scenario_id','name','project_id','labor_rate','overhead_rate','explanation']) $('project-cost-form').elements.namedItem(field).value = result[field];
+          $('project-cost-prior').value = result.version_id; $('project-cost-reason').value = '';
+          renderProjectCostPortions(result.direct_cost_portions);
+          notify('Prior version selected. Current captured inputs will be used in the new version; enter a reason and review every selection.');
+        }
+      } catch (error) { notify(error.message,'error'); }
+      finally { setProjectCostBusy(false); }
+    };
+    row.append(button('View saved cost sheet',() => load(false)),button('Use as prior version',() => load(true)));
+    node.append(row);
+  }
+}
+$('project-cost-project').addEventListener('change',() => renderProjectCostPortions());
+$('project-cost-capture-form').addEventListener('submit',async event => {
+  event.preventDefault(); if (projectCostBusy || pendingProjectCost) return; setProjectCostBusy(true);
+  try {
+    const captured = await request('/api/project-cost-inputs?as_of=' + encodeURIComponent($('project-cost-cutoff').value));
+    projectCostInputs = captured;
+    const selected = $('project-cost-project').value; $('project-cost-project').replaceChildren();
+    captured.actuals.projects.forEach(p => $('project-cost-project').append(new Option(p.name + ' · ' + p.project_id,p.project_id)));
+    if (captured.actuals.projects.some(p => p.project_id === selected)) $('project-cost-project').value = selected;
+    renderProjectCostPortions(); renderProjectCostVersions();
+    notify('Actuals and time captured together. Select direct nonlabor inputs explicitly; saved cost sheets keep their original facts.');
+  } catch (error) { notify(error.message,'error'); }
+  finally { setProjectCostBusy(false); }
+});
+$('project-cost-form').addEventListener('submit',event => {
+  event.preventDefault(); if (projectCostBusy || pendingProjectCost || !projectCostInputs) return;
+  const form = event.target, values = Object.fromEntries(new FormData(form));
+  pendingProjectCost = {entity_id:projectCostInputs.actuals.entity_id,scenario_id:values.scenario_id,name:values.name,project_id:values.project_id,
+    as_of:projectCostInputs.actuals.as_of,labor_rate:values.labor_rate,overhead_rate:values.overhead_rate,prior_version_id:values.prior_version_id || null,
+    reason:values.reason,explanation:values.explanation,idempotency_key:crypto.randomUUID(),
+    actual_snapshot_digest:projectCostInputs.actuals.snapshot_digest,time_snapshot_digest:projectCostInputs.time.snapshot_digest,
+    direct_cost_portions:Array.from(form.querySelectorAll('[name="direct_cost_portion"]:checked')).map(input => JSON.parse(input.value))};
+  projectCostUncertain = false; setProjectCostBusy(false); renderProjectCostReview();
+});
+function renderProjectCostReview() {
+  const node = $('project-cost-review'); node.replaceChildren(); if (!pendingProjectCost) return;
+  const pending = pendingProjectCost;
+  const portions = projectCostInputs.eligible_direct_costs.filter(row => pending.direct_cost_portions.some(r => r.revision_id === row.revision_id && r.allocation_number === row.allocation_number));
+  node.append(el('h4','Confirm a new immutable management version'),metadata([['Scenario',pending.name],['Project',pending.project_id],['Cutoff',pending.as_of],
+    ['Labor assumption',pending.labor_rate + ' USD/hour'],['Overhead assumption',pending.overhead_rate + ' USD/hour'],['Prior version',pending.prior_version_id || 'Initial version'],['Reason',pending.reason]]),
+    table(['Direct nonlabor journal','Portion','Signed USD'],portions.map(r => [r.journal_id,r.allocation_number,r.signed_amount]),'Exactly selected actual portions'),
+    jsonDetails('Exact reviewed capture bindings and assumptions',pending));
+  const save = button(projectCostUncertain ? 'Retry same costing confirmation' : 'Confirm and save costing version',async () => {
+    if (projectCostBusy) return; setProjectCostBusy(true); renderProjectCostReview();
+    try {
+      const result = await request($('project-cost-form').getAttribute('action'),pendingProjectCost);
+      pendingProjectCost = null; projectCostUncertain = false; renderProjectCostSheet(result);
+      $('project-cost-result').textContent = 'Saved ' + result.version_id + ' · version ' + result.version + ' · ' + result.recorded_at + '. Capture inputs and versions again before preparing another version.';
+      projectCostInputs = null; $('project-cost-versions').replaceChildren();
+      notify('Costing version saved. Financial actuals are unchanged.');
+    } catch (error) { projectCostUncertain = error.uncertain; notify(error.message + (projectCostUncertain ? ' Retry the same confirmation to recover its original version.' : ' Edit this review and capture current inputs if they are stale.'),'error'); }
+    finally { setProjectCostBusy(false); renderProjectCostReview(); }
+  });
+  save.disabled = projectCostBusy;
+  const edit = button('Edit costing review',() => { pendingProjectCost = null; setProjectCostBusy(false); renderProjectCostReview(); });
+  edit.disabled = projectCostBusy || projectCostUncertain;
+  node.append(add(el('div',null,'actions'),save,edit));
+}

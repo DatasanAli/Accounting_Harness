@@ -155,11 +155,18 @@ def capture_time(ledger, as_of):
     if not ledger._empty.period_start <= cutoff <= ledger._empty.period_end:
         raise ValueError('time capture cutoff must be within the supported accounting period')
     with ledger._transaction():
-        projects = _read_projects(ledger)
-        records = [json.loads(r[0]) for r in ledger._connection.execute('SELECT result_json FROM project_time_records ORDER BY work_date,worker_id,start_minute,record_id')]
-        voids = [json.loads(r[0]) for r in ledger._connection.execute('SELECT result_json FROM project_time_voids ORDER BY record_id')]
-        return TimeCapture(ledger._empty.catalog.entity_id,ledger._empty.period_start.isoformat(),cutoff.isoformat(),
-                           _canonical(projects),_canonical(records),_canonical(voids))
+        return _capture_time(ledger, as_of)
+
+
+def _capture_time(ledger, as_of):
+    cutoff = accounting_date(as_of)
+    if not ledger._empty.period_start <= cutoff <= ledger._empty.period_end:
+        raise ValueError("time capture cutoff must be within the supported accounting period")
+    projects = _read_projects(ledger)
+    records = [json.loads(r[0]) for r in ledger._connection.execute('SELECT result_json FROM project_time_records ORDER BY work_date,worker_id,start_minute,record_id')]
+    voids = [json.loads(r[0]) for r in ledger._connection.execute('SELECT result_json FROM project_time_voids ORDER BY record_id')]
+    return TimeCapture(ledger._empty.catalog.entity_id,ledger._empty.period_start.isoformat(),cutoff.isoformat(),
+                       _canonical(projects),_canonical(records),_canonical(voids))
 
 
 def _duration(minutes):

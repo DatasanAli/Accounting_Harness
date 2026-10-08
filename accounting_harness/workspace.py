@@ -79,10 +79,12 @@ class Workspace:
                 # in one transaction, before generic review handles can commit a migration.
                 from accounting_harness.project_dimensions import ProjectDimensionsService
                 from accounting_harness.project_time import ProjectTimeService
+                from accounting_harness.project_cost import ProjectCostService
                 with ledger._transaction(write=True):
                     RevenueAccrualService(ledger, registry)
                     ProjectDimensionsService(ledger)
                     ProjectTimeService(ledger)
+                    ProjectCostService(ledger)
                 store = SQLiteReviewStore(ledger, registry)
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
@@ -143,6 +145,16 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             capture = capture_time(ledger, as_of)
         return time_report(capture)
+
+    def project_cost_inputs(self, as_of):
+        from accounting_harness.project_cost import ProjectCostService
+        with self.storage() as (_, ledger, _, _, _):
+            return ProjectCostService(ledger).inputs(as_of)
+
+    def project_cost(self, version_id):
+        from accounting_harness.project_cost import ProjectCostService
+        with self.storage() as (_, ledger, _, _, _):
+            return ProjectCostService(ledger).get(version_id)
 
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
@@ -464,6 +476,10 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'project-cost':
+            from accounting_harness.project_cost import ProjectCostService
+            with self.storage() as (_, ledger, _, _, _):
+                return ProjectCostService(ledger).save(data, actor_id='local-operator')
         if action in ('project-time', 'project-time-void'):
             from accounting_harness.project_time import ProjectTimeService
             with self.storage() as (_, ledger, _, _, _):
