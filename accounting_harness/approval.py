@@ -155,7 +155,7 @@ class ReviewApplication:
             if current.policy_version in ('advance-v1', 'advance-earning-v1'):
                 from accounting_harness.advances import prepare_advance_post
                 prepare_advance_post(self.store, approval, current, entry)
-            if current.policy_version == 'expense-accrual-v1':
+            if current.policy_version in ('expense-accrual-v1', 'revenue-accrual-v1'):
                 from accounting_harness.expense_accrual import prepare_expense_accrual_post
                 prepare_expense_accrual_post(self.store, approval, current, entry)
             if current.policy_version == 'prepaid-consumption-v1':

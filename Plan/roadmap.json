@@ -274,17 +274,19 @@
             {
               "id": "20b",
               "title": "Evidenced unbilled expense accrual",
-              "status": "complete"
+              "status": "complete",
+              "commit": "d3511be23bfcdea6fb23629e91bb0f0f592932ec",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37826947400"
             },
             {
               "id": "20c",
               "title": "Evidenced unbilled service revenue",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "20d",
               "title": "Verified adjusted operational fixture",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         },

@@ -461,7 +461,7 @@ class AdvancesTests(unittest.TestCase):
         self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(5,)])
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone(),seal)
         self.service()
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(10,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(11,)])
         self.assertEqual({t:db.execute(f'SELECT * FROM {t}').fetchall() for t in tables},before)
         self.assertEqual(self.registry.get('rent'),source_before)
         self.assertEqual(test_review.ReviewTests.save(self,require_unused_evidence=True),legacy)

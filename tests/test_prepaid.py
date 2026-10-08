@@ -310,7 +310,7 @@ class PrepaidTests(unittest.TestCase):
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone(),seal)
         self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='prepaid_schema'").fetchone())
         service=self.service()
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(10,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(11,)])
         self.assertEqual({name:db.execute('SELECT * FROM '+name+' ORDER BY 1').fetchall() for name in names},before)
         self.assertEqual(app.post(approval.approval_id,actor_id='old',idempotency_key='old'),receipt)
 

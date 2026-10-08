@@ -175,7 +175,7 @@ class ExpenseAccrualTests(unittest.TestCase):
         self.assertEqual({t:db.execute('SELECT * FROM '+t+' ORDER BY 1').fetchall() for t in tables},before)
         self.service()
         self.assertEqual(db.execute('PRAGMA user_version').fetchone(),(5,))
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchone(),(10,))
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchone(),(11,))
         for t in tables:
             if t!='review_schema':self.assertEqual(db.execute('SELECT * FROM '+t+' ORDER BY 1').fetchall(),before[t])
         self.assertEqual(app.post(approval.approval_id,actor_id='old',idempotency_key='old'),receipt)
@@ -323,7 +323,7 @@ class ExpenseAccrualTests(unittest.TestCase):
                 directory=Path(self.temp.name)/entrypoint
                 # Reproduce the delivered pre-accrual workspace: ledger4/review9,
                 # ordinary receipt approval/history, no accrual service installed.
-                with patch('accounting_harness.workspace.ExpenseAccrualService'):
+                with patch('accounting_harness.workspace.RevenueAccrualService'):
                     workspace=Workspace(directory)
                     with workspace.storage() as (registry,ledger,store,app,_):
                         registry.register(self.document,actor_id='old-importer')
@@ -367,7 +367,7 @@ class ExpenseAccrualTests(unittest.TestCase):
                 self.assertEqual(captured(),before)
                 # A successful read migrates all schemas together without activating 2050.
                 state=workspace.state();self.assertEqual(state['journal_count'],1)
-                after=captured();self.assertEqual(after[0],(5,));self.assertEqual(after[2]['review_schema'],[(10,)])
+                after=captured();self.assertEqual(after[0],(6,));self.assertEqual(after[2]['review_schema'],[(11,)])
                 for table,rows in before[2].items():
                     if table!='review_schema':self.assertEqual(after[2][table],rows,table)
                 with workspace.storage() as (_,ledger,store,app,_):

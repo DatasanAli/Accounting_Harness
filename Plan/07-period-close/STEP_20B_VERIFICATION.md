@@ -47,7 +47,8 @@ the pre-restart values exactly. The journal count remained one.
 
 The earlier 527-test pass and subsequent 528-test run with one fixture failure
 remain part of the development record; neither is presented as the final result.
-Final commit, remote verification and exact-SHA CI follow local acceptance.
+Delivered as [d3511be23bfcdea6fb23629e91bb0f0f592932ec](https://github.com/DatasanAli/Accounting_Harness/commit/d3511be23bfcdea6fb23629e91bb0f0f592932ec). Remote main matched exactly;
+[CI37826947400 passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37826947400) for that SHA.
 
 ## Commands
 

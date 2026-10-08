@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  'revenue-accrual': ['Revenue accruals', 'Completed unbilled services and their recorded cutoff assets.'],
   'expense-accrual': ['Expense accruals', 'Supported unbilled expenses and their recorded cutoff obligations.'],
   prepaid: ['Prepaid insurance', 'Coverage, supported consumption and the remaining recorded asset.'],
   evidence: ['Evidence', 'Start with a receipt. Keep every decision connected to its evidence.'],
@@ -200,7 +201,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderBank(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -299,7 +300,7 @@ $('receipt-form').addEventListener('submit', async event => {
 });
 
 function renderCashChoices() {
-  for (const [id, kinds] of [['expense-accrual-incurrence-select', ['incurred_expense']], ['expense-accrual-basis-select', ['expense_accrual_basis']], ['prepaid-coverage-select', ['prepaid_coverage']], ['cash-source-select', ['cash_movement']],
+  for (const [id, kinds] of [['revenue-accrual-completion-select', ['service_completion']], ['revenue-accrual-basis-select', ['revenue_accrual_basis']], ['expense-accrual-incurrence-select', ['incurred_expense']], ['expense-accrual-basis-select', ['expense_accrual_basis']], ['prepaid-coverage-select', ['prepaid_coverage']], ['cash-source-select', ['cash_movement']],
     ['recognition-source-select', ['incurred_expense', 'service_completion']],
     ['earning-completion-select', ['advance_completion']],
     ['prepayment-source-select', ['customer_prepayment']], ['advance-cash-select', ['cash_movement']],
@@ -1349,6 +1350,62 @@ function renderExpenseAccruals() {
       metadata([['Vendor ID', item.vendor_id], ['Expense event', item.event_id], ['Accrued amount', money(item.principal_amount)],
         ['Expense account', item.expense_account], ['Cutoff', item.cutoff_date], ['Incurrence evidence', item.incurrence_source_id],
         ['Unbilled/unpaid evidence', item.basis_source_id], ['Posted journal', item.journal_id], ['Approval', item.approval_id]]),
+      add(el('details'), el('summary', 'Evidence, exact amount and approval trace'), el('pre', item.trace_json))));
+  }
+  node.append(el('p', report.report_policy + ' · Snapshot ' + report.snapshot_digest + ' · Report ' + report.report_digest, 'action-hint'));
+}
+
+$('revenue-accrual-facts-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const input = Object.fromEntries(new FormData(event.target));
+  if (input.completion_source_id === input.basis_source_id) {
+    notify('Completion and cutoff basis require distinct document IDs.', 'error'); return;
+  }
+  const common = {schema_version: 2, synthetic: true, entity_id: state.entity_id, currency: 'USD',
+    event_id: input.event_id, counterparty_id: input.counterparty_id, counterparty: input.counterparty, amount: input.amount};
+  const completion = {...common, document_id: input.completion_source_id, kind: 'service_completion',
+    document_date: input.completion_date, completion_date: input.completion_date,
+    description: input.completion_description};
+  const basis = {...common, document_id: input.basis_source_id, kind: 'revenue_accrual_basis',
+    document_date: '2026-01-31', cutoff_date: '2026-01-31', status: 'unbilled_uncollected', description: input.basis_description};
+  busy = true; render();
+  try {
+    await request('/api/operation-sources', {document: completion});
+    await request('/api/operation-sources', {document: basis});
+    await refresh();
+    $('revenue-accrual-completion-select').value = completion.document_id;
+    $('revenue-accrual-basis-select').value = basis.document_id;
+    $('revenue-accrual-proposal-panel').open = true;
+    notify('Both revenue facts registered. Prepare the supported accrual, then review and confirm it separately.');
+  } catch (error) { await refresh(); notify(error.message + ' Resubmit the same facts to recover any pending enrollment.', 'error'); }
+  finally { busy = false; render(); }
+});
+$('revenue-accrual-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.target));
+  payload.expected_revision = Number(payload.expected_revision);
+  busy = true; render();
+  try {
+    await request('/api/revenue-accrual-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Revenue accrual draft prepared. Review its two sources and confirm the exact January 31 journal separately.');
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+function renderRevenueAccruals() {
+  const node = $('revenue-accrual-report'); node.replaceChildren();
+  const report = state.revenue_accruals;
+  node.append(add(el('div', null, 'card'), el('h3', 'Recognized unbilled service assets'),
+    metadata([['Supported accruals', money(report.principal_amount)], ['1150 control', report.control_amount + ' USD'],
+      ['Unassigned control residual', report.unassigned_control_amount + ' USD'], ['Cutoff', report.as_of]])));
+  if (!report.assets.length) node.append(empty('No posted revenue accruals', 'Register two supported facts, prepare a draft, and confirm it separately.'));
+  for (const item of report.assets) {
+    node.append(add(el('article', null, 'card'), el('h3', item.customer_name),
+      metadata([['Customer ID', item.customer_id], ['Revenue event', item.event_id], ['Accrued amount', money(item.principal_amount)],
+        ['Cutoff', item.cutoff_date], ['Completion evidence', item.completion_source_id],
+        ['Unbilled/uncollected evidence', item.basis_source_id], ['Posted journal', item.journal_id], ['Approval', item.approval_id]]),
       add(el('details'), el('summary', 'Evidence, exact amount and approval trace'), el('pre', item.trace_json))));
   }
   node.append(el('p', report.report_policy + ' · Snapshot ' + report.snapshot_digest + ' · Report ' + report.report_digest, 'action-hint'));

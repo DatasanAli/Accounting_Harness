@@ -239,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-bill", help="review a separately evidenced vendor bill and reconcile AP")
     commands.add_parser("demo-cash", help="review rent and earned cash against paired synthetic facts")
     commands.add_parser("demo-reconciliation", help="capture and explicitly complete exact bank-to-book reconciliation")
+    commands.add_parser("demo-revenue-accrual", help="review completed unbilled service and its accrued asset")
     commands.add_parser("demo-expense-accrual", help="review supported unbilled expense and its outstanding obligation")
     commands.add_parser("demo-prepaid-consumption", help="review supported monthly insurance consumption and remaining asset")
     commands.add_parser("demo-bank-fee", help="review a whole imported fee and post exactly once before separate matching")
@@ -288,6 +289,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "demo-reconciliation":
             from accounting_harness.reconciliation import demo_reconciliation
             demo_reconciliation()
+        elif args.command == "demo-revenue-accrual":
+            from accounting_harness.revenue_accrual import demo_revenue_accrual
+            demo_revenue_accrual()
         elif args.command == "demo-expense-accrual":
             from accounting_harness.expense_accrual import demo_expense_accrual
             demo_expense_accrual()

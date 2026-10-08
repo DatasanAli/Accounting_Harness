@@ -2,10 +2,10 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–20b (20b upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–20c (20c upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Active:** finish Step20b delivery, then [20c revenue accrual](07-period-close/STEP_20C_PLAN.md) and the independently
-verified [20d adjusted operational month](07-period-close/STEP_20D_PLAN.md).
+**Active:** finish20c delivery, then [20d adjusted operational month](07-period-close/STEP_20D_PLAN.md)
+and [21 financial statements](07-period-close/STEP_21_PLAN.md).
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -19,19 +19,20 @@ and [exact next prompt](NEXT_STEP.md).
 The persistent localhost app has exact USD cents, audited source enrollment,
 immutable journal/reversal history, versioned drafts and separate human approval.
 Supported services include cash recognition, vendor bills/settlement, customer
-invoices/collections/aging, advances/earning, bank import/matching/fees/reconciliation
-supported prepaid consumption and evidenced unbilled expense accruals. Every posted operation retains its source,
+invoices/collections/aging, advances/earning, bank import/matching/fees/reconciliation,
+supported prepaid consumption and evidenced unbilled expense/revenue accruals. Every posted operation retains its source,
 effective date and actor; managed controls enforce their approved effects.
 
-Latest local Step20b checks: **528 tests and27 demonstrations passed**, independent
-review approved after a workspace migration fix, and browser preparation/approval/
-frozen restart passed. Its commit/remote/exact CI checks follow; prior20a delivery
-is verified below. Commands and coverage
+Latest local Step20c checks: **546 tests and28 demonstrations passed**, independent
+review approved with one Minor wording issue, and revenue browser/restart plus
+actual20b historical-workspace preservation passed. Commit/remote/exact CI checks
+follow; prior20b delivery is verified below. Commands and coverage
 are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); detailed outcomes and limitations
 are linked in the delivery table below. A foundation check is not application proof.
 
-The Step20b implementation uses ledger schema5, review schema10, prepaid schema1
-and expense-accrual schema1. Account
+The Step20c implementation uses ledger schema6, review schema11, prepaid schema1
+and expense/revenue-accrual schema1. Old expense captures remainv1; new combined
+captures identifyv2 even when empty. Account
 extensions are audited; old baseline contexts, approvals and captured reports
 remain immutable. Provider choices exist for offline fixtures, Ollama and OpenAI;
 real calls require explicit startup configuration and remain unverified. Existing
@@ -67,6 +68,7 @@ retained in the verification record and Git history.
 | 19b | [Reviewed bank fee](06-bank-reconciliation/STEP_19B_VERIFICATION.md) | [757e6fd](https://github.com/DatasanAli/Accounting_Harness/commit/757e6fda735da408c4717e7579d0351847a29cda) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37817880835) |
 | 19c | [Captured reconciliation](06-bank-reconciliation/STEP_19C_VERIFICATION.md) | [c4edae4](https://github.com/DatasanAli/Accounting_Harness/commit/c4edae4bc77151bad6dd796a89d5200158f1aa8c) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37820570127) |
 | 20a | [Prepaid consumption](07-period-close/STEP_20A_VERIFICATION.md) | [ab557e4](https://github.com/DatasanAli/Accounting_Harness/commit/ab557e4581a705a776d613a4790e384eb71b038b) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37823178380) |
+| 20b | [Unbilled expense accrual](07-period-close/STEP_20B_VERIFICATION.md) | [d3511be](https://github.com/DatasanAli/Accounting_Harness/commit/d3511be23bfcdea6fb23629e91bb0f0f592932ec) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37826947400) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)
@@ -88,8 +90,9 @@ purchase by its Jan1 coverage start. Step20d explicitly uses a new synthetic Jan
 purchase variant, preserving original fixture/history bytes and identical
 January31 totals; early cutoff results are intentionally different.
 
-One minor receipt list/tuple validation inconsistency is queued for final whole-work
-review; saved proposals already normalize before posting. Prior payable seal and
+Two Minor issues are queued for final whole-work review: receipt list/tuple
+validation consistency (saved proposals normalize before posting), and shared
+revenue-validation errors using an expense label. Prior payable seal and
 migration findings were resolved in16c. A copied-workspace run-path limitation was
 reproduced in19a and has an explicit verified-relocation plan in
 [33a](09-integrations-and-pilot/STEP_33A_PLAN.md); file copying alone is not recovery.

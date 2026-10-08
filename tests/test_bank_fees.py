@@ -312,7 +312,7 @@ class BankFeeTests(unittest.TestCase):
             self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone(),seal)
             self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='bank_fee_schema'").fetchone())
             BankFeeService(ledger,registry)
-            self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(10,)])
+            self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(11,)])
             self.assertEqual(db.execute('PRAGMA user_version').fetchone(),(4,))
             self.assertEqual({name:db.execute('SELECT * FROM '+name+' ORDER BY 1').fetchall() for name in names},before)
             self.assertEqual(store.get('old-draft'),draft)

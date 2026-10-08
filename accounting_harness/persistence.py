@@ -15,7 +15,7 @@ from accounting_harness.domain.ledger import (
 )
 from accounting_harness.domain.money import Money
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 MAX_CENTS = 2**63 - 1
 OPERATION = "post-v1"
 REVERSAL_OPERATION = "reverse-v1"
@@ -106,6 +106,7 @@ class AccountExtensionReceipt:
     operation: str
 
 
+ACCRUED_REVENUE_ACCOUNT = Account('1150', 'Accrued Service Revenue', 'asset', 'debit', temporary=False)
 ACCRUED_EXPENSE_ACCOUNT = Account('2050', 'Accrued Expenses', 'liability', 'credit', temporary=False)
 
 BANK_FEE_ACCOUNT = Account('5300', 'Bank Fees Expense', 'expense', 'debit', temporary=True)
@@ -122,7 +123,7 @@ class SQLiteLedger:
     (2000 ms by default, at most 60000 ms per lock acquisition). A busy failure
     rolls back; the caller may retry using the same explicit idempotency key.
     Existing files must match the frozen context. Schema v1 migrates atomically
-    through v2, v3 and v4; the expense-accrual service atomically opts into v5.
+    through v2, v3 and v4; concrete accrual services atomically opt into v5/v6.
     Other versions are rejected. No context change, update or deletion API.
     """
 
@@ -213,7 +214,7 @@ class SQLiteLedger:
                     BEFORE INSERT ON {table}
                     BEGIN SELECT RAISE(ABORT, 'ledger context is frozen'); END""")
             version = 1
-        elif version not in (1, 2, 3, 4, SCHEMA_VERSION):
+        elif version not in (1, 2, 3, 4, 5, SCHEMA_VERSION):
             raise ValueError(f"unsupported schema version: {version}")
         else:
             stored = self._connection.execute(
@@ -355,7 +356,7 @@ class SQLiteLedger:
 
     def _migrate_v5(self):
         """Opt-in fixed accrual extension, called inside the service's atomic setup."""
-        if self._connection.execute('PRAGMA user_version').fetchone()[0] == 5:
+        if self._connection.execute('PRAGMA user_version').fetchone()[0] >= 5:
             return
         self.bank_fee_account_activation()  # Verify legacy audit before copying it verbatim.
         self._connection.execute('DROP TRIGGER accounts_extension_required')
@@ -382,6 +383,39 @@ class SQLiteLedger:
                 OR NOT EXISTS(SELECT 1 FROM account_extensions WHERE account_code=NEW.code)
             BEGIN SELECT RAISE(ABORT,'account requires new audited extension'); END""")
         self._connection.execute('PRAGMA user_version = 5')
+
+    def _migrate_v6(self):
+        """Opt-in fixed accrual extension, called inside the service's atomic setup."""
+        if self._connection.execute('PRAGMA user_version').fetchone()[0] >= 6:
+            return
+        self._migrate_v5()
+        self.expense_accrual_account_activation()
+        self.bank_fee_account_activation()  # Verify legacy audit before copying it verbatim.
+        self._connection.execute('DROP TRIGGER accounts_extension_required')
+        for action in ('update', 'delete', 'replace'):
+            self._connection.execute('DROP TRIGGER account_extensions_no_' + action)
+        self._connection.execute("""CREATE TABLE account_extensions_v6 (
+            account_code TEXT PRIMARY KEY REFERENCES accounts(code) DEFERRABLE INITIALLY DEFERRED
+                CHECK(account_code IN ('5300','2050','1150')),
+            entity_id TEXT NOT NULL REFERENCES ledger_context(entity_id),
+            metadata_digest TEXT NOT NULL CHECK(length(metadata_digest)=64 AND metadata_digest NOT GLOB '*[^0-9a-f]*'),
+            canonical_metadata TEXT NOT NULL CHECK(length(canonical_metadata)>0),
+            actor_id TEXT NOT NULL CHECK(length(trim(actor_id))>0 AND actor_id=trim(actor_id)),
+            recorded_at TEXT NOT NULL CHECK(recorded_at GLOB '*T*+00:00'),
+            operation TEXT NOT NULL CHECK((account_code='5300' AND operation='activate-bank-fee-account-v1')
+                OR (account_code='2050' AND operation='activate-expense-accrual-account-v1')
+                OR (account_code='1150' AND operation='activate-revenue-accrual-account-v1'))
+        ) STRICT, WITHOUT ROWID""")
+        self._connection.execute('INSERT INTO account_extensions_v6 SELECT * FROM account_extensions')
+        self._connection.execute('DROP TABLE account_extensions')
+        self._connection.execute('ALTER TABLE account_extensions_v6 RENAME TO account_extensions')
+        from accounting_harness.review import protect_table
+        protect_table(self._connection, 'account_extensions', 'account_code=NEW.account_code')
+        self._connection.execute("""CREATE TRIGGER accounts_extension_required BEFORE INSERT ON accounts
+            WHEN EXISTS(SELECT 1 FROM accounts WHERE code=NEW.code)
+                OR NOT EXISTS(SELECT 1 FROM account_extensions WHERE account_code=NEW.code)
+            BEGIN SELECT RAISE(ABORT,'account requires new audited extension'); END""")
+        self._connection.execute('PRAGMA user_version = 6')
 
     def expense_accrual_account_activation(self):
         row = self._connection.execute("SELECT * FROM account_extensions WHERE account_code='2050'").fetchone()
@@ -411,6 +445,34 @@ class SQLiteLedger:
         self._connection.execute("INSERT INTO accounts VALUES('2050')")
         return self.expense_accrual_account_activation()
 
+    def revenue_accrual_account_activation(self):
+        row = self._connection.execute("SELECT * FROM account_extensions WHERE account_code='1150'").fetchone()
+        if row is None:
+            return None
+        canonical = _canonical(asdict(ACCRUED_REVENUE_ACCOUNT))
+        expected = (ACCRUED_REVENUE_ACCOUNT.code, self._empty.catalog.entity_id,
+                    hashlib.sha256(canonical.encode()).hexdigest(), canonical)
+        if row[:4] != expected or row[6] != 'activate-revenue-accrual-account-v1':
+            raise ValueError('account extension conflicts with fixed accrued-revenue metadata')
+        return AccountExtensionReceipt(*row[:5], datetime.fromisoformat(row[5]), row[6])
+
+    def _ensure_revenue_accrual_account(self, *, actor_id):
+        _validate_text(actor_id, 'actor ID')
+        self._migrate_v6()
+        if any(a.code == '1150' for a in self._empty.catalog.accounts):
+            raise ValueError('accrued revenue conflicts with frozen baseline')
+        prior = self.revenue_accrual_account_activation()
+        if prior is not None:
+            return prior
+        if self._connection.execute("SELECT 1 FROM lines WHERE account='1150'").fetchone():
+            raise ValueError('accrued revenue activation requires zero unexplained opening balance')
+        canonical = _canonical(asdict(ACCRUED_REVENUE_ACCOUNT))
+        self._connection.execute('INSERT INTO account_extensions VALUES(?,?,?,?,?,?,?)',
+            ('1150', self._empty.catalog.entity_id, hashlib.sha256(canonical.encode()).hexdigest(),
+             canonical, actor_id, datetime.now(timezone.utc).isoformat(), 'activate-revenue-accrual-account-v1'))
+        self._connection.execute("INSERT INTO accounts VALUES('1150')")
+        return self.revenue_accrual_account_activation()
+
     def current_catalog(self) -> AccountCatalog:
         """Baseline plus immutable fixed extensions, read within this transaction."""
         if self._connection.execute('PRAGMA user_version').fetchone()[0] < 4:
@@ -420,6 +482,8 @@ class SQLiteLedger:
             additions.append(BANK_FEE_ACCOUNT)
         if self.expense_accrual_account_activation() is not None:
             additions.append(ACCRUED_EXPENSE_ACCOUNT)
+        if self.revenue_accrual_account_activation() is not None:
+            additions.append(ACCRUED_REVENUE_ACCOUNT)
         return replace(self._empty.catalog, accounts=(*self._empty.catalog.accounts, *additions))
 
     def ensure_bank_fee_account(self, *, actor_id: str) -> AccountExtensionReceipt:
@@ -460,6 +524,9 @@ class SQLiteLedger:
         digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
         if canonical != source.canonical_content or digest != source.content_digest:
             raise ValueError('registered source content/digest differs')
+        if document['kind'] == 'revenue_accrual_basis':
+            from accounting_harness.revenue_accrual import RevenueAccrualService
+            RevenueAccrualService(self, registry)
         if document['kind'] == 'expense_accrual_basis':
             from accounting_harness.expense_accrual import ExpenseAccrualService
             ExpenseAccrualService(self, registry)
@@ -568,6 +635,9 @@ class SQLiteLedger:
             if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='expense_accrual_effects'").fetchone():
                 if self._connection.execute('SELECT 1 FROM expense_accrual_effects WHERE journal_id=?', (original_id,)).fetchone():
                     raise ValueError('operational_reversal_not_supported: expense accrual requires linked correction policy')
+            if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='revenue_accrual_effects'").fetchone():
+                if self._connection.execute('SELECT 1 FROM revenue_accrual_effects WHERE journal_id=?', (original_id,)).fetchone():
+                    raise ValueError('operational_reversal_not_supported: revenue accrual requires linked correction policy')
             if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='prepaid_effects'").fetchone():
                 if self._connection.execute('SELECT 1 FROM prepaid_effects WHERE original_journal_id=? OR journal_id=?', (original_id,original_id)).fetchone():
                     raise ValueError('operational_reversal_not_supported: prepaid dependency requires linked correction policy')

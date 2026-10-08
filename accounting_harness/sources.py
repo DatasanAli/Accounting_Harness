@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'revenue_accrual_basis': {'event_id', 'counterparty_id', 'cutoff_date', 'status'},
     'expense_accrual_basis': {'event_id', 'counterparty_id', 'cutoff_date', 'status'},
     'prepaid_coverage': {'original_journal_id', 'original_source_id', 'coverage_start', 'coverage_end', 'allocation_policy'},
     'bank_fee': {'event_id', 'bank_account_id', 'transaction_id', 'bank_content_digest', 'bank_reference', 'bank_description', 'signed_amount'},
@@ -79,6 +80,10 @@ def _content(document: object, entity_id: str) -> tuple[str, str]:
             raise ValueError('bank fee evidence must retain the whole negative movement')
         if len(document['bank_content_digest']) != 64 or any(c not in '0123456789abcdef' for c in document['bank_content_digest']):
             raise ValueError('invalid bank content digest')
+    if kind == 'revenue_accrual_basis':
+        accounting_date(document['cutoff_date'])
+        if document['status'] != 'unbilled_uncollected':
+            raise ValueError('revenue accrual status must be unbilled_uncollected')
     if kind == 'expense_accrual_basis':
         accounting_date(document['cutoff_date'])
         if document['status'] != 'unbilled_unpaid':

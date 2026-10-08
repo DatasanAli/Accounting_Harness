@@ -125,4 +125,6 @@ linked reversals, not deletion or a database reset.
 
 - Step 20a: delivered as `ab557e4`, exact CI37823178380 passed; 508 tests/26 demos, browser coverage/prepare/approve/restart and independent review with no findings. See [verification](07-period-close/STEP_20A_VERIFICATION.md).
 
-- Step20b: local528 tests/27 demos, browser registration/preparation/approval/frozen restart and independent review pass after workspace migration fix. Commit/remote/exact CI pending; see [verification](07-period-close/STEP_20B_VERIFICATION.md).
+- Step20b: local528 tests/27 demos, browser registration/preparation/approval/frozen restart and independent review pass after workspace migration fix. Delivered as d3511be; [exact CI37826947400 passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37826947400), remote matched; see [verification](07-period-close/STEP_20B_VERIFICATION.md).
+
+- Step20c: local546 tests/28 demos, revenue browser/restart and actual20b report/book preservation pass; review approved with one Minor validation-label issue queued. Commit/remote/exact CI pending; see [verification](07-period-close/STEP_20C_VERIFICATION.md).

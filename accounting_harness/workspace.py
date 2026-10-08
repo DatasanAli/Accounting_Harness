@@ -22,6 +22,7 @@ from accounting_harness.receivables import ReceivablesService, receivables_repor
 from accounting_harness.advances import AdvancesService, advances_report
 from accounting_harness.reconciliation import ReconciliationService
 from accounting_harness.prepaid import PrepaidService, prepaid_report
+from accounting_harness.revenue_accrual import RevenueAccrualService, accrual_report
 from accounting_harness.expense_accrual import ExpenseAccrualService, expense_accrual_report
 from accounting_harness.bank import BankStatementService
 from accounting_harness.bank_fees import BankFeeService, bank_evidence, fee_operation, require_available
@@ -76,7 +77,7 @@ class Workspace:
                               known_source_ids=set(self.sources)) as ledger:
                 # The accrual service owns ledger/review/approval/accrual schema setup
                 # in one transaction, before generic review handles can commit a migration.
-                ExpenseAccrualService(ledger, registry)
+                RevenueAccrualService(ledger, registry)
                 store = SQLiteReviewStore(ledger, registry)
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
@@ -173,6 +174,9 @@ class Workspace:
             WHERE draft_id=? ORDER BY revision DESC LIMIT 1''', (draft_id,)).fetchone()
         if row is None:
             raise KeyError(draft_id)
+        if row[0] == 'revenue-accrual-v1':
+            accrual = RevenueAccrualService(store.ledger, store.registry)
+            return accrual.store, accrual.app
         if row[0] == 'expense-accrual-v1':
             accrual = ExpenseAccrualService(store.ledger, store.registry)
             return accrual.store, accrual.app
@@ -216,6 +220,15 @@ class Workspace:
             service = ExpenseAccrualService(ledger, registry)
             draft = service.propose(**data, actor_id='expense-accrual-template',
                 idempotency_key='web-expense-accrual:' + digest(data))
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
+
+    def prepare_revenue_accrual(self, data):
+        fields(data, dict(completion_source_id=str, basis_source_id=str, expected_revision=int))
+        with self.storage() as (registry, ledger, _, _, _):
+            service = RevenueAccrualService(ledger, registry)
+            draft = service.propose(**data, actor_id='local-operator',
+                idempotency_key='web-revenue-accrual:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -353,7 +366,8 @@ class Workspace:
                     attempts=checkpoint.provider_attempts, reserved_nanodollars=checkpoint.cost_units,
                     trace=[dict(sequence=c.sequence, state=c.state, reason=c.reason,
                                 recorded_at_ms=c.recorded_at_ms) for c in engine.trace(run_id)]))
-            expense_accruals = expense_accrual_report(ExpenseAccrualService(ledger, registry).snapshot(), as_of='2026-01-31')
+            accruals = accrual_report(RevenueAccrualService(ledger, registry).combined_snapshot(), as_of='2026-01-31')
+            expense_accruals, revenue_accruals = accruals['expenses'], accruals['revenue']
             prepaid = prepaid_report(PrepaidService(ledger, registry).snapshot(), as_of='2026-01-31')
             advances = advances_report(AdvancesService(ledger, registry).snapshot(), as_of='2026-01-31')
             for item in [advances, *advances['customers'], *advances['advances'], *advances['earnings']]:
@@ -404,7 +418,7 @@ class Workspace:
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
                 bank_fee_account_activation=self._account_activation(ledger),
                 bank_statements=BankStatementService(ledger).list_statements(),
-                journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid, expense_accruals=expense_accruals,
+                journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid, expense_accruals=expense_accruals, revenue_accruals=revenue_accruals, accruals=accruals,
                 trial_balance=dict(as_of=report.as_of.isoformat(), policy=report.policy,
                     snapshot_digest=digest(report_identity), catalog=catalog,
                     included_entry_ids=list(report.included_entry_ids),
@@ -416,6 +430,8 @@ class Workspace:
         if action in ('bank-timing', 'bank-reconcile'):
             with self.storage() as (_, ledger, _, _, _):
                 return ReconciliationService(ledger).action(action.removeprefix('bank-'), data, actor_id='local-operator')
+        if action == 'revenue-accrual-proposals':
+            return self.prepare_revenue_accrual(data)
         if action == 'expense-accrual-proposals':
             return self.prepare_expense_accrual(data)
         if action == 'prepaid-proposals':

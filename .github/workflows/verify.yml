@@ -71,3 +71,5 @@ jobs:
         run: python3 -m accounting_harness demo-prepaid-consumption
       - name: Demonstrate evidenced unbilled expense accrual
         run: python3 -m accounting_harness demo-expense-accrual
+      - name: Demonstrate evidenced unbilled service revenue
+        run: python3 -m accounting_harness demo-revenue-accrual

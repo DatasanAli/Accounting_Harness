@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: Step20b expense accrual passes528 tests,27 demos, browser/restart and independent review after migration fixes; upload/exact CI follow. See [verification](STEP_20B_VERIFICATION.md). Step20c revenue accrual follows separately.
+Status: Step20c revenue accrual passes546 tests,28 demos, browser/restart/historical-preservation checks and independent review. Upload/exact CI follow; see [verification](STEP_20C_VERIFICATION.md). Step20d adjusted operational fixture follows separately.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 

@@ -1,16 +1,17 @@
-# Next delivery: Step20c evidenced revenue accrual
+# Next delivery: Step20d adjusted operational month
 
 The user authorized the localhost app and wider accounting roadmap in this
 request. Continue through independently verified commits without waiting for
 another request. Live provider and external-account connections stay deferred.
 
-Step20b implements separately evidenced150.00 expense accruals. Independent review
-approved the workspace atomic-migration fix and historical fixture correction;
-528 tests,27 demos and browser/frozen-restart checks passed. Upload/CI checks follow. See [verification](07-period-close/STEP_20B_VERIFICATION.md).
+Step20c passes546 tests,28 demos, native revenue approval/restart and historical20b
+workspace preservation. Independent review approved with one Minor wording issue
+queued for final review. Commit/remote/exact CI checks follow. See
+[verification](07-period-close/STEP_20C_VERIFICATION.md).
 
 ## Exact next implementation prompt
 
-> Build Step20c: Register separate service-completion and unbilled/uncollected basis evidence for250.00 of January revenue, activate fixed1150 through the audited extension boundary, and prepare it for exact human review. Follow Plan/07-period-close/STEP_20C_PLAN.md and STEP_20_PLAN.md. Preserve shared service-recognition claims, current approval seals, old report bytes and atomic migrations through the actual workspace path. Verify, review, commit/push/exact CI, then continue Step20d's adjusted operational fixture. Keep live connections deferred.
+> Build Step20d: Assemble the supported adjusted operational month through the delivered services and explicit synthetic approvals, with the documented Jan1 insurance-purchase variant. Follow Plan/07-period-close/STEP_20D_PLAN.md. Verify all11 journals,13,300.00 trial-balance totals and zero subsidiary residuals, retain a stable source/approval/journal map, and test interruption/restart/exact retries without bypassing any managed controls. Verify, review, commit/push/exact CI, then continue Step21 statements. Keep live connections deferred.
 
-Start implementation only after the preceding delivery's exact remote/CI checks.
+Start only after the preceding delivery's exact remote/CI checks.
 Step12 live provider evaluation remains deferred, not passed.
