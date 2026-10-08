@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: Step20c revenue accrual passes546 tests,28 demos, browser/restart/historical-preservation checks and independent review. Upload/exact CI follow; see [verification](STEP_20C_VERIFICATION.md). Step20d adjusted operational fixture follows separately.
+Status: Step 20d's adjusted operational month passes 556 tests, 29 demos and independent review with no findings. Upload/exact CI follow; see [verification](STEP_20D_VERIFICATION.md). Step 21 statements follows.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 

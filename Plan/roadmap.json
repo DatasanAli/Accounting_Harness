@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "19",
-  "next_step": "20",
+  "current_step": "20",
+  "next_step": "21",
   "phases": [
     {
       "id": "01",
@@ -262,7 +262,7 @@
         {
           "id": "20",
           "title": "Month-end adjustment proposals",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "20a",
@@ -281,19 +281,21 @@
             {
               "id": "20c",
               "title": "Evidenced unbilled service revenue",
-              "status": "complete"
+              "status": "complete",
+              "commit": "57e1ad97761124ca4d0990910e4f265d15c6bcea",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37829402673"
             },
             {
               "id": "20d",
               "title": "Verified adjusted operational fixture",
-              "status": "ready"
+              "status": "complete"
             }
           ]
         },
         {
           "id": "21",
           "title": "Core financial statements",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "22",

@@ -42,7 +42,8 @@ identified v2 and its revenue component correctly remained0.00.
   Important findings. One Minor label issue is queued for final whole-work review:
   some shared revenue-validation refusals still say "expense accrual". The refusal
   remains effective; no accounting or historical-data issue was found.
-- Exact commit/remote/CI checks follow local acceptance.
+- Delivered as [57e1ad97761124ca4d0990910e4f265d15c6bcea](https://github.com/DatasanAli/Accounting_Harness/commit/57e1ad97761124ca4d0990910e4f265d15c6bcea). Remote main matched exactly;
+  [CI37829402673 passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37829402673) for this SHA.
 
 ## Commands
 

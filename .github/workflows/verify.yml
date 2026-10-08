@@ -73,3 +73,5 @@ jobs:
         run: python3 -m accounting_harness demo-expense-accrual
       - name: Demonstrate evidenced unbilled service revenue
         run: python3 -m accounting_harness demo-revenue-accrual
+      - name: Demonstrate supported adjusted operational month
+        run: python3 -m accounting_harness demo-adjusted-month

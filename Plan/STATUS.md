@@ -2,10 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–20c (20c upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–20d (20d upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Active:** finish20c delivery, then [20d adjusted operational month](07-period-close/STEP_20D_PLAN.md)
-and [21 financial statements](07-period-close/STEP_21_PLAN.md).
+**Active:** finish Step 20d delivery, then [Step 21 financial statements](07-period-close/STEP_21_PLAN.md).
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -20,20 +19,21 @@ The persistent localhost app has exact USD cents, audited source enrollment,
 immutable journal/reversal history, versioned drafts and separate human approval.
 Supported services include cash recognition, vendor bills/settlement, customer
 invoices/collections/aging, advances/earning, bank import/matching/fees/reconciliation,
-supported prepaid consumption and evidenced unbilled expense/revenue accruals. Every posted operation retains its source,
-effective date and actor; managed controls enforce their approved effects.
+supported prepaid consumption and evidenced unbilled expense/revenue accruals.
+Every posted operation retains its source, effective date and actor; managed
+controls enforce their approved effects.
 
-Latest local Step20c checks: **546 tests and28 demonstrations passed**, independent
-review approved with one Minor wording issue, and revenue browser/restart plus
-actual20b historical-workspace preservation passed. Commit/remote/exact CI checks
-follow; prior20b delivery is verified below. Commands and coverage
-are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); detailed outcomes and limitations
+Latest local Step 20d checks: **556 tests and 29 demonstrations passed**.
+Independent review approved the adjusted-month fixture with no findings. It has
+11 journals, eight reviewed approvals, exact balances and zero subsidiary residuals;
+no new browser feature was added. Commit/remote/exact CI follow local acceptance.
+Prior Step 20c delivery is verified below. Commands and
+coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); detailed outcomes and limitations
 are linked in the delivery table below. A foundation check is not application proof.
 
-The Step20c implementation uses ledger schema6, review schema11, prepaid schema1
-and expense/revenue-accrual schema1. Old expense captures remainv1; new combined
-captures identifyv2 even when empty. Account
-extensions are audited; old baseline contexts, approvals and captured reports
+The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
+schema 1 and expense/revenue-accrual schema 1. Old expense captures remain v1;
+new combined captures identify v2 even when empty. Account extensions are audited; old baseline contexts, approvals and captured reports
 remain immutable. Provider choices exist for offline fixtures, Ollama and OpenAI;
 real calls require explicit startup configuration and remain unverified. Existing
 agent adapters initially cover receipt expenses; broader bounded operational
@@ -69,6 +69,7 @@ retained in the verification record and Git history.
 | 19c | [Captured reconciliation](06-bank-reconciliation/STEP_19C_VERIFICATION.md) | [c4edae4](https://github.com/DatasanAli/Accounting_Harness/commit/c4edae4bc77151bad6dd796a89d5200158f1aa8c) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37820570127) |
 | 20a | [Prepaid consumption](07-period-close/STEP_20A_VERIFICATION.md) | [ab557e4](https://github.com/DatasanAli/Accounting_Harness/commit/ab557e4581a705a776d613a4790e384eb71b038b) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37823178380) |
 | 20b | [Unbilled expense accrual](07-period-close/STEP_20B_VERIFICATION.md) | [d3511be](https://github.com/DatasanAli/Accounting_Harness/commit/d3511be23bfcdea6fb23629e91bb0f0f592932ec) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37826947400) |
+| 20c | [Unbilled service revenue](07-period-close/STEP_20C_VERIFICATION.md) | [57e1ad9](https://github.com/DatasanAli/Accounting_Harness/commit/57e1ad97761124ca4d0990910e4f265d15c6bcea) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37829402673) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)
