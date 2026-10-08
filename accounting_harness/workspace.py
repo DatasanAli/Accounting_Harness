@@ -77,7 +77,10 @@ class Workspace:
                               known_source_ids=set(self.sources)) as ledger:
                 # The accrual service owns ledger/review/approval/accrual schema setup
                 # in one transaction, before generic review handles can commit a migration.
-                RevenueAccrualService(ledger, registry)
+                from accounting_harness.project_dimensions import ProjectDimensionsService
+                with ledger._transaction(write=True):
+                    RevenueAccrualService(ledger, registry)
+                    ProjectDimensionsService(ledger)
                 store = SQLiteReviewStore(ledger, registry)
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
@@ -126,6 +129,12 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             capture = capture_cash_flow(ledger, as_of)
         return report_package(capture)
+
+    def project_dimensions(self, as_of):
+        from accounting_harness.project_dimensions import capture_dimensions, project_report
+        with self.storage() as (_, ledger, _, _, _):
+            capture = capture_dimensions(ledger, as_of)
+        return project_report(capture)
 
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
@@ -447,6 +456,12 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action in ('projects', 'project-assignments'):
+            from accounting_harness.project_dimensions import ProjectDimensionsService
+            with self.storage() as (_, ledger, _, _, _):
+                service = ProjectDimensionsService(ledger)
+                method = service.create_project if action == 'projects' else service.assign
+                return method(data, actor_id='local-operator')
         if action in ('close-preview', 'close-confirm'):
             from accounting_harness.closing import CloseService
             with self.storage() as (registry, ledger, _, _, _):

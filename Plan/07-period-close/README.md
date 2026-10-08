@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: all local phase behavior is implemented. Step 23b passes 628 tests, 33 demos, native deterministic downloads, server-off readback, 390px layout and final restart checks. Its CSV limit review finding was fixed and scoped review approved. Commit/push/exact CI are pending; see [verification](STEP_23B_VERIFICATION.md). Step 24a project attribution follows after verified delivery.
+Status: all local phase behavior is implemented. Step 23b passes 628 tests, 33 demos, native deterministic downloads, server-off readback, 390px layout and final restart checks. Its CSV limit review finding was fixed and scoped review approved. Commit/remote/exact CI are verified; see [verification](STEP_23B_VERIFICATION.md). The local phase is complete; Step 24a project attribution follows.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 

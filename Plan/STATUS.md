@@ -2,9 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–23b (23b upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–24a (24a upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Next:** [Step 24a project attribution](08-service-management/STEP_24A_PLAN.md), after the current delivery’s exact CI check.
+**Next:** [Step 24b auditable time facts](08-service-management/STEP_24B_PLAN.md), after the current delivery’s exact CI check.
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -23,14 +23,15 @@ supported prepaid consumption and evidenced unbilled expense/revenue accruals.
 Every posted operation retains its source, effective date and actor; managed
 controls enforce their approved effects.
 
-Latest local Step 23b checks: **628 tests and 33 demonstrations passed**.
-Native JSON/ZIP downloads are deterministic and reproduce the linked reports
-without the server. January31/15 cutoff, altered-package refusal, 390px layout and
-final fixed-code restart passed with unchanged accounting state and old reports.
-The CSV field-limit review finding was fixed and scoped review approved with no
-new findings. Commit/push/exact CI are pending; prior delivery evidence is below.
+Latest local Step 24a checks: **645 tests and 34 demonstrations passed**.
+Native project attribution splits Software Expense 300.00 into A 120.00, B 100.00
+and unallocated 80.00, with every account and classification axis reconciled.
+Corrections, historical retry, stale refusal, captured report retention, true 390px/
+1280px layouts and frozen restart passed. Books, old reports and portable bytes
+remained exact. Independent review approved with one Minor UI capture/preview
+race queued for the workbench/final review. Commit/push/exact CI are pending.
 Commands and coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); observed
-boundaries are in [Step 23b verification](07-period-close/STEP_23B_VERIFICATION.md).
+boundaries are in [Step 24a verification](08-service-management/STEP_24A_VERIFICATION.md).
 A foundation check is not application proof.
 
 The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
@@ -42,7 +43,7 @@ agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
-Authenticated roles, management reporting, integration contracts,
+Project attribution is implemented. Authenticated roles, time/cost/budget reporting, integration contracts,
 and verified recovery are still planned. The existing local operator is not an
 authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
@@ -77,6 +78,7 @@ retained in the verification record and Git history.
 | 21 | [Captured financial statements](07-period-close/STEP_21_VERIFICATION.md) | [511d932](https://github.com/DatasanAli/Accounting_Harness/commit/511d93203a82227b00794462267b372a2e275178) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37832868799) |
 | 22 | [Confirmed close and date locks](07-period-close/STEP_22_VERIFICATION.md) | [1bdb15e](https://github.com/DatasanAli/Accounting_Harness/commit/1bdb15e9e98dc1f188fb5de2b410c5f9793b620c) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37834858650) |
 | 23a | [Captured direct cash flow](07-period-close/STEP_23A_VERIFICATION.md) | [969b783](https://github.com/DatasanAli/Accounting_Harness/commit/969b783b2cf105114501403c0879380d696743c5) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37836761506) |
+| 23b | [Portable report packages](07-period-close/STEP_23B_VERIFICATION.md) | [bf1fbb8](https://github.com/DatasanAli/Accounting_Harness/commit/bf1fbb8e369549babc02b007778574e72bc4ab3d) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37839537188) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)
@@ -98,9 +100,10 @@ purchase by its Jan1 coverage start. Step20d explicitly uses a new synthetic Jan
 purchase variant, preserving original fixture/history bytes and identical
 January 31 totals; early cutoff results are intentionally different.
 
-Two Minor issues are queued for final whole-work review: receipt list/tuple
-validation consistency (saved proposals normalize before posting), and shared
-revenue-validation errors using an expense label. Prior payable seal and
+Three Minor issues are queued for final whole-work review: receipt list/tuple
+validation consistency (saved proposals normalize before posting), shared
+revenue-validation errors using an expense label, and an in-flight project capture
+replacing attribution preview context (server binding remains protected). Prior payable seal and
 migration findings were resolved in16c. A copied-workspace run-path limitation was
 reproduced in19a and has an explicit verified-relocation plan in
 [33a](09-integrations-and-pilot/STEP_33A_PLAN.md); file copying alone is not recovery.

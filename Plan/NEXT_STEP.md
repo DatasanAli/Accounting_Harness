@@ -1,15 +1,17 @@
-# Next delivery: Step 24a project attribution
+# Next delivery: Step 24b auditable time facts
 
 The user authorized the localhost app and wider accounting roadmap in this
 request. Continue through independently verified commits without waiting for
 another request. Live provider and external-account connections stay deferred.
 
-Step 23b passes 628 tests, 33 demos and native/server-off/final restart checks.
-Its CSV limit finding is fixed and scoped review approved. Do not begin Step 24a
-until the current commit/push/exact remote/CI checks are complete. See [verification](07-period-close/STEP_23B_VERIFICATION.md).
+Step 24a passes 645 tests, 34 demos, native attribution/correction/mobile and
+frozen restart with unchanged financials. Review approved with one Minor UI race
+queued for workbench/final review. Commit/remote/exact CI checks follow; see
+[verification](08-service-management/STEP_24A_VERIFICATION.md).
 
 ## Exact next implementation prompt
 
-> Build Step 24a: Add immutable project identities and versioned attribution of recorded revenue/expense lines. Follow Plan/08-service-management/STEP_24A_PLAN.md. Split a recorded 300.00 expense into Project A 120.00, Project B 100.00 and visible unallocated 80.00. Preserve financial signs, source evidence, old captures and exact historical retries; require a current prior revision and reason for corrections. Capture assignments and books together; metadata never posts a journal. Add localhost controls and reconciliation, verify, review, commit/push/exact CI, then continue Step 24b time facts. Keep live connections deferred.
+> Build Step 24b: Add auditable service-time facts linked to existing projects. Follow Plan/08-service-management/STEP_24B_PLAN.md. Record two five-hour daily intervals totaling exactly 600 integer minutes; reject duplicate-content conflicts and overlapping worker intervals. Correct through explicit void and a new event, preserve historical retries without reactivation, and retain old captures. Add localhost entry/history controls and a demonstration; time never posts wages or changes financial actuals. Verify, review, commit/push/exact CI, then continue Step 25 project costing. Keep live connections deferred.
 
+Start only after the preceding delivery’s exact remote/CI checks.
 Step 12 live provider evaluation remains deferred, not passed.

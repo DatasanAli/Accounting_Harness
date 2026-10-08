@@ -18,6 +18,7 @@
       <button class="nav-item" data-view="review"><span aria-hidden="true">✓</span>Review queue<span id="review-count" class="nav-count">0</span></button>
       <button class="nav-item" data-view="ledger"><span aria-hidden="true">▥</span>Ledger</button>
       <button class="nav-item" data-view="close"><span aria-hidden="true">◷</span>Period close</button>
+      <button class="nav-item" data-view="projects"><span aria-hidden="true">▦</span>Projects</button>
       <button class="nav-item" data-view="reports"><span aria-hidden="true">▥</span>Reports</button>
       <button class="nav-item" data-view="receivables"><span aria-hidden="true">▣</span>Customer invoices</button>
       <button class="nav-item" data-view="advances"><span aria-hidden="true">▣</span>Customer advances</button>
@@ -43,6 +44,45 @@
         <div class="metric"><span>Needs your review</span><strong id="metric-review">—</strong><small>Human decisions come next</small></div>
         <div class="metric"><span>Posted journals</span><strong id="metric-journals">—</strong><small>Approved, permanent entries</small></div>
         <div class="metric"><span>Trial balance</span><strong id="metric-balance" class="money">—</strong><small id="balance-caption">USD per debit / credit column</small></div>
+      </section>
+      <section id="view-projects" class="view" aria-labelledby="projects-heading" hidden>
+        <div class="section-heading"><h2 id="projects-heading">Project attribution</h2><span class="muted">Recorded actuals · management metadata</span></div>
+        <div class="card setup-card">
+          <h3>Create an immutable project</h3>
+          <p>Customer IDs are optional management references for this entity. Project identity and customer reference remain fixed after creation.</p>
+          <form id="project-create-form" class="receipt-form">
+            <label>Project ID <input name="project_id" required maxlength="200" placeholder="project-a"></label>
+            <label>Project name <input name="name" required maxlength="200" placeholder="Project A"></label>
+            <label>Customer reference (optional) <input name="customer_id" maxlength="200" placeholder="customer-a"></label>
+            <button id="create-project" class="button" type="submit">Create project</button>
+          </form>
+          <p id="project-create-result" class="digest" aria-live="polite"></p>
+        </div>
+        <div class="card setup-card">
+          <h3>Capture project actuals</h3>
+          <form id="project-capture-form" class="receipt-form">
+            <label>Inclusive cutoff <input id="project-cutoff" name="as_of" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-31"></label>
+            <button id="capture-projects" class="button" type="submit">Capture project actuals</button>
+          </form>
+          <p>The capture combines current attribution revisions with the books at this cutoff. Later metadata corrections require a new capture. Closing transfers are excluded.</p>
+        </div>
+        <div class="card setup-card">
+          <h3>Review a complete allocation set</h3>
+          <p>Choose a captured ordinary revenue or expense line. Enter positive USD portions and explicit classifications. The source supplies the financial sign; any remainder stays unallocated. Remove every row to clear an earlier assignment.</p>
+          <form id="project-assignment-form" class="receipt-form">
+            <fieldset id="project-assignment-fields" disabled>
+              <label>Recorded source line <select id="project-source" required></select></label>
+              <div id="project-source-context"></div>
+              <div id="project-allocation-rows" class="stack"></div>
+              <button id="add-project-allocation" class="button secondary" type="button">Add allocation row</button>
+              <label>Attribution or correction reason <textarea id="project-reason" required maxlength="1000" rows="2"></textarea></label>
+              <button id="review-project-assignment" class="button" type="submit">Review replacement allocation set</button>
+            </fieldset>
+          </form>
+          <div id="project-assignment-review" aria-live="polite"></div>
+          <p id="project-assignment-result" class="digest" aria-live="polite"></p>
+        </div>
+        <div id="project-report" class="stack"></div>
       </section>
       <section id="view-close" class="view" aria-labelledby="close-heading" hidden>
         <div class="section-heading"><h2 id="close-heading">Close January 2026</h2><span class="muted">Review → Confirm → Lock</span></div>

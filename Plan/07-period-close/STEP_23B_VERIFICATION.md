@@ -54,7 +54,7 @@ Python's default field limit. The ZIP exporter and reader now enforce the same
 oversized archive. JSON keeps its separate 4 MiB bound. Unicode and formula-prefix
 boundary regressions pass without altering global CSV parser settings. Scoped
 review approved with no new findings. The final full suite, all demonstrations
-and restart checks include this fix. Commit/remote/exact CI remain pending.
+and restart checks include this fix. Delivered commit [bf1fbb8](https://github.com/DatasanAli/Accounting_Harness/commit/bf1fbb8e369549babc02b007778574e72bc4ab3d) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37839537188) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py

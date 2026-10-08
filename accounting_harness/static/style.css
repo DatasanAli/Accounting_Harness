@@ -8,3 +8,8 @@
 
 .bank-csv-field { grid-column: 1 / -1; }
 #bank-csv { font-family: monospace; }
+
+#project-assignment-fields { border: 0; padding: 0; min-width: 0; display: grid; gap: 16px; }
+.project-allocation-row { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
+#view-projects .stack, #view-projects .card { min-width: 0; }
+#view-projects .card { margin-bottom: 20px; }

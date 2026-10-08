@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  projects: ['Projects', 'Attribute recorded revenue and expense to projects with an exact bridge to the books.'],
   close: ['Period close', 'Review the complete January books, then explicitly close temporary balances and lock posting dates.'],
   reports: ['Reports', 'Captured income, owner’s equity, assets and the sources and uses of Cash.'],
   'revenue-accrual': ['Revenue accruals', 'Completed unbilled services and their recorded cutoff assets.'],
@@ -1692,3 +1693,163 @@ $('report-export-form').addEventListener('submit', async event => {
     $('report-export-status').textContent = 'Unable to download reports: ' + error.message;
   } finally { button.disabled = false; }
 });
+
+let projectReport = null;
+let pendingAttribution = null;
+let attributionUncertain = false;
+let attributionBusy = false;
+function projectCentsAmount(value) {
+  const cents = BigInt(value), absolute = cents < 0n ? -cents : cents;
+  return (cents < 0n ? '-' : '') + (absolute / 100n).toString() + '.' + (absolute % 100n).toString().padStart(2, '0');
+}
+function projectSelectedSource() { return projectReport?.sources[$('project-source').value]; }
+function projectField(title, input) { return add(el('label', title), input); }
+function projectOptions(values, current) {
+  const select = el('select');
+  for (const [value, title] of values) { const option = el('option', title); option.value = value; select.append(option); }
+  if (current !== undefined) select.value = current;
+  return select;
+}
+function addProjectAllocation(portion = null) {
+  const rows = $('project-allocation-rows');
+  if (!projectReport || rows.children.length >= 100) return;
+  const row = el('div', null, 'project-allocation-row');
+  const project = projectOptions(projectReport.projects.map(p => [p.project_id, p.name + ' · ' + p.project_id]), portion?.project_id);
+  project.name = 'project_id'; project.required = true;
+  const customer = el('select'); customer.name = 'customer_id';
+  const updateCustomer = () => {
+    customer.replaceChildren();
+    const none = el('option', 'Unassigned customer'); none.value = ''; customer.append(none);
+    const selected = projectReport.projects.find(p => p.project_id === project.value);
+    if (selected?.customer_id) { const option = el('option', selected.customer_id); option.value = selected.customer_id; customer.append(option); }
+  };
+  updateCustomer(); if (portion?.customer_id) customer.value = portion.customer_id;
+  project.addEventListener('change', updateCustomer);
+  const amount = el('input'); amount.name = 'amount'; amount.required = true; amount.inputMode = 'decimal';
+  amount.pattern = '[0-9]+\\.[0-9]{2}'; amount.maxLength = 22; amount.placeholder = '120.00';
+  if (portion) amount.value = projectCentsAmount(portion.cents);
+  const category = el('input'); category.name = 'category'; category.required = true; category.maxLength = 100;
+  category.placeholder = 'software'; category.value = portion?.category || '';
+  const behavior = projectOptions(['unclassified', 'fixed', 'variable'].map(v => [v, v]), portion?.behavior); behavior.name = 'behavior';
+  const trace = projectOptions(['unclassified', 'direct', 'indirect'].map(v => [v, v]), portion?.traceability); trace.name = 'traceability';
+  row.append(projectField('Project', project), projectField('Customer attribution', customer), projectField('Portion (USD)', amount),
+    projectField('Cost category', category), projectField('Cost behavior', behavior), projectField('Traceability', trace),
+    button('Remove allocation row', () => row.remove(), 'button secondary'));
+  rows.append(row);
+}
+function selectProjectSource() {
+  $('project-allocation-rows').replaceChildren();
+  $('project-source-context').replaceChildren();
+  $('project-reason').value = '';
+  const source = projectSelectedSource();
+  if (!source) return;
+  $('project-source-context').append(metadata([['Journal', source.journal_id], ['Line', source.line_number],
+    ['Account', source.account + ' · ' + source.account_name], ['Signed actual', signedMoney(source.actual_amount)],
+    ['Effective date', source.effective_date], ['Evidence', source.source_ids.join(', ')],
+    ['Original journal (reversal)', source.original_entry_id || 'None'], ['Current revision', source.revision_id || 'Unassigned']]),
+    jsonDetails('Source and attribution audit', source));
+  for (const portion of source.attribution?.allocations || []) addProjectAllocation(portion);
+}
+function renderProjectReport() {
+  const node = $('project-report'); node.replaceChildren();
+  if (!projectReport) return;
+  const report = projectReport;
+  const card = add(el('article', null, 'card setup-card'), el('h3', 'Captured project actuals · through ' + report.as_of),
+    el('p', 'Allocated plus unallocated reproduces the same captured financial actuals. Each classification table partitions the allocated rows independently.'));
+  card.append(table(['Type', 'Ledger actual · USD', 'Allocated · USD', 'Unallocated · USD', 'Residual · USD'],
+    Object.entries(report.totals).map(([kind,r]) => [kind, r.actual_amount, r.allocated_amount, r.unallocated_amount, r.residual_amount]),
+    report.reconciled ? 'Exact reconciliation · all accounts agree' : 'Reconciliation requires attention'));
+  card.append(table(['Account', 'Ledger actual · USD', 'Allocated · USD', 'Unallocated · USD', 'Residual · USD'],
+    report.accounts.map(r => [r.account + ' · ' + r.name, r.actual_amount, r.allocated_amount, r.unallocated_amount, r.residual_amount]), 'Every supported revenue and expense account'));
+  card.append(table(['Project', 'Name', 'Customer reference', 'Created by'], report.projects.map(p => [p.project_id,p.name,p.customer_id || 'None',p.actor_id]), 'Immutable projects in this capture'));
+  for (const [axis, title] of [['project_id','Project'],['customer_id','Customer'],['category','Cost category'],['behavior','Cost behavior'],['traceability','Traceability']]) {
+    card.append(table([title, 'Revenue · USD', 'Expense · USD'],report.groups[axis].map(r => [r.key ?? 'Unassigned customer',r.revenue_amount,r.expense_amount]),
+      title + ' · allocated amounts only; unallocated remains in the reconciliation above'));
+  }
+  const drilldown = add(el('details'), el('summary', 'Source lines, evidence and attribution revisions'));
+  for (const source of report.sources) {
+    const detail = add(el('details'), el('summary', source.journal_id + ' · line ' + source.line_number + ' · ' + source.account + ' · ' + signedMoney(source.actual_amount)),
+      metadata([['Effective date',source.effective_date],['Evidence',source.source_ids.join(', ')],['Original journal',source.original_entry_id || 'None'],
+        ['Allocated',signedMoney(source.allocated_amount)],['Unallocated',signedMoney(source.unallocated_amount)],['Revision',source.revision_id || 'Unassigned']]));
+    detail.append(table(['Project','Customer','Category','Behavior','Traceability','Signed amount · USD'],
+      source.allocations.map(r => [r.project_id,r.customer_id || 'Unassigned',r.category,r.behavior,r.traceability,r.signed_amount]),'Explicit portions'));
+    detail.append(jsonDetails('Complete captured source and attribution audit',source)); drilldown.append(detail);
+  }
+  card.append(drilldown);
+  digest(card, 'Management capture SHA-256',report.snapshot_digest);
+  digest(card, 'Financial snapshot SHA-256',report.financial_snapshot_digest);
+  digest(card, 'Project report SHA-256',report.report_digest);
+  card.append(jsonDetails('Captured books, project identities, current revision IDs and policy',report.capture)); node.append(card);
+}
+$('project-create-form').addEventListener('submit', async event => {
+  event.preventDefault(); const submit = $('create-project'); submit.disabled = true;
+  try {
+    const values = Object.fromEntries(new FormData(event.target));
+    const result = await request('/api/projects', {...values, customer_id: values.customer_id || null, entity_id: state.entity_id});
+    $('project-create-result').textContent = 'Created ' + result.project_id + ' · ' + result.recorded_at + '. Capture project actuals to include this identity.';
+    event.target.reset();
+  } catch (error) { notify(error.message, 'error'); }
+  finally { submit.disabled = false; }
+});
+$('project-capture-form').addEventListener('submit', async event => {
+  event.preventDefault(); if (pendingAttribution) { notify('Finish or edit the pending attribution review before capturing again.', 'error'); return; }
+  $('capture-projects').disabled = true;
+  try {
+    projectReport = await request('/api/project-dimensions?as_of=' + encodeURIComponent($('project-cutoff').value));
+    const select = $('project-source'); select.replaceChildren();
+    projectReport.sources.forEach((source,index) => { const option = el('option', source.account + ' · ' + source.journal_id + ' · line ' + source.line_number + ' · ' + source.actual_amount + ' USD'); option.value = String(index); select.append(option); });
+    $('project-assignment-fields').disabled = projectReport.sources.length === 0;
+    selectProjectSource(); renderProjectReport(); notify('Project actuals captured. Attribution and books share the displayed snapshot.');
+  } catch (error) { notify(error.message, 'error'); }
+  finally { $('capture-projects').disabled = false; }
+});
+$('project-source').addEventListener('change', selectProjectSource);
+$('add-project-allocation').addEventListener('click', () => addProjectAllocation());
+$('project-assignment-form').addEventListener('submit', event => {
+  event.preventDefault(); const source = projectSelectedSource(); if (!source || pendingAttribution) return;
+  try {
+    const allocations = Array.from($('project-allocation-rows').children).map(row => {
+      const value = name => row.querySelector('[name="' + name + '"]').value;
+      const amount = value('amount');
+      if (!/^[0-9]+\.[0-9]{2}$/.test(amount)) throw new Error('Each portion requires an unsigned USD amount with exactly two decimal places.');
+      const cents = BigInt(amount.replace('.', ''));
+      if (cents <= 0n) throw new Error('Every portion must be positive. Remove a row to leave it unallocated.');
+      return {project_id: value('project_id'), customer_id: value('customer_id') || null, category: value('category'), behavior: value('behavior'), traceability: value('traceability'), cents: cents.toString()};
+    });
+    const assigned = allocations.reduce((sum,r) => sum + BigInt(r.cents), 0n);
+    const actual = BigInt(source.actual_cents), absolute = actual < 0n ? -actual : actual;
+    if (assigned > absolute) throw new Error('The allocation portions exceed this posted source amount.');
+    pendingAttribution = {entity_id: projectReport.entity_id, journal_id: source.journal_id, line_number: source.line_number,
+      source_digest: source.source_digest, prior_revision_id: source.revision_id, reason: $('project-reason').value,
+      idempotency_key: crypto.randomUUID(), allocations};
+    attributionUncertain = false; $('project-assignment-fields').disabled = true;
+    renderAttributionReview();
+  } catch (error) { notify(error.message, 'error'); }
+});
+function renderAttributionReview() {
+  const node = $('project-assignment-review'); node.replaceChildren();
+  if (!pendingAttribution) return;
+  const pending = pendingAttribution, source = projectSelectedSource();
+  const sign = BigInt(source.actual_cents) < 0n ? -1n : 1n;
+  const assigned = pending.allocations.reduce((sum,r) => sum + BigInt(r.cents),0n) * sign;
+  node.append(el('h4','Confirm the complete replacement'),
+    metadata([['Signed actual',source.actual_amount + ' USD'],['Assigned',projectCentsAmount(assigned) + ' USD'],
+      ['Unallocated',projectCentsAmount(BigInt(source.actual_cents)-assigned) + ' USD'],['Reason',pending.reason]]),
+    table(['Project','Customer','Category','Behavior','Traceability','Signed USD'],pending.allocations.map(r => [r.project_id,r.customer_id || 'Unassigned',r.category,r.behavior,r.traceability,projectCentsAmount(BigInt(r.cents)*sign)]),'Every row to be saved'),
+    jsonDetails('Exact source binding and prior revision',pending));
+  const save = button(attributionUncertain ? 'Retry same attribution confirmation' : 'Confirm and save attribution', async () => {
+    if (attributionBusy) return;
+    attributionBusy = true; renderAttributionReview();
+    try {
+      const result = await request('/api/project-assignments',pendingAttribution);
+      pendingAttribution = null; attributionUncertain = false;
+      $('project-assignment-result').textContent = 'Saved revision ' + result.revision_id + ' · ' + result.recorded_at + '. Displayed report remains its earlier capture. Capture again to see the new attribution.';
+      notify('Attribution saved. Capture again to inspect the new reconciliation or make a correction.');
+    } catch (error) { attributionUncertain = error.uncertain; notify(error.message + (attributionUncertain ? ' Retry the same confirmation to recover its recorded outcome.' : ' Edit the review, then capture current actuals if its prior revision is stale.'), 'error'); }
+    finally { attributionBusy = false; renderAttributionReview(); }
+  });
+  save.disabled = attributionBusy;
+  const edit = button('Edit allocation review', () => { pendingAttribution = null; $('project-assignment-fields').disabled = false; renderAttributionReview(); }, 'button secondary');
+  edit.disabled = attributionBusy || attributionUncertain;
+  node.append(add(el('div',null,'actions'),save,edit));
+}

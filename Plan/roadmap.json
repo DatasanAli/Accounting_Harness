@@ -323,7 +323,9 @@
             {
               "id": "23b",
               "title": "Portable reproducible report packages",
-              "status": "complete"
+              "status": "complete",
+              "commit": "bf1fbb8e369549babc02b007778574e72bc4ab3d",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37839537188"
             }
           ]
         }
@@ -342,12 +344,12 @@
             {
               "id": "24a",
               "title": "Project attribution of recorded actuals",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "24b",
               "title": "Auditable project time facts",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         },

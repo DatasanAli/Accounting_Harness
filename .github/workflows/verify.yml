@@ -83,3 +83,5 @@ jobs:
         run: python3 -m accounting_harness demo-cash-flow
       - name: Demonstrate deterministic portable report packages
         run: python3 -m accounting_harness demo-report-export
+      - name: Demonstrate captured project attribution and unallocated actuals
+        run: python3 -m accounting_harness demo-project-dimensions

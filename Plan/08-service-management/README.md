@@ -1,6 +1,6 @@
 # Phase 08: Service costing, budgets and analysis
 
-Status: Step 24a project attribution is ready after Step 23b exact delivery verification. No behavior in this phase is implemented yet.
+Status: Step 24a passes 645 tests, 34 demos and native attribution/correction/retained-report/mobile/restart checks with unchanged financials. Independent review approved with one Minor UI race queued for workbench/final review. Upload/exact CI follow; see [verification](STEP_24A_VERIFICATION.md). Step 24b time facts follows.
 
 **Depends on:** Steps 02–23. These outputs read supported actuals and label assumptions separately.
 

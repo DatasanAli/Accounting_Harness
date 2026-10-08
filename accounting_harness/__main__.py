@@ -219,6 +219,7 @@ def demo_source() -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("demo-project-dimensions", help="attribute recorded expense across projects with exact ledger reconciliation")
     commands.add_parser("demo-adjusted-month", help="assemble the supported adjusted reference month with explicit synthetic approvals")
     commands.add_parser("demo-close", help="explicitly close January and refuse backdated entries")
     commands.add_parser("demo-report-export", help="round-trip captured reports as exact offline JSON and CSV packages")
@@ -269,6 +270,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "serve":
             from accounting_harness.web import serve
             serve(args)
+        elif args.command == "demo-project-dimensions":
+            from accounting_harness.project_dimensions import demo_project_dimensions
+            demo_project_dimensions()
         elif args.command == "demo-adjusted-month":
             from accounting_harness.adjusted_month import demo_adjusted_month
             demo_adjusted_month()
