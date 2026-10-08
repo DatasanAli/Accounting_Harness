@@ -147,7 +147,7 @@ class ReviewApplication:
             if current.policy_version in ('bill-v1', 'bill-payment-v1'):
                 from accounting_harness.payables import prepare_payable_post
                 prepare_payable_post(self.store, approval, current, entry)
-            if current.policy_version == 'invoice-v1':
+            if current.policy_version in ('invoice-v1', 'invoice-collection-v1'):
                 from accounting_harness.receivables import prepare_receivable_post
                 prepare_receivable_post(self.store, approval, current, entry)
             receipt = self.ledger._store_entry(entry, actor_id)

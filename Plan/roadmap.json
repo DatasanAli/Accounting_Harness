@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "14",
-  "next_step": "15",
+  "current_step": "15",
+  "next_step": "16",
   "phases": [
     {
       "id": "01",
@@ -157,24 +157,38 @@
         {
           "id": "15",
           "title": "Customer invoices and collection",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "15a",
               "title": "Reviewed customer invoice recognition",
-              "status": "complete"
+              "status": "complete",
+              "commit": "0176f99c6bce416f2f38ab83c00221e8a1e9af09",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37800424176"
             },
             {
               "id": "15b",
               "title": "Recorded collection and aging",
-              "status": "ready"
+              "status": "complete"
             }
           ]
         },
         {
           "id": "16",
           "title": "Customer advances and earning",
-          "status": "planned"
+          "status": "ready",
+          "substeps": [
+            {
+              "id": "16a",
+              "title": "Reviewed customer advance receipt",
+              "status": "ready"
+            },
+            {
+              "id": "16b",
+              "title": "Supported earning of customer advances",
+              "status": "planned"
+            }
+          ]
         }
       ]
     },

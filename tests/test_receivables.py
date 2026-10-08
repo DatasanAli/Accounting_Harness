@@ -312,7 +312,8 @@ class ReceivablesTests(unittest.TestCase):
             self.assertEqual(report['unassigned_control_cents'],0)
             self.assertEqual(report['invoices'][0]['customer_name'],'Fictional service customer')
             self.assertEqual(report['customers'],[dict(customer_id='customer-1',
-                names=['Fictional service customer'],outstanding_cents=250000)])
+                names=['Fictional service customer'],outstanding_cents=250000,
+                aging_cents=dict(current=0,days_1_30=250000,days_31_60=0,days_61_90=0,days_91_plus=0))])
             later=facts(self.catalog.entity_id,event='later-invoice',number='I-002')
             for document in later:
                 document['counterparty']='Fictional service customer renamed'
@@ -326,7 +327,8 @@ class ReceivablesTests(unittest.TestCase):
                 self.assertEqual(receivables_report(frozen,as_of='2026-01-31'),report)
             current=receivables_report(service.snapshot(),as_of='2026-01-31')
             self.assertEqual(current['customers'],[dict(customer_id='customer-1',
-                names=['Fictional service customer','Fictional service customer renamed'],outstanding_cents=500000)])
+                names=['Fictional service customer','Fictional service customer renamed'],outstanding_cents=500000,
+                aging_cents=dict(current=0,days_1_30=500000,days_31_60=0,days_61_90=0,days_91_plus=0))])
             self.assertEqual(current['unassigned_control_cents'],0)
             # An unanchored source still has to match the immutable approval binding.
             from dataclasses import replace
@@ -712,7 +714,7 @@ class InvoiceMigrationTests(unittest.TestCase):
         self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(3,)])
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0], old_seal)
         service = ReceivablesService(self.ledger, self.registry)
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(4,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(5,)])
         self.assertEqual({t: db.execute(f'SELECT * FROM {t}').fetchall() for t in tables}, before)
         self.assertEqual(test_review.ReviewTests.save(self, require_unused_evidence=True), old)
         self.assertEqual(old_app.post(approval.approval_id, actor_id='human', idempotency_key='old'), receipt)

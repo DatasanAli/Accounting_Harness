@@ -51,3 +51,5 @@ jobs:
         run: python3 -m accounting_harness demo-bill-payment
       - name: Demonstrate reviewed customer invoice and receivable reconciliation
         run: python3 -m accounting_harness demo-invoice
+      - name: Demonstrate recorded invoice collection and captured aging
+        run: python3 -m accounting_harness demo-collection

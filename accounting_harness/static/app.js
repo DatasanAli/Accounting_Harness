@@ -291,12 +291,13 @@ function renderCashChoices() {
     ['recognition-source-select', ['incurred_expense', 'service_completion']],
     ['invoice-source-select', ['customer_invoice']], ['completion-source-select', ['service_completion']],
     ['bill-source-select', ['vendor_bill']], ['incurrence-source-select', ['incurred_expense']],
-    ['payment-cash-select', ['cash_movement']]]) {
+    ['collection-cash-select', ['cash_movement']], ['payment-cash-select', ['cash_movement']]]) {
     const select = $(id);
     const prior = select.value;
     select.replaceChildren(el('option', 'Choose registered evidence'));
     select.firstChild.value = '';
     state.sources.filter(source => kinds.includes(source.document.kind) &&
+      (id !== 'collection-cash-select' || (source.document.direction === 'in' && source.document.purpose === 'settlement')) &&
       (id !== 'payment-cash-select' || (source.document.direction === 'out' && source.document.purpose === 'settlement'))).forEach(source => {
       const option = el('option', source.source_id + ' · ' + money(source.document.amount));
       option.value = source.source_id;
@@ -316,6 +317,19 @@ function renderCashChoices() {
     bills.append(option);
   }
   bills.value = selectedBill;
+  const invoices = $('collection-invoice-select');
+  const selectedInvoice = invoices.value;
+  invoices.replaceChildren(el('option', 'Choose a posted invoice'));
+  invoices.firstChild.value = '';
+  for (const invoice of state.receivables.invoices) {
+    const option = el('option', invoice.customer_name + ' · ' + invoice.invoice_number + ' · Outstanding ' + money(invoice.outstanding_amount));
+    option.value = invoice.invoice_id;
+    option.disabled = invoice.outstanding_amount === '0.00';
+    invoices.append(option);
+  }
+  invoices.value = selectedInvoice;
+  $('prepare-collection').disabled = busy;
+  $('register-collection-evidence').disabled = busy;
   $('prepare-payment').disabled = busy;
   $('register-payment-evidence').disabled = busy;
   $('prepare-invoice').disabled = busy;
@@ -351,6 +365,35 @@ $('payment-proposal-form').addEventListener('submit', async event => {
     await request('/api/bill-payment-proposals', payload);
     await refresh(); showView('review', true);
     notify('Payment draft prepared. Inspect both documents and confirm the exact revision separately.');
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+$('collection-evidence-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy) return;
+  const input = Object.fromEntries(new FormData(event.target));
+  const document = {...input, schema_version: 2, synthetic: true, entity_id: state.entity_id,
+    currency: 'USD', kind: 'cash_movement', direction: 'in', purpose: 'settlement'};
+  busy = true; render();
+  try {
+    await request('/api/operation-sources', {document});
+    selectedSource = document.document_id; remember('source', selectedSource);
+    await refresh();
+    $('collection-cash-select').value = document.document_id;
+    $('collection-proposal-panel').open = true;
+    notify('Recorded collection evidence registered. Select its invoice and prepare a draft for human review.');
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+$('collection-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy) return;
+  const payload = Object.fromEntries(new FormData(event.target));
+  busy = true; render();
+  try {
+    await request('/api/invoice-collection-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Collection draft prepared. Inspect both documents and confirm the exact revision separately.');
   } catch (error) { await refresh(); notify(error.message, 'error'); }
   finally { busy = false; render(); }
 });
@@ -407,20 +450,29 @@ function renderReceivables() {
   summary.append(metadata([['As of', report.as_of], ['AR control', amounts(report.ar_control_amount)],
     ['Customer outstanding', amounts(report.subledger_amount)], ['Unassigned residual', amounts(report.unassigned_control_amount)],
     ['Reconciliation', report.reconciled ? 'Reconciled' : 'Unassigned AR: correction workflow required']]));
-  summary.append(el('p', report.enabled ? 'New AR postings require an approved invoice. Managed invoice corrections are unavailable.'
+  summary.append(el('p', report.enabled ? 'New AR postings require an approved invoice or recorded collection. Managed invoice and collection corrections are unavailable.'
     : 'Invoice setup requires zero existing unassigned AR. Preparing the first valid invoice activates the control guard.', 'action-hint'));
   digest(summary, 'Captured snapshot · ' + report.policy, report.snapshot_digest);
   digest(summary, 'Reproducible report digest', report.report_digest);
   node.append(summary);
-  if (report.customers.length) node.append(table(['Customer', 'Outstanding · USD'], report.customers.map(customer => [customer.names.join(' / ') + ' · ' + customer.customer_id, money(customer.outstanding_amount)]), 'Customer totals'));
+  const buckets = ['current', 'days_1_30', 'days_31_60', 'days_61_90', 'days_91_plus'];
+  node.append(table(['Current / due today', '1–30 days', '31–60 days', '61–90 days', '91+ days'],
+    [buckets.map(bucket => money(report.aging_amounts[bucket]))], 'Outstanding aging · USD'));
+  if (report.customers.length) node.append(table(['Customer', 'Outstanding · USD', 'Current', '1–30', '31–60', '61–90', '91+ days'],
+    report.customers.map(customer => [customer.names.join(' / ') + ' · ' + customer.customer_id,
+      money(customer.outstanding_amount), ...buckets.map(bucket => money(customer.aging_amounts[bucket]))]), 'Customer aging · USD'));
   if (!report.invoices.length) node.append(empty('No posted customer invoices', 'Register the invoice and separate completion evidence, prepare a proposal, then approve it in the review queue.'));
   for (const invoice of report.invoices) {
     const card = el('article', null, 'card draft-body');
     card.append(el('h3', invoice.customer_name + ' · ' + invoice.invoice_number),
-      metadata([['Customer ID', invoice.customer_id], ['Recognition date', invoice.effective_date], ['Due date', invoice.due_date],
+      metadata([['Customer ID', invoice.customer_id], ['Recognition date', invoice.effective_date], ['Due date', invoice.due_date], ['Days past due', String(invoice.days_past_due)],
         ['Principal', money(invoice.principal_amount)], ['Paid', money(invoice.paid_amount)], ['Outstanding', money(invoice.outstanding_amount)]]),
       el('p', 'Invoice evidence: ' + invoice.invoice_source_id + ' · Completion evidence: ' + invoice.completion_source_id));
     card.append(add(el('details'), el('summary', 'Invoice and approval trace'), el('pre', invoice.trace_json)));
+    for (const collection of report.collections.filter(item => item.invoice_id === invoice.invoice_id)) {
+      card.append(add(el('details'), el('summary', 'Recorded collection ' + money(collection.allocated_amount) + ' · ' + collection.effective_date),
+        el('pre', collection.trace_json)));
+    }
     node.append(card);
   }
 }

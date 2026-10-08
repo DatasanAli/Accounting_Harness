@@ -352,7 +352,7 @@ class PaymentMigrationTests(unittest.TestCase):
         db=self.service.db
         # Simulate the shipped v2 review seal and v1 payables guard with genuine posted bill rows.
         seal=db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0]
-        old_seal=seal.replace("NOT IN ('bill-v1','bill-payment-v1','invoice-v1')", "!= 'bill-v1'").replace("IN ('bill-v1','bill-payment-v1','invoice-v1')", "= 'bill-v1'")
+        old_seal=seal.replace("NOT IN ('bill-v1','bill-payment-v1','invoice-v1','invoice-collection-v1')", "!= 'bill-v1'").replace("IN ('bill-v1','bill-payment-v1','invoice-v1','invoice-collection-v1')", "= 'bill-v1'")
         guard=db.execute("SELECT sql FROM sqlite_master WHERE name='payables_post_guard'").fetchone()[0]
         old_guard=guard.replace('                 OR EXISTS (SELECT 1 FROM vendor_bill_payments WHERE journal_id=NEW.journal_id)\n','')
         start=old_guard.index(' ) AND NOT EXISTS (\n                    SELECT 1 FROM vendor_bill_payments')
@@ -378,7 +378,7 @@ class PaymentMigrationTests(unittest.TestCase):
         self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(2,)])
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0],old_seal)
         SQLiteReviewStore(self.ledger,self.registry)
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(4,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(5,)])
         db.set_authorizer(deny_update('payables_schema'))
         try:
             with self.assertRaises(sqlite3.DatabaseError): PayablesService(self.ledger,self.registry)

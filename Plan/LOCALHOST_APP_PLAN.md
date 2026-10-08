@@ -105,4 +105,5 @@ linked reversals, not deletion or a database reset.
 - Step 13b: `887cc4e974c196913432c0006bf7d1e24e5af096`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37791223746). 268 tests, 14 demos and browser cash review/posting.
 - Step 14a: `ff9a1cba9f26d83010112657a52adcb45df9b505`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37794830614). 287 tests, 15 demos, browser normal bill/restart and exact large-amount review.
 - Step 14b: `0e061604d57c3f70400a10e6f39bb1e7a5c0ecf8`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37797498803). 301 tests, 16 demos, browser partial settlement and independent review.
-- Step 15a: locally verified and reviewed; 327 broad tests/17 demos, 27 focused tests after final-seal correction, browser posting and exact large amount display. Upload/exact CI pending; [verification](05-service-bookkeeping/STEP_15A_VERIFICATION.md).
+- Step 15a: `0176f99c6bce416f2f38ab83c00221e8a1e9af09`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37800424176). Final 328 tests/17 demos in CI, browser posting and exact large amounts.
+- Step 15b: locally verified, 345 tests/18 demos, browser collection/aging and review without findings; upload/exact CI pending. See [verification](05-service-bookkeeping/STEP_15B_VERIFICATION.md).

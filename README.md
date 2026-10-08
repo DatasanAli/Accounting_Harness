@@ -4,7 +4,7 @@ An accounting agent harness for bookkeeping at a small service business, built o
 
 The intended workflow is: **evidence → proposed journal entry → validation → human approval → posting → reconciliation → reporting**. Accounting code owns calculations and ledger changes. The agent helps interpret evidence and propose work.
 
-**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Step 13b adds typed cash/recognition facts and reviewed cash expense and earned-service templates. Step 14a adds vendor bill recognition and AP reconciliation. Step 14b adds reviewed partial settlement with atomic payment allocation. Step 15a adds separately evidenced customer invoices and AR reconciliation. Authenticated roles remain a future step.
+**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Step 13b adds typed cash/recognition facts and reviewed cash expense and earned-service templates. Step 14a adds vendor bill recognition and AP reconciliation. Step 14b adds reviewed partial settlement with atomic payment allocation. Step 15a adds separately evidenced customer invoices and AR reconciliation. Step 15b adds partial collection and captured customer aging. Authenticated roles remain a future step.
 
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
 
@@ -73,6 +73,7 @@ python3 -m accounting_harness demo-cash
 python3 -m accounting_harness demo-bill
 python3 -m accounting_harness demo-bill-payment
 python3 -m accounting_harness demo-invoice
+python3 -m accounting_harness demo-collection
 ```
 
 The account demo prints 13 fictional accounts, including credit-normal accumulated depreciation and debit-normal owner drawings. It demonstrates `0.10 + 0.20 = 0.30 USD (30 cents)` and rejects the unsupported precision in `1.005`.
@@ -102,7 +103,7 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 328 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all seventeen demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 345 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all eighteen demonstrations.
 
 Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting is implemented; authenticated approval is not. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
@@ -122,7 +123,7 @@ The delivery target is this repository on GitHub with its verification workflow 
 
 Next prompt:
 
-> Build Step 15b: Record partial invoice collection and captured aging with exact review and atomic allocation. Follow Plan/05-service-bookkeeping/STEP_15B_PLAN.md. A 2500.00 invoice collected by 1500.00 leaves 1000.00 receivable with revenue unchanged. Keep live connections deferred; verify, commit, push and check exact CI, then continue customer advances.
+> Build Step 16a: Record separately evidenced customer advances as liabilities with exact review and control reconciliation. Follow Plan/05-service-bookkeeping/STEP_16A_PLAN.md. A 600.00 advance increases Cash and Unearned Revenue, with no earned revenue. Keep live connections deferred; verify, commit, push and check exact CI, then continue supported earning.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 
@@ -192,5 +193,9 @@ No money is transmitted. See the [payment verification](Plan/05-service-bookkeep
 
 Customer invoices use paired invoice and completion evidence. Recognition posts
 Accounts Receivable debit and Service Revenue credit after exact human review;
-customer balances reconcile to AR. Collection and aging follow separately. See
+customer balances reconcile to AR. Recorded whole cash movements can settle part of an invoice without recognizing revenue again. Aging shows the outstanding amount by due date at the captured cutoff. See
 [invoice verification](Plan/05-service-bookkeeping/STEP_15A_VERIFICATION.md).
+
+Collection checks include posting-time remaining balance and shared cash-event
+protection. A 2500.00 invoice collected by 1500.00 leaves 1000.00 due, with
+revenue unchanged. See [collection verification](Plan/05-service-bookkeeping/STEP_15B_VERIFICATION.md).

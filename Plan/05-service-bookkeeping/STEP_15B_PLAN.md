@@ -14,6 +14,8 @@
 
 Follow all constraints in `Plan/05-service-bookkeeping/STEP_15_PLAN.md`: exact USD integer cents/decimal strings, January 2026 current catalog, synthetic evidence only, separate human approval, immutable history, preserved legacy digest/retry/context bytes, semantic claims shared across policies, mandatory AR control effects and reproducible captured reports. No live connections, tax, FX, credit notes, split cash allocation or managed operational reversals. Browser money uses exact decimal strings or server-produced trace text, including integers beyond 2^53.
 
+The final posting-event seal must recheck the current approved revision and bound intent after effect insertion. Preserve the Step 15a regression for a later rejection/pending revision between effect insertion and journal sealing, and cover the collection branch too.
+
 ## Task 1: collection allocation, customer aging and local UI
 
 **Contract:** Read `Plan/05-service-bookkeeping/STEP_15_PLAN.md` for exact receipt/intent/mapping, temporal, concurrency and report requirements.

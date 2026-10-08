@@ -31,6 +31,8 @@ Copyable prompt:
 
 ### Step 18: Matching and exceptions
 
+Detailed bounded implementation: [Step 18 plan](STEP_18_PLAN.md).
+
 - **Build:** Propose one-to-one matches by amount/date/reference with operator confirmation.
 - **Test:** Ambiguous equal-amount rows stay unresolved; unmatched rows persist; repeated matching is idempotent; a transfer is not income.
 - **Verify manually:** Confirm a unique receipt match and leave two ambiguous rows for review.
@@ -43,8 +45,8 @@ Copyable prompt:
 ### Step 19: Reconciliation and reviewed adjustments
 
 The current frozen 13-account catalog has no bank-fee expense account. Before
-implementing the reviewed fee, split out an independently verified additive
-account extension if it is still needed. Preserve original ledger context,
+implementing the reviewed fee, deliver [19a additive bank-fee account](STEP_19A_PLAN.md)
+if it is still needed, followed by 19b reconciliation and reviewed adjustment. Preserve original ledger context,
 approval/retry/provider bytes and captured snapshots; do not relabel software or
 rent expense as bank fees. Introduce a clearly named fictional bank-fee expense
 account with immutable metadata and audit, and use the effective captured catalog

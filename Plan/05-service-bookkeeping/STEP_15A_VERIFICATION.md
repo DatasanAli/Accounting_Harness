@@ -67,5 +67,4 @@ commit; never delete an invoice or journal to undo an accounting transaction.
 
 ## Delivery evidence
 
-Commit, remote comparison and exact-SHA CI will be recorded after final checks
-and review; no GitHub completion is claimed yet.
+Delivered as [0176f99](https://github.com/DatasanAli/Accounting_Harness/commit/0176f99c6bce416f2f38ab83c00221e8a1e9af09). Local HEAD and remote main matched. [GitHub Actions run 37800424176](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37800424176) completed successfully for this exact SHA, running the final 328-test suite and all 17 demos.

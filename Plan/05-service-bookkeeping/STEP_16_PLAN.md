@@ -100,7 +100,7 @@ The trusted posting branch inserts the effect before sealing the journal within
 the same transaction as review posting and retry storage. SQL guards check the
 approved current intent and exactly matching two journal lines, date and sources;
 old connections, generic admission and direct inserts cannot omit the effect.
-Use explicit trigger definitions or checked replacements in migrations.
+Use explicit trigger definitions or checked replacements in migrations. Recheck the current approved revision and bound intent at the final posting-event seal as well as effect insertion; a later rejection/revision within the same transaction must prevent sealing and roll back the unit.
 
 Earning posting rechecks remaining principal under `BEGIN IMMEDIATE`. Approval
 reserves nothing. Positive earning cannot exceed principal minus prior posted
