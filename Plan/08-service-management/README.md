@@ -1,6 +1,6 @@
 # Phase 08: Service costing, budgets and analysis
 
-Status: Step 24a passes 645 tests, 34 demos and native attribution/correction/retained-report/mobile/restart checks with unchanged financials. Independent review approved with one Minor UI race queued for workbench/final review. Upload/exact CI follow; see [verification](STEP_24A_VERIFICATION.md). Step 24b time facts follows.
+Status: Steps 24a/24b are locally verified. Step 24b passes 663 tests, 35 demos, native time/void/retry/replacement/mobile/restart checks with unchanged financials. Independent review approved with no new findings. Upload/exact CI follow; see [verification](STEP_24B_VERIFICATION.md). Step 25 project costing follows.
 
 **Depends on:** Steps 02–23. These outputs read supported actuals and label assumptions separately.
 

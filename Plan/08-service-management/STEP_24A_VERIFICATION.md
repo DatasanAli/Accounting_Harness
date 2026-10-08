@@ -46,7 +46,7 @@ selection. At 1280px the report was present without horizontal document overflow
   Minor UI race is queued for the workbench/final review: a recapture finishing
   during assignment preview can replace displayed source context while the
   pending request remains correctly bound. Server accounting checks remain intact.
-- Commit/remote/exact CI checks follow local acceptance.
+- Delivered commit [c5ce264](https://github.com/DatasanAli/Accounting_Harness/commit/c5ce264412de606bd620dbae5538bf4080347b92) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37841528029) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py

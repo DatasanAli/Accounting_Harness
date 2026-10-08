@@ -77,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(409, dict(error=str(error)))
             except (sqlite3.Error, PersistenceBusy):
                 return self.respond(503, dict(error='workspace busy or unavailable; retry export'))
-        if urlsplit(self.path).path in ('/api/financial-statements', '/api/cash-flow', '/api/project-dimensions'):
+        if urlsplit(self.path).path in ('/api/financial-statements', '/api/cash-flow', '/api/project-dimensions', '/api/project-time'):
             try:
                 values = parse_qs(urlsplit(self.path).query, strict_parsing=True,
                                   keep_blank_values=True, max_num_fields=1)
@@ -85,7 +85,8 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('financial statements require as_of exactly once')
                 render = {'/api/cash-flow': self.server.workspace.cash_flow,
                           '/api/financial-statements': self.server.workspace.financial_statements,
-                          '/api/project-dimensions': self.server.workspace.project_dimensions}[urlsplit(self.path).path]
+                          '/api/project-dimensions': self.server.workspace.project_dimensions,
+                          '/api/project-time': self.server.workspace.project_time}[urlsplit(self.path).path]
                 return self.respond(200, render(values['as_of'][0]))
             except (ValueError, TypeError) as error:
                 return self.respond(409, dict(error=str(error)))
@@ -143,7 +144,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
-        if self.path not in ('/api/projects', '/api/project-assignments', '/api/close-preview', '/api/close-confirm', '/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
+        if self.path not in ('/api/project-time', '/api/project-time-void', '/api/projects', '/api/project-assignments', '/api/close-preview', '/api/close-confirm', '/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
                              '/api/revenue-accrual-proposals', '/api/expense-accrual-proposals', '/api/prepaid-proposals', '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals', '/api/invoice-proposals', '/api/advance-proposals', '/api/advance-earning-proposals', '/api/invoice-collection-proposals', '/api/bill-payment-proposals'):
             return self.respond(404, dict(error='not found'))
         try:

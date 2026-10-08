@@ -78,9 +78,11 @@ class Workspace:
                 # The accrual service owns ledger/review/approval/accrual schema setup
                 # in one transaction, before generic review handles can commit a migration.
                 from accounting_harness.project_dimensions import ProjectDimensionsService
+                from accounting_harness.project_time import ProjectTimeService
                 with ledger._transaction(write=True):
                     RevenueAccrualService(ledger, registry)
                     ProjectDimensionsService(ledger)
+                    ProjectTimeService(ledger)
                 store = SQLiteReviewStore(ledger, registry)
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
@@ -135,6 +137,12 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             capture = capture_dimensions(ledger, as_of)
         return project_report(capture)
+
+    def project_time(self, as_of):
+        from accounting_harness.project_time import capture_time, time_report
+        with self.storage() as (_, ledger, _, _, _):
+            capture = capture_time(ledger, as_of)
+        return time_report(capture)
 
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
@@ -456,6 +464,12 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action in ('project-time', 'project-time-void'):
+            from accounting_harness.project_time import ProjectTimeService
+            with self.storage() as (_, ledger, _, _, _):
+                service = ProjectTimeService(ledger)
+                method = service.record if action == 'project-time' else service.void
+                return method(data, actor_id='local-operator')
         if action in ('projects', 'project-assignments'):
             from accounting_harness.project_dimensions import ProjectDimensionsService
             with self.storage() as (_, ledger, _, _, _):

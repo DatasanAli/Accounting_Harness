@@ -83,6 +83,47 @@
           <p id="project-assignment-result" class="digest" aria-live="polite"></p>
         </div>
         <div id="project-report" class="stack"></div>
+        <div class="card setup-card">
+          <h3>Capture operational service time</h3>
+          <p>Time is an operational fact, separate from recorded financial costs and assumed costing rates. It does not establish paid wages or create an expense. Captures retain the projects, intervals and correction history known when captured.</p>
+          <form id="project-time-capture-form" class="receipt-form">
+            <label>Work-date cutoff <input id="project-time-cutoff" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-31"></label>
+            <button id="capture-project-time" class="button" type="submit">Capture time history</button>
+          </form>
+        </div>
+        <div class="card setup-card">
+          <h3>Record a supported daily interval</h3>
+          <p>Capture time history first to choose an existing project. Use one stable event ID for the original service fact. Exact retries retain the original audit, including a later void. A worker cannot have overlapping active intervals across projects. Split overnight work into separate dates.</p>
+          <form id="project-time-form" action="/api/project-time" class="receipt-form">
+            <fieldset id="project-time-fields" disabled>
+              <label>Project <select id="project-time-project" name="project_id" required></select></label>
+              <label>Worker ID <input name="worker_id" required maxlength="200" placeholder="worker-1"></label>
+              <label>Stable time event ID <input name="time_event_id" required maxlength="200" placeholder="service-001"></label>
+              <label>Work date <input name="work_date" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-10"></label>
+              <label>Start minute of day <input name="start_minute" type="number" required min="0" max="1439" step="1" value="540"></label>
+              <label>End minute of day <input name="end_minute" type="number" required min="1" max="1440" step="1" value="840"></label>
+              <small>540 = 09:00; 840 = 14:00. This interval is exactly 300 minutes (5h 0m). End must be after start.</small>
+              <label>Replaces voided record ID (optional) <input id="project-time-replaces" name="replaces_record_id" maxlength="200" placeholder="time-…"></label>
+              <button id="save-project-time" class="button" type="submit">Record time interval</button>
+            </fieldset>
+          </form>
+          <p id="project-time-result" class="digest" aria-live="polite"></p>
+        </div>
+        <div class="card setup-card">
+          <h3>Explicitly void an incorrect interval</h3>
+          <p>Choose a record from the captured history below and enter a reason. Voiding is a complete, separate operation. Then record its replacement above with a new time event ID and the voided record ID. If replacement fails, the void remains recorded and you can retry the replacement.</p>
+          <form id="project-time-void-form" action="/api/project-time-void" class="receipt-form">
+            <fieldset id="project-time-void-fields">
+              <label>Time record ID <input id="project-time-void-record" name="record_id" required maxlength="200" placeholder="time-…"></label>
+              <label>Stable void event ID <input name="void_event_id" required maxlength="200" placeholder="time-correction-001"></label>
+              <label>Correction reason <textarea name="reason" required maxlength="1000" rows="2"></textarea></label>
+              <label class="check-label"><input name="confirmed" type="checkbox" required> I confirm this interval should no longer count as active time.</label>
+              <button id="void-project-time" class="button" type="submit">Confirm and void time interval</button>
+            </fieldset>
+          </form>
+          <p id="project-time-void-result" class="digest" aria-live="polite"></p>
+        </div>
+        <div id="project-time-report" class="stack"></div>
       </section>
       <section id="view-close" class="view" aria-labelledby="close-heading" hidden>
         <div class="section-heading"><h2 id="close-heading">Close January 2026</h2><span class="muted">Review → Confirm → Lock</span></div>

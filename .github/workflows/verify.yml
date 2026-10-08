@@ -85,3 +85,5 @@ jobs:
         run: python3 -m accounting_harness demo-report-export
       - name: Demonstrate captured project attribution and unallocated actuals
         run: python3 -m accounting_harness demo-project-dimensions
+      - name: Demonstrate auditable project time and voided retry
+        run: python3 -m accounting_harness demo-project-time

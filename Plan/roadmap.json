@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "23",
-  "next_step": "24",
+  "current_step": "24",
+  "next_step": "25",
   "phases": [
     {
       "id": "01",
@@ -339,24 +339,26 @@
         {
           "id": "24",
           "title": "Project and cost dimensions",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "24a",
               "title": "Project attribution of recorded actuals",
-              "status": "complete"
+              "status": "complete",
+              "commit": "c5ce264412de606bd620dbae5538bf4080347b92",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37841528029"
             },
             {
               "id": "24b",
               "title": "Auditable project time facts",
-              "status": "ready"
+              "status": "complete"
             }
           ]
         },
         {
           "id": "25",
           "title": "Service project costing",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "26",

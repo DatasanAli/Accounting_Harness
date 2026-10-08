@@ -2,9 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–24a (24a upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–24b (24b upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Next:** [Step 24b auditable time facts](08-service-management/STEP_24B_PLAN.md), after the current delivery’s exact CI check.
+**Next:** [Step 25 project costing](08-service-management/STEP_25_PLAN.md), after the current delivery’s exact CI check.
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -23,15 +23,14 @@ supported prepaid consumption and evidenced unbilled expense/revenue accruals.
 Every posted operation retains its source, effective date and actor; managed
 controls enforce their approved effects.
 
-Latest local Step 24a checks: **645 tests and 34 demonstrations passed**.
-Native project attribution splits Software Expense 300.00 into A 120.00, B 100.00
-and unallocated 80.00, with every account and classification axis reconciled.
-Corrections, historical retry, stale refusal, captured report retention, true 390px/
-1280px layouts and frozen restart passed. Books, old reports and portable bytes
-remained exact. Independent review approved with one Minor UI capture/preview
-race queued for the workbench/final review. Commit/push/exact CI are pending.
-Commands and coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); observed
-boundaries are in [Step 24a verification](08-service-management/STEP_24A_VERIFICATION.md).
+Latest local Step 24b checks: **663 tests and 35 demonstrations passed**.
+Native two-day time records total exactly 600 minutes. Duplicate retries preserve
+original audit, overlaps fail, and explicit void/replacement retains history
+without reactivation. Captures, true 390px/1280px layouts and frozen-code restart
+passed with unchanged attribution, financial state, old reports and portable
+bytes. Independent review approved with no new findings. Commit/push/exact CI
+are pending. Commands and coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md);
+observed boundaries are in [Step 24b verification](08-service-management/STEP_24B_VERIFICATION.md).
 A foundation check is not application proof.
 
 The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
@@ -43,7 +42,7 @@ agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
-Project attribution is implemented. Authenticated roles, time/cost/budget reporting, integration contracts,
+Project attribution and auditable service time are implemented. Authenticated roles, cost/budget reporting, integration contracts,
 and verified recovery are still planned. The existing local operator is not an
 authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
@@ -79,6 +78,7 @@ retained in the verification record and Git history.
 | 22 | [Confirmed close and date locks](07-period-close/STEP_22_VERIFICATION.md) | [1bdb15e](https://github.com/DatasanAli/Accounting_Harness/commit/1bdb15e9e98dc1f188fb5de2b410c5f9793b620c) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37834858650) |
 | 23a | [Captured direct cash flow](07-period-close/STEP_23A_VERIFICATION.md) | [969b783](https://github.com/DatasanAli/Accounting_Harness/commit/969b783b2cf105114501403c0879380d696743c5) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37836761506) |
 | 23b | [Portable report packages](07-period-close/STEP_23B_VERIFICATION.md) | [bf1fbb8](https://github.com/DatasanAli/Accounting_Harness/commit/bf1fbb8e369549babc02b007778574e72bc4ab3d) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37839537188) |
+| 24a | [Project attribution](08-service-management/STEP_24A_VERIFICATION.md) | [c5ce264](https://github.com/DatasanAli/Accounting_Harness/commit/c5ce264412de606bd620dbae5538bf4080347b92) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37841528029) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

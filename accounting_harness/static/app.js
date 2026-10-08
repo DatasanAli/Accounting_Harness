@@ -1853,3 +1853,73 @@ function renderAttributionReview() {
   edit.disabled = attributionBusy || attributionUncertain;
   node.append(add(el('div',null,'actions'),save,edit));
 }
+
+let projectTimeReport = null;
+let projectTimeBusy = false;
+function setProjectTimeBusy(value) {
+  projectTimeBusy = value;
+  $('capture-project-time').disabled = value;
+  $('project-time-fields').disabled = value || !projectTimeReport?.projects.length;
+  $('project-time-void-fields').disabled = value;
+}
+function timeClock(minute) {
+  return String(Math.floor(minute / 60)).padStart(2,'0') + ':' + String(minute % 60).padStart(2,'0');
+}
+function renderProjectTimeReport() {
+  const report = projectTimeReport, node = $('project-time-report'); node.replaceChildren();
+  const card = add(el('section',null,'card'),el('h3','Captured service time · ' + report.as_of),
+    el('p',report.scope,'callout'),metadata([['Active time',report.total_minutes + ' minutes · ' + report.duration],
+      ['All recorded intervals',report.recorded_minutes + ' minutes'],['Voided intervals',report.voided_minutes + ' minutes'],
+      ['Reconciled',report.reconciled ? 'Recorded − voided = active' : 'Review required'],['Policy',report.policy]]));
+  card.append(table(['Project','Worker','Work date','Active minutes','Exact duration'],
+    report.groups.map(r => [r.project_id,r.worker_id,r.work_date,r.total_minutes,r.duration]),'Active intervals by project, worker and date'));
+  for (const record of report.records) {
+    const detail = add(el('details'),el('summary',record.project_id + ' · ' + record.worker_id + ' · ' + record.work_date + ' · ' + record.minutes + ' minutes · ' + record.status),
+      metadata([['Record ID',record.record_id],['Time event',record.time_event_id],['Interval',timeClock(record.start_minute) + '–' + timeClock(record.end_minute)],
+        ['Recorded by',record.actor_id],['Recorded at',record.recorded_at],['Replaces',record.replaces_record_id || 'None'],
+        ['Replacement',record.replacement_record_id || 'None']]));
+    if (record.void) detail.append(metadata([['Void event',record.void.void_event_id],['Void reason',record.void.reason],
+      ['Voided by',record.void.actor_id],['Voided at',record.void.recorded_at]]));
+    const choose = button(record.status === 'active' ? 'Choose interval to void' : 'Use voided ID for replacement',() => {
+      if (projectTimeBusy) return;
+      const target = record.status === 'active' ? $('project-time-void-record') : $('project-time-replaces');
+      target.value = record.record_id; target.focus();
+    });
+    detail.append(choose,jsonDetails('Complete captured time audit',record)); card.append(detail);
+  }
+  digest(card,'Time capture SHA-256',report.snapshot_digest); digest(card,'Time report SHA-256',report.report_digest);
+  card.append(jsonDetails('Immutable projects, original time and void history',report.capture)); node.append(card);
+}
+$('project-time-capture-form').addEventListener('submit',async event => {
+  event.preventDefault(); if (projectTimeBusy) return; setProjectTimeBusy(true);
+  try {
+    projectTimeReport = await request('/api/project-time?as_of=' + encodeURIComponent($('project-time-cutoff').value));
+    const selected = $('project-time-project').value; $('project-time-project').replaceChildren();
+    projectTimeReport.projects.forEach(p => $('project-time-project').append(new Option(p.name + ' · ' + p.project_id,p.project_id)));
+    if (projectTimeReport.projects.some(p => p.project_id === selected)) $('project-time-project').value = selected;
+    renderProjectTimeReport(); notify('Time history captured. Later entries and voids require another capture.');
+  } catch (error) { notify(error.message,'error'); }
+  finally { setProjectTimeBusy(false); }
+});
+for (const [formId,isVoid] of [['project-time-form',false],['project-time-void-form',true]]) {
+  $(formId).addEventListener('submit',async event => {
+    event.preventDefault(); if (projectTimeBusy) return;
+    const form = event.target, values = Object.fromEntries(new FormData(form));
+    let payload;
+    try {
+      if (isVoid) {
+        payload = {entity_id:state.entity_id,record_id:values.record_id,void_event_id:values.void_event_id,reason:values.reason};
+      } else {
+        if (!/^\d+$/.test(values.start_minute) || !/^\d+$/.test(values.end_minute)) throw new Error('Use whole integer minutes without rounding.');
+        payload = {...values,entity_id:state.entity_id,start_minute:Number(values.start_minute),end_minute:Number(values.end_minute),replaces_record_id:values.replaces_record_id || null};
+      }
+      setProjectTimeBusy(true);
+      const result = await request(form.getAttribute('action'),payload);
+      const label = isVoid ? 'Voided ' + result.record_id : result.status + ' · ' + result.record_id + ' · ' + result.minutes + ' minutes';
+      $(isVoid ? 'project-time-void-result' : 'project-time-result').textContent = label + ' · ' + result.recorded_at + '. Displayed history remains its earlier capture; capture again to see the current totals.';
+      if (isVoid) $('project-time-replaces').value = result.record_id;
+      notify(isVoid ? 'Void recorded. Record a replacement separately with a new event ID.' : 'Time event recovered or recorded. Financial actuals are unchanged.');
+    } catch (error) { notify(error.message + (error.uncertain ? ' Keep these exact fields and submit again to recover the original outcome.' : ''),'error'); }
+    finally { setProjectTimeBusy(false); }
+  });
+}
