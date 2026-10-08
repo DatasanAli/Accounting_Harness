@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "20",
-  "next_step": "21",
+  "current_step": "21",
+  "next_step": "22",
   "phases": [
     {
       "id": "01",
@@ -288,19 +288,21 @@
             {
               "id": "20d",
               "title": "Verified adjusted operational fixture",
-              "status": "complete"
+              "status": "complete",
+              "commit": "56d2548598b089358ad8e1af579446eb9b77ee2e",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37830844808"
             }
           ]
         },
         {
           "id": "21",
           "title": "Core financial statements",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "22",
           "title": "Closing entries and date locks",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "23",

@@ -129,4 +129,6 @@ linked reversals, not deletion or a database reset.
 
 - Step20c: local546 tests/28 demos, revenue browser/restart and actual20b report/book preservation pass; review approved with one Minor validation-label issue queued. Delivered as57e1ad9; [exact CI37829402673 passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37829402673), remote matched; see [verification](07-period-close/STEP_20C_VERIFICATION.md).
 
-- Step 20d: local 556 tests/29 demos, exact adjusted-month balances and recovery pass; independent review approved without findings. Fixture-only slice; no new browser feature. Commit/remote/exact CI pending; see [verification](07-period-close/STEP_20D_VERIFICATION.md).
+- Step 20d: local 556 tests/29 demos, exact adjusted-month balances and recovery pass; independent review approved without findings. Fixture-only slice; no new browser feature. Delivered as56d2548; [exact CI37830844808 passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37830844808), remote matched; see [verification](07-period-close/STEP_20D_VERIFICATION.md).
+
+- Step 21: local 569 tests/30 demos, native linked reports/cutoff/drilldown/390px/restart pass with unchanged books; independent review approved without findings. Commit/remote/exact CI pending; see [verification](07-period-close/STEP_21_VERIFICATION.md).

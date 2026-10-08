@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  reports: ['Reports', 'Income, owner’s equity and assets linked to one captured set of books.'],
   'revenue-accrual': ['Revenue accruals', 'Completed unbilled services and their recorded cutoff assets.'],
   'expense-accrual': ['Expense accruals', 'Supported unbilled expenses and their recorded cutoff obligations.'],
   prepaid: ['Prepaid insurance', 'Coverage, supported consumption and the remaining recorded asset.'],
@@ -19,6 +20,8 @@ const sampleNames = {'rent-standard': 'January office rent', 'software-standard'
   'ambiguity-1': 'Ambiguous expense', 'missing-1': 'Missing receipt details', 'hostile-1': 'Document instruction test'};
 const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'awaiting_review']);
 let state = null;
+let financialReport = null;
+let capturingFinancialReport = false;
 let bankDetail = null;
 let bankMatchView = null;
 let reconciliationView = null;
@@ -201,7 +204,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderFinancialReports(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -1186,6 +1189,88 @@ function auditTrail(draft) {
   node.append(jsonDetails('Approval binding · evidence, policy & revision', binding));
   return node;
 }
+function signedMoney(value) {
+  return typeof value === 'string' && value.startsWith('-') ? '-' + money(value.slice(1)) : money(value);
+}
+function financialAccount(row) {
+  const node = add(el('details'), el('summary', row.account + ' · ' + row.name + ' · ' + signedMoney(row.amount)));
+  node.append(table(['Date', 'Journal', 'Net contribution · USD'], row.drilldown.map(line => [
+    line.effective_date, line.journal_id, signedMoney(line.amount)
+  ]), 'Contributing journal lines · ' + row.name, ['', 'Account total', signedMoney(row.amount)]));
+  for (const line of row.drilldown) {
+    node.append(add(el('details'), el('summary', line.journal_id + ' · line ' + line.line_number + ' · evidence & posting'),
+      metadata([['Effective date', line.effective_date], ['Recorded at', line.recorded_at], ['Actor', line.actor_id],
+        ['Classification', line.classification], ['Posted side', line.side], ['Posted amount', money(line.posted_amount)],
+        ['Original journal', line.original_entry_id || '—'], ['Source references', line.source_ids.join(', ')]]),
+      el('p', line.description)));
+  }
+  if (!row.drilldown.length) node.append(el('p', 'No included activity for this account.'));
+  return node;
+}
+function renderFinancialReports() {
+  const node = $('financial-reports'); node.replaceChildren();
+  $('capture-financial-report').disabled = capturingFinancialReport;
+  if (!financialReport) {
+    node.append(empty('Choose a cutoff and capture the books', 'Review all linked statements, then expand any account to inspect its journal and evidence references.'));
+    return;
+  }
+  const report = financialReport;
+  const capture = add(el('div', null, 'card setup-card'), el('h3', 'Captured books · through ' + report.as_of),
+    metadata([['Entity', report.entity_id], ['Period start', report.period_start], ['Inclusive cutoff', report.as_of],
+      ['Included journals', report.included_journal_ids.length], ['Basis', report.policy.basis],
+      ['Equity model', 'Owner capital and drawings'], ['Policy', report.policy.version]]));
+  digest(capture, 'Common snapshot SHA-256', report.snapshot_digest);
+  capture.append(jsonDetails('Captured account catalog and journal identities', {
+    catalog: report.catalog, included_journal_ids: report.included_journal_ids,
+    excluded_closing_journal_ids: report.excluded_closing_journal_ids, policy: report.policy,
+    policy_digest: report.policy_digest, report_digest: report.report_digest}));
+  node.append(capture);
+  const choice = $('financial-statement').value;
+  for (const [key,title] of [['income_statement','Income statement'],['owners_equity','Owner’s equity'],['balance_sheet','Balance sheet']]) {
+    if (choice !== 'all' && choice !== key) continue;
+    const statement = report[key];
+    const card = add(el('article', null, 'card'), add(el('div', null, 'card-heading'), el('h3', title)));
+    const body = el('div', null, 'ledger-body');
+    if (key === 'income_statement') {
+      body.append(metadata([['Revenue', signedMoney(statement.revenue_amount)], ['Expenses', signedMoney(statement.expenses_amount)],
+        ['Net income / loss', signedMoney(statement.net_income_amount)]]));
+      for (const [label,rows] of [['Revenue accounts',statement.revenue],['Expense accounts',statement.expenses]]) {
+        body.append(el('h4', label)); rows.forEach(row => body.append(financialAccount(row)));
+      }
+    } else if (key === 'owners_equity') {
+      body.append(metadata([['Opening capital', signedMoney(statement.opening_capital_amount)],
+        ['Net contributions / withdrawals', signedMoney(statement.contributions_amount)], ['Current-period income / loss', signedMoney(statement.net_income_amount)],
+        ['Less net drawings / returns', signedMoney(statement.drawings_amount)], ['Ending owner’s equity', signedMoney(statement.ending_equity_amount)]]),
+        financialAccount(statement.contributions), financialAccount(statement.drawings));
+      body.append(el('p', 'Current-period income comes from the linked income statement.', 'action-hint'));
+    } else {
+      body.append(metadata([['Assets', signedMoney(statement.assets_amount)], ['Liabilities', signedMoney(statement.liabilities_amount)],
+        ['Owner’s equity', signedMoney(statement.equity_amount)], ['Equation residual', signedMoney(statement.residual_amount)]]),
+        status(statement.reconciled ? 'reconciled' : 'failed'));
+      body.append(el('p', statement.reconciled ? 'Assets equal liabilities plus linked owner’s equity.' : 'The accounting equation does not reconcile. Inspect the signed residual.', 'action-hint'));
+      for (const [label,rows] of [['Asset accounts',statement.assets],['Liability accounts',statement.liabilities]]) {
+        body.append(el('h4', label)); rows.forEach(row => body.append(financialAccount(row)));
+      }
+    }
+    body.append(jsonDetails('Statement identity and cross-links', {snapshot_digest: statement.snapshot_digest,
+      policy_digest: statement.policy_digest, report_digest: statement.report_digest,
+      income_statement_digest: statement.income_statement_digest, owners_equity_digest: statement.owners_equity_digest}));
+    card.append(body); node.append(card);
+  }
+}
+$('financial-report-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (capturingFinancialReport) return;
+  const cutoff = $('financial-cutoff').value;
+  capturingFinancialReport = true; renderFinancialReports();
+  try {
+    financialReport = await request('/api/financial-statements?as_of=' + encodeURIComponent(cutoff));
+    notify('Statements captured through ' + financialReport.as_of + '. Expand an account to inspect its contributing journals.');
+  } catch (error) { notify('Unable to capture statements: ' + error.message + ' The previous capture remains displayed.', 'error'); }
+  finally { capturingFinancialReport = false; renderFinancialReports(); }
+});
+$('financial-statement').addEventListener('change', renderFinancialReports);
+
 function renderLedger() {
   const node = $('ledger-content'); node.replaceChildren();
   const report = state.trial_balance;

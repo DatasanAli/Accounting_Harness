@@ -2,9 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–20d (20d upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–21 (21 upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Active:** finish Step 20d delivery, then [Step 21 financial statements](07-period-close/STEP_21_PLAN.md).
+**Active:** finish Step 21 delivery, then [Step 22 close and date locks](07-period-close/STEP_22_PLAN.md).
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -23,11 +23,11 @@ supported prepaid consumption and evidenced unbilled expense/revenue accruals.
 Every posted operation retains its source, effective date and actor; managed
 controls enforce their approved effects.
 
-Latest local Step 20d checks: **556 tests and 29 demonstrations passed**.
-Independent review approved the adjusted-month fixture with no findings. It has
-11 journals, eight reviewed approvals, exact balances and zero subsidiary residuals;
-no new browser feature was added. Commit/remote/exact CI follow local acceptance.
-Prior Step 20c delivery is verified below. Commands and
+Latest local Step 21 checks: **569 tests and 30 demonstrations passed**.
+Independent review approved the captured statements with no findings. Native
+January 31/15 reports, drilldown, capture retention, 390px layout and frozen-code
+restart passed; ledger/source/review state remained unchanged. Commit/remote/exact
+CI follow local acceptance. Prior Step 20d delivery is verified below. Commands and
 coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); detailed outcomes and limitations
 are linked in the delivery table below. A foundation check is not application proof.
 
@@ -39,7 +39,8 @@ real calls require explicit startup configuration and remain unverified. Existin
 agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
-Authenticated roles, statements/close, management reporting, integration contracts,
+Captured financial statements are implemented. Authenticated roles, period close,
+management reporting, integration contracts,
 and verified recovery are still planned. The existing local operator is not an
 authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
@@ -70,6 +71,7 @@ retained in the verification record and Git history.
 | 20a | [Prepaid consumption](07-period-close/STEP_20A_VERIFICATION.md) | [ab557e4](https://github.com/DatasanAli/Accounting_Harness/commit/ab557e4581a705a776d613a4790e384eb71b038b) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37823178380) |
 | 20b | [Unbilled expense accrual](07-period-close/STEP_20B_VERIFICATION.md) | [d3511be](https://github.com/DatasanAli/Accounting_Harness/commit/d3511be23bfcdea6fb23629e91bb0f0f592932ec) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37826947400) |
 | 20c | [Unbilled service revenue](07-period-close/STEP_20C_VERIFICATION.md) | [57e1ad9](https://github.com/DatasanAli/Accounting_Harness/commit/57e1ad97761124ca4d0990910e4f265d15c6bcea) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37829402673) |
+| 20d | [Adjusted operational month](07-period-close/STEP_20D_VERIFICATION.md) | [56d2548](https://github.com/DatasanAli/Accounting_Harness/commit/56d2548598b089358ad8e1af579446eb9b77ee2e) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37830844808) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

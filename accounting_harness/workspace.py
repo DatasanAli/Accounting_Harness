@@ -108,6 +108,12 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             return ReconciliationService(ledger).view(bank_account_id, statement_id)
 
+    def financial_statements(self, as_of):
+        from accounting_harness.financial_reports import capture_financials, financial_statements
+        with self.storage() as (_, ledger, _, _, _):
+            capture = capture_financials(ledger, as_of)
+        return financial_statements(capture)
+
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
                      note='No model calls. Fixed fictional examples.'),

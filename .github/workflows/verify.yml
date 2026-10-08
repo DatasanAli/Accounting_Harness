@@ -75,3 +75,5 @@ jobs:
         run: python3 -m accounting_harness demo-revenue-accrual
       - name: Demonstrate supported adjusted operational month
         run: python3 -m accounting_harness demo-adjusted-month
+      - name: Demonstrate captured financial statements
+        run: python3 -m accounting_harness demo-statements

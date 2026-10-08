@@ -17,6 +17,7 @@
       <button class="nav-item active" data-view="evidence" aria-current="page"><span aria-hidden="true">▤</span>Evidence</button>
       <button class="nav-item" data-view="review"><span aria-hidden="true">✓</span>Review queue<span id="review-count" class="nav-count">0</span></button>
       <button class="nav-item" data-view="ledger"><span aria-hidden="true">▥</span>Ledger</button>
+      <button class="nav-item" data-view="reports"><span aria-hidden="true">▥</span>Reports</button>
       <button class="nav-item" data-view="receivables"><span aria-hidden="true">▣</span>Customer invoices</button>
       <button class="nav-item" data-view="advances"><span aria-hidden="true">▣</span>Customer advances</button>
       <button class="nav-item" data-view="payables"><span aria-hidden="true">▣</span>Vendor bills</button>
@@ -227,6 +228,18 @@
         </details>
       </section>
       <section id="view-review" class="view" aria-labelledby="review-heading" hidden><div class="section-heading"><h2 id="review-heading">Your review queue</h2><span class="muted">Inspect the evidence, then decide.</span></div><div id="draft-list" class="stack"></div></section>
+      <section id="view-reports" class="view" aria-labelledby="reports-heading" hidden>
+        <div class="section-heading"><h2 id="reports-heading">Financial statements</h2><span class="muted">Recorded actuals · USD · accrual basis</span></div>
+        <div class="card setup-card">
+          <form id="financial-report-form" class="receipt-form">
+            <label>Inclusive cutoff <input id="financial-cutoff" name="as_of" type="date" min="2026-01-01" max="2026-01-31" required value="2026-01-31"></label>
+            <button id="capture-financial-report" class="button" type="submit">Capture statements</button>
+          </form>
+          <p>All three statements use the same captured books. Capture again to include later postings; Refresh keeps the report currently displayed. Opening balances are zero for this fictional first month.</p>
+          <label>Statement <select id="financial-statement"><option value="all">All linked statements</option><option value="income_statement">Income statement</option><option value="owners_equity">Owner’s equity</option><option value="balance_sheet">Balance sheet</option></select></label>
+        </div>
+        <div id="financial-reports" class="stack" aria-live="polite"></div>
+      </section>
       <section id="view-ledger" class="view" aria-labelledby="ledger-heading" hidden><div class="section-heading"><h2 id="ledger-heading">Trial balance &amp; audit trail</h2><span class="muted">Recorded actuals · USD</span></div><div id="ledger-content" class="stack"></div></section>
       <section id="view-advances" class="view" aria-labelledby="advances-heading" hidden><div class="section-heading"><h2 id="advances-heading">Customer advances</h2><span class="muted">January 31, 2026 · USD</span></div><div id="advances-content" class="stack"></div></section>
       <section id="view-receivables" class="view" aria-labelledby="receivables-heading" hidden><div class="section-heading"><h2 id="receivables-heading">Customer invoices, collections &amp; aging</h2><span class="muted">January 31, 2026 · USD</span></div><div id="receivables-content" class="stack"></div></section>

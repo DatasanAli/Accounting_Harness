@@ -23,7 +23,8 @@ No managed-control effect is fabricated and no guard is disabled.
 Ten focused tests passed. The guarded full suite passed all **556 tests in
 37.676 seconds**. All **29 demonstrations** passed, along with foundation and diff
 checks. Independent review approved spec compliance and task quality with no
-findings. Exact commit/remote/CI checks follow local acceptance.
+findings. Delivered as [56d2548598b089358ad8e1af579446eb9b77ee2e](https://github.com/DatasanAli/Accounting_Harness/commit/56d2548598b089358ad8e1af579446eb9b77ee2e).
+Remote main matched exactly; [CI37830844808 passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37830844808) for this SHA.
 
 ```sh
 python3 scripts/verify_foundation.py

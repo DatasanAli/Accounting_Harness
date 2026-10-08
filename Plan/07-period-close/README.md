@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: Step 20d's adjusted operational month passes 556 tests, 29 demos and independent review with no findings. Upload/exact CI follow; see [verification](STEP_20D_VERIFICATION.md). Step 21 statements follows.
+Status: Step 21 captured statements pass 569 tests, 30 demos, browser/cutoff/mobile/restart checks and independent review with no findings. Upload/exact CI follow; see [verification](STEP_21_VERIFICATION.md). Step 22 close and date locks follows.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 
