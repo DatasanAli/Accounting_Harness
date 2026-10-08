@@ -714,7 +714,7 @@ class InvoiceMigrationTests(unittest.TestCase):
         self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(3,)])
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0], old_seal)
         service = ReceivablesService(self.ledger, self.registry)
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(6,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(7,)])
         self.assertEqual({t: db.execute(f'SELECT * FROM {t}').fetchall() for t in tables}, before)
         self.assertEqual(test_review.ReviewTests.save(self, require_unused_evidence=True), old)
         self.assertEqual(old_app.post(approval.approval_id, actor_id='human', idempotency_key='old'), receipt)

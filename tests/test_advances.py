@@ -461,7 +461,7 @@ class AdvancesTests(unittest.TestCase):
         self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(5,)])
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone(),seal)
         self.service()
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(6,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(7,)])
         self.assertEqual({t:db.execute(f'SELECT * FROM {t}').fetchall() for t in tables},before)
         self.assertEqual(self.registry.get('rent'),source_before)
         self.assertEqual(test_review.ReviewTests.save(self,require_unused_evidence=True),legacy)
@@ -479,7 +479,7 @@ class AdvancesTests(unittest.TestCase):
         service.app.post(approval.approval_id,actor_id='human',idempotency_key='post')
         for table,column in [('customer_advances','principal_cents'),('advances_context','actor_id'),('advances_schema','version')]:
             with self.assertRaises(sqlite3.IntegrityError):service.db.execute(f'UPDATE {table} SET {column}={column}')
-        self.assertEqual(service.db.execute("SELECT name FROM sqlite_master WHERE name LIKE '%earning%'").fetchall(),[])
+        self.assertEqual(service.db.execute('SELECT count(*) FROM customer_advance_earnings').fetchone(),(0,))
 
     def test_failed_service_initialization_restores_all_prior_schema(self):
         from accounting_harness import advances

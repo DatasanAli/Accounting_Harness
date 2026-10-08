@@ -61,8 +61,7 @@ final-seal supersession, exact concurrent retry, legacy migration preservation,
 initialization/write rollback, old/direct connection guards, immutable captured
 names/reports and exact large-cent HTTP display.
 
-Commit, remote comparison and exact-SHA CI will be recorded after final checks
-and review; no GitHub completion is claimed yet.
+Delivered as [8deae9b](https://github.com/DatasanAli/Accounting_Harness/commit/8deae9b781ddf1a8621647cd0e8d76017290e0b6); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37805104017). The remote main SHA matched the local commit.
 
 ## Limits and rollback
 

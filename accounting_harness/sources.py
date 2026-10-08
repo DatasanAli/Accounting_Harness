@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'advance_completion': {'event_id', 'counterparty_id', 'contract_id', 'completion_date'},
     'customer_prepayment': {'event_id', 'counterparty_id', 'contract_id'},
     'customer_invoice': {'event_id', 'counterparty_id', 'invoice_number', 'due_date'},
     'vendor_bill': {'event_id', 'counterparty_id', 'bill_number', 'due_date'},
@@ -78,8 +79,10 @@ def _content(document: object, entity_id: str) -> tuple[str, str]:
     if kind in ('vendor_bill', 'customer_invoice'):
         if accounting_date(document['due_date']) < accounting_date(document['document_date']):
             raise ValueError('due date cannot precede issue date')
-    if kind == 'service_completion':
+    if kind in ('service_completion', 'advance_completion'):
         accounting_date(document['completion_date'])
+    if kind == 'advance_completion' and document['document_date'] != document['completion_date']:
+        raise ValueError('advance completion date must equal document date')
     accounting_date(document["document_date"])
     amount = Money.parse(document["amount"], document["currency"])
     if amount.cents == 0:

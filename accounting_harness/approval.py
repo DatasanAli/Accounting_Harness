@@ -152,7 +152,7 @@ class ReviewApplication:
             if current.policy_version in ('invoice-v1', 'invoice-collection-v1'):
                 from accounting_harness.receivables import prepare_receivable_post
                 prepare_receivable_post(self.store, approval, current, entry)
-            if current.policy_version == 'advance-v1':
+            if current.policy_version in ('advance-v1', 'advance-earning-v1'):
                 from accounting_harness.advances import prepare_advance_post
                 prepare_advance_post(self.store, approval, current, entry)
             receipt = self.ledger._store_entry(entry, actor_id)

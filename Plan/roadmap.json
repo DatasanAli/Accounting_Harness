@@ -183,17 +183,19 @@
             {
               "id": "16a",
               "title": "Reviewed customer advance receipt",
-              "status": "complete"
+              "status": "complete",
+              "commit": "8deae9b781ddf1a8621647cd0e8d76017290e0b6",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37805104017"
             },
             {
               "id": "16b",
               "title": "Supported earning of customer advances",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "16c",
               "title": "Payable approval seal and migration hardening",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         }

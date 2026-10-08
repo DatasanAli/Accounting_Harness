@@ -84,6 +84,95 @@ def validate_advance(store, proposal, records, intent, draft_id):
     return ()
 
 
+def earning_operation(db, records, advance_id):
+    _validate_text(advance_id, 'advance ID')
+    advance = db.execute('SELECT b.* FROM customer_advances b JOIN posting_events p ON p.journal_id=b.journal_id WHERE advance_id=?', (advance_id,)).fetchone()
+    if advance is None:
+        raise ValueError('earning requires a posted customer advance')
+    if len(records) != 2 or len({r.document_id for r in records}) != 2:
+        raise ValueError('earning requires distinct advance and completion evidence')
+    documents = []
+    for record in records:
+        document = dict(json.loads(record.canonical_content), entity_id=record.entity_id,
+                        document_id=record.document_id)
+        _content(document, record.entity_id)
+        documents.append(document)
+    completion = next((d for d in documents if d['kind'] == 'advance_completion'), None)
+    source = next((d for d in documents if d['kind'] == 'customer_prepayment'), None)
+    if source is None or source['document_id'] != advance[4] or completion is None:
+        raise ValueError('earning evidence must include the target advance and completion event')
+    if completion['currency'] != source['currency']:
+        raise ValueError('earning currency must match the advance')
+    if completion['counterparty_id'] != advance[1] or completion['entity_id'] != source['entity_id']:
+        raise ValueError('earning customer/entity must match the advance')
+    if completion['document_date'] < advance[7]:
+        raise ValueError('earning cannot precede advance recognition')
+    if completion['contract_id'] != advance[2]:
+        raise ValueError('completion contract must match the posted advance')
+    if completion['document_date'] != completion['completion_date']:
+        raise ValueError('completion and document dates must match')
+    cents = Money.parse(completion['amount']).cents
+    if not 1 <= cents <= MAX_CENTS:
+        raise ValueError('earning amount must be a positive bounded integer')
+    draft_id = 'draft:advance-earning:' + digest([completion['entity_id'], completion['event_id']])
+    intent = dict(schema_version=1, kind='customer_advance_earning', advance_id=advance_id,
+        customer_id=advance[1], contract_id=advance[2], completion_event_id=completion['event_id'], currency='USD', earned_cents=cents,
+        effective_date=completion['document_date'], evidence_roles=dict(prepayment=advance[4], completion=completion['document_id']))
+    proposal = dict(id='journal:' + digest([completion['entity_id'], draft_id]), entity_id=completion['entity_id'],
+        currency='USD', effective_date=completion['document_date'], description='Synthetic customer earning: ' + completion['event_id'],
+        source_ids=[advance[4], completion['document_id']],
+        lines=[dict(account='2100', side='debit', amount=completion['amount']),
+               dict(account='4000', side='credit', amount=completion['amount'])])
+    return draft_id, intent, proposal
+
+
+def validate_earning(store, proposal, records, intent, draft_id):
+    try:
+        if (not isinstance(intent, dict) or type(intent.get('schema_version')) is not int
+                or type(intent.get('earned_cents')) is not int):
+            raise ValueError('earning requires an exact integer-cent operation intent')
+        expected_id, expected_intent, expected_proposal = earning_operation(store.db, records, intent.get('advance_id'))
+        if intent != expected_intent or draft_id != expected_id or proposal != expected_proposal:
+            raise ValueError('earning intent, identity or journal differs from evidenced completion')
+        if not store.db.execute('SELECT 1 FROM advances_context').fetchone():
+            raise ValueError('advances must be enabled')
+        claim = store.db.execute("""SELECT draft_id FROM operation_claims
+            WHERE entity_id=? AND event_id=? AND role='service_revenue_recognition' """,
+            (store.registry._entity_id, intent['completion_event_id'])).fetchone()
+        if claim and claim != (draft_id,):
+            raise ValueError('duplicate economic event and role')
+        prior = store.db.execute('SELECT * FROM customer_advance_earnings WHERE completion_event_id=? OR completion_source_id=?',
+            (intent['completion_event_id'], intent['evidence_roles']['completion'])).fetchall()
+        if prior:
+            own = store.db.execute('SELECT journal_id FROM review_postings WHERE draft_id=?', (draft_id,)).fetchone()
+            expected = (intent['completion_event_id'], intent['advance_id'], intent['evidence_roles']['completion'],
+                        intent['earned_cents'], intent['effective_date'])
+            if len(prior) != 1 or prior[0][:5] != expected or own != (prior[0][6],) or prior[0][6] != proposal['id']:
+                raise ValueError('completion event already allocated')
+        else:
+            principal = store.db.execute('SELECT principal_cents FROM customer_advances WHERE advance_id=?',
+                                         (intent['advance_id'],)).fetchone()[0]
+            earned = sum(r[0] for r in store.db.execute('SELECT earned_cents FROM customer_advance_earnings WHERE advance_id=?',
+                                                    (intent['advance_id'],)))
+            if intent['earned_cents'] > principal - earned:
+                raise ValueError('earning exceeds remaining unearned advance')
+            _require_reconciled(store.ledger, store.registry)
+    except (ValueError, TypeError, KeyError) as error:
+        return (Finding('unsupported_advance_earning', 'operation_intent', str(error)),)
+    return ()
+
+
+@dataclass(frozen=True, slots=True)
+class CustomerAdvanceEarning:
+    completion_event_id: str
+    advance_id: str
+    completion_source_id: str
+    earned_cents: int
+    effective_date: str
+    approval_id: str
+    journal_id: str
+
+
 @dataclass(frozen=True, slots=True)
 class CustomerAdvance:
     advance_id: str
@@ -105,6 +194,8 @@ class AdvancesSnapshot:
     advances: tuple[CustomerAdvance, ...]
     activation_json: str | None
     ledger_context: str
+    # None preserves delivered four-field captures; an empty tuple is explicitly schema 2.
+    earnings: tuple[CustomerAdvanceEarning, ...] | None = None
 
 
 def _snapshot(ledger, registry):
@@ -114,7 +205,8 @@ def _snapshot(ledger, registry):
         content = approved_source_content(db, registry, row[4], row[8])
         advances.append(CustomerAdvance(*row, json.loads(content)['counterparty']))
     activation = db.execute('SELECT * FROM advances_context').fetchone()
-    return AdvancesSnapshot(ledger._snapshot(), tuple(advances), _canonical(activation) if activation else None, ledger._context)
+    return AdvancesSnapshot(ledger._snapshot(), tuple(advances), _canonical(activation) if activation else None, ledger._context,
+        tuple(CustomerAdvanceEarning(*r) for r in db.execute('SELECT * FROM customer_advance_earnings ORDER BY completion_event_id')))
 
 
 def advances_report(snapshot, *, as_of):
@@ -125,6 +217,13 @@ def advances_report(snapshot, *, as_of):
     ids = tuple(e.id for e in entries)
     advances = [dict(asdict(a), earned_cents=0, remaining_cents=a.principal_cents)
                 for a in snapshot.advances if a.journal_id in ids and accounting_date(a.effective_date) <= cutoff]
+    earnings = [asdict(e) for e in snapshot.earnings or ()
+                if e.journal_id in ids and accounting_date(e.effective_date) <= cutoff]
+    for advance in advances:
+        advance['earned_cents'] = sum(e['earned_cents'] for e in earnings if e['advance_id'] == advance['advance_id'])
+        advance['remaining_cents'] -= advance['earned_cents']
+    earned = sum(e['earned_cents'] for e in earnings)
+    remaining = sum(a['remaining_cents'] for a in advances)
     control = sum(l.amount.cents if l.side == 'credit' else -l.amount.cents
                   for e in entries for l in e.lines if l.account == '2100')
     principal = sum(a['principal_cents'] for a in advances)
@@ -133,16 +232,20 @@ def advances_report(snapshot, *, as_of):
         selected = [a for a in advances if a['customer_id'] == customer_id]
         total = sum(a['principal_cents'] for a in selected)
         customers.append(dict(customer_id=customer_id, names=sorted({a['customer_name'] for a in selected}),
-                              principal_cents=total, earned_cents=0, remaining_cents=total))
+                              principal_cents=total, earned_cents=sum(a['earned_cents'] for a in selected),
+                              remaining_cents=sum(a['remaining_cents'] for a in selected)))
     snapshot_digest = digest([snapshot.ledger_context,
         [SQLiteLedger._entry_payload(e) for e in snapshot.ledger.entries],
-        [asdict(a) for a in snapshot.advances], snapshot.activation_json])
+        [asdict(a) for a in snapshot.advances], snapshot.activation_json]
+        + ([[asdict(e) for e in snapshot.earnings]] if snapshot.earnings is not None else []))
     report = dict(schema_version=1, policy=REPORT_POLICY, as_of=cutoff.isoformat(), snapshot_digest=snapshot_digest,
         included_journal_ids=list(ids), enabled=snapshot.activation_json is not None,
         activation=json.loads(snapshot.activation_json) if snapshot.activation_json else None,
-        advances=advances, customers=customers, principal_cents=principal, earned_cents=0,
-        remaining_cents=principal, unearned_control_cents=control, subledger_cents=principal,
-        unassigned_control_cents=control-principal, reconciled=control == principal)
+        advances=advances, customers=customers, principal_cents=principal, earned_cents=earned,
+        remaining_cents=remaining, unearned_control_cents=control, subledger_cents=remaining,
+        unassigned_control_cents=control-remaining, reconciled=control == remaining)
+    if snapshot.earnings is not None:
+        report.update(schema_version=2, earnings=earnings)
     return dict(report, report_digest=digest(report))
 
 
@@ -159,6 +262,7 @@ class AdvancesService:
             self.store = SQLiteReviewStore(ledger, registry, policy_version='advance-v1')
             self.app = ReviewApplication(self.store)
             self._initialize()
+            self._initialize_earnings()
 
     @staticmethod
     def _approval_match(effect):
@@ -187,7 +291,7 @@ class AdvancesService:
 
     def _initialize(self):
         if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='advances_schema'").fetchone():
-            if self.db.execute('SELECT version FROM advances_schema').fetchall() != [(1,)]:
+            if self.db.execute('SELECT version FROM advances_schema').fetchall() not in ([(1,)], [(2,)]):
                 raise ValueError('unsupported advances schema version')
             return
         self.db.execute('CREATE TABLE advances_schema (version INTEGER PRIMARY KEY) STRICT')
@@ -222,10 +326,27 @@ class AdvancesService:
         self.db.execute(f'''CREATE TRIGGER advance_approved_operation BEFORE INSERT ON customer_advances
             WHEN NOT {self._approval_match('NEW')}
             BEGIN SELECT RAISE(ABORT,'advance effect must match approved operation'); END''')
+        self._create_post_guard()
+
+    def _create_post_guard(self, *, earnings=False):
+        earning_when = 'OR EXISTS (SELECT 1 FROM customer_advance_earnings WHERE journal_id=NEW.journal_id)' if earnings else ''
+        earning_match = (f""" AND NOT EXISTS (
+            SELECT 1 FROM customer_advance_earnings e JOIN customer_advances target USING(advance_id)
+            JOIN journals j ON j.id=e.journal_id
+            WHERE e.journal_id=NEW.journal_id AND j.effective_date=e.effective_date
+            AND {self._earning_approval_match('e')}
+            AND (SELECT count(*) FROM lines WHERE journal_id=NEW.journal_id)=2
+            AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id AND account='2100' AND side='debit' AND cents=e.earned_cents)
+            AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id AND account='4000' AND side='credit' AND cents=e.earned_cents)
+            AND (SELECT count(*) FROM journal_sources WHERE journal_id=NEW.journal_id)=2
+            AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=target.prepayment_source_id)
+            AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=e.completion_source_id)
+        )""" if earnings else '')
         self.db.execute(f'''CREATE TRIGGER advances_post_guard BEFORE INSERT ON posting_events
             WHEN (EXISTS (SELECT 1 FROM advances_context)
                   AND EXISTS (SELECT 1 FROM lines WHERE journal_id=NEW.journal_id AND account='2100'))
                  OR EXISTS (SELECT 1 FROM customer_advances WHERE journal_id=NEW.journal_id)
+                 {earning_when}
             BEGIN
                 SELECT CASE WHEN NOT EXISTS (
                     SELECT 1 FROM customer_advances b JOIN journals j ON j.id=b.journal_id
@@ -239,8 +360,65 @@ class AdvancesService:
                     AND (SELECT count(*) FROM journal_sources WHERE journal_id=NEW.journal_id)=2
                     AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=b.prepayment_source_id)
                     AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=b.cash_source_id)
-                ) THEN RAISE(ABORT,'2100 posting requires matching approved advance effect; correction workflow required') END;
+                ){earning_match} THEN RAISE(ABORT,'2100 posting requires matching approved advance effect; correction workflow required') END;
             END''')
+
+    @staticmethod
+    def _earning_approval_match(effect):
+        return f"""EXISTS (
+            SELECT 1 FROM approvals a JOIN draft_revisions r USING(draft_id,revision)
+            JOIN draft_operation_intents i USING(draft_id,revision)
+            JOIN customer_advances target ON target.advance_id={effect}.advance_id
+            JOIN posting_events target_post ON target_post.journal_id=target.journal_id
+            WHERE a.approval_id={effect}.approval_id AND r.policy_version='advance-earning-v1'
+              AND r.state='pending'
+              AND r.revision=(SELECT max(revision) FROM draft_revisions WHERE draft_id=r.draft_id)
+              AND json_extract(a.binding_json,'$.revision_digest')=r.content_digest
+              AND json_extract(a.binding_json,'$.policy_version')='advance-earning-v1'
+              AND json_extract(a.binding_json,'$.action')='post'
+              AND json_extract(i.intent_json,'$.schema_version')=1
+              AND json_extract(i.intent_json,'$.currency')='USD'
+              AND json_extract(i.intent_json,'$.contract_id')=target.contract_id
+              AND json_extract(r.proposal_json,'$.id')={effect}.journal_id
+              AND json_extract(i.intent_json,'$.kind')='customer_advance_earning'
+              AND json_extract(i.intent_json,'$.advance_id')={effect}.advance_id
+              AND json_extract(i.intent_json,'$.customer_id')=target.customer_id
+              AND json_extract(i.intent_json,'$.completion_event_id')={effect}.completion_event_id
+              AND json_extract(i.intent_json,'$.earned_cents')={effect}.earned_cents
+              AND json_extract(i.intent_json,'$.effective_date')={effect}.effective_date
+              AND {effect}.effective_date>=target.effective_date
+              AND json_extract(i.intent_json,'$.evidence_roles.prepayment')=target.prepayment_source_id
+              AND json_extract(i.intent_json,'$.evidence_roles.completion')={effect}.completion_source_id)"""
+
+    def _initialize_earnings(self):
+        if self.db.execute('SELECT version FROM advances_schema').fetchall() == [(2,)]:
+            return
+        self.db.execute("""CREATE TABLE customer_advance_earnings (
+            completion_event_id TEXT PRIMARY KEY CHECK(length(trim(completion_event_id))>0 AND completion_event_id=trim(completion_event_id)),
+            advance_id TEXT NOT NULL REFERENCES customer_advances(advance_id),
+            completion_source_id TEXT NOT NULL UNIQUE REFERENCES sources(id),
+            earned_cents INTEGER NOT NULL CHECK(earned_cents>0),
+            effective_date TEXT NOT NULL CHECK(length(effective_date)=10 AND date(effective_date)=effective_date
+                AND effective_date BETWEEN '2026-01-01' AND '2026-01-31'),
+            approval_id TEXT NOT NULL UNIQUE REFERENCES approvals(approval_id),
+            journal_id TEXT NOT NULL UNIQUE REFERENCES posting_events(journal_id) DEFERRABLE INITIALLY DEFERRED
+        ) STRICT, WITHOUT ROWID""")
+        protect_table(self.db, 'customer_advance_earnings', 'completion_event_id=NEW.completion_event_id OR completion_source_id=NEW.completion_source_id')
+        self.db.execute("""CREATE TRIGGER earning_before_post BEFORE INSERT ON customer_advance_earnings
+            WHEN EXISTS (SELECT 1 FROM posting_events WHERE journal_id=NEW.journal_id)
+                 OR NOT EXISTS (SELECT 1 FROM advances_context)
+            BEGIN SELECT RAISE(ABORT,'earning effect requires an enabled, unsealed journal'); END""")
+        self.db.execute(f"""CREATE TRIGGER earning_approved_operation BEFORE INSERT ON customer_advance_earnings
+            WHEN NOT {self._earning_approval_match('NEW')}
+              OR NEW.earned_cents > (SELECT principal_cents FROM customer_advances WHERE advance_id=NEW.advance_id)
+                 - COALESCE((SELECT sum(earned_cents) FROM customer_advance_earnings WHERE advance_id=NEW.advance_id),0)
+            BEGIN SELECT RAISE(ABORT,'earning effect must match approved operation and remaining balance'); END""")
+        self.db.execute('DROP TRIGGER advances_post_guard')
+        self._create_post_guard(earnings=True)
+        self.db.execute('DROP TRIGGER advances_schema_no_update')
+        self.db.execute('UPDATE advances_schema SET version=2')
+        self.db.execute("""CREATE TRIGGER advances_schema_no_update BEFORE UPDATE ON advances_schema
+            BEGIN SELECT RAISE(ABORT,'advances schema is immutable'); END""")
 
     def ensure_enabled(self, *, actor_id):
         _validate_text(actor_id, 'actor ID')
@@ -266,6 +444,17 @@ class AdvancesService:
             operation_intent=intent, expected_revision=expected_revision, actor_id=actor_id,
             idempotency_key=idempotency_key, reason='Synthetic customer advance; separate human review required')
 
+    def propose_earning(self, *, advance_id, completion_source_id, expected_revision, actor_id, idempotency_key):
+        row = self.db.execute('SELECT prepayment_source_id FROM customer_advances WHERE advance_id=?', (advance_id,)).fetchone()
+        if row is None:
+            raise ValueError('earning requires a posted customer advance')
+        records = (self.registry.get(row[0]), self.registry.get(completion_source_id))
+        draft_id, intent, proposal = earning_operation(self.db, records, advance_id)
+        store = SQLiteReviewStore(self.ledger, self.registry, policy_version='advance-earning-v1')
+        return store.save(draft_id, proposal, evidence={r.document_id:r.content_digest for r in records},
+            operation_intent=intent, expected_revision=expected_revision, actor_id=actor_id,
+            idempotency_key=idempotency_key, reason='Synthetic recorded customer earning; separate human review required')
+
     def snapshot(self):
         with self.ledger._transaction():
             return _snapshot(self.ledger, self.registry)
@@ -275,7 +464,8 @@ def prepare_advance_post(store, approval, revision, entry):
     if not store.db.in_transaction:
         raise ValueError('advance posting requires the ledger write transaction')
     intent = json.loads(revision.operation_intent_json)
-    if (revision.policy_version, intent['kind']) != ('advance-v1', 'customer_advance'):
+    if (revision.policy_version, intent['kind']) not in (('advance-v1', 'customer_advance'),
+            ('advance-earning-v1', 'customer_advance_earning')):
         raise ValueError('unsupported advance operation')
     findings = store.validate(json.loads(revision.proposal_json), json.loads(revision.evidence_json),
                               operation_intent=intent, draft_id=revision.draft_id)
@@ -283,12 +473,19 @@ def prepare_advance_post(store, approval, revision, entry):
         raise ValueError('advance operation is no longer valid: ' + findings[0].message)
     if entry.id != json.loads(revision.proposal_json)['id']:
         raise ValueError('effect journal must match approved operation')
+    earning = intent['kind'] == 'customer_advance_earning'
     claim = store.db.execute("""SELECT draft_id FROM operation_claims
-        WHERE entity_id=? AND event_id=? AND role='cash_movement' """,
-        (entry.entity_id, intent['cash_event_id'])).fetchone()
+        WHERE entity_id=? AND event_id=? AND role=?""",
+        (entry.entity_id, intent['completion_event_id' if earning else 'cash_event_id'],
+         'service_revenue_recognition' if earning else 'cash_movement')).fetchone()
     if claim != (revision.draft_id,):
-        raise ValueError('cash movement claim is not owned by this draft')
+        raise ValueError('economic event claim is not owned by this draft')
     _require_reconciled(store.ledger, store.registry)
+    if earning:
+        store.db.execute('INSERT INTO customer_advance_earnings VALUES (?,?,?,?,?,?,?)',
+            (intent['completion_event_id'],intent['advance_id'],intent['evidence_roles']['completion'],
+             intent['earned_cents'],intent['effective_date'],approval.approval_id,entry.id))
+        return
     store.db.execute('INSERT INTO customer_advances VALUES (?,?,?,?,?,?,?,?,?,?)',
         (intent['advance_id'],intent['customer_id'],intent['contract_id'],intent['cash_event_id'],
          intent['evidence_roles']['prepayment'],intent['evidence_roles']['cash'],intent['principal_cents'],

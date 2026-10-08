@@ -13,6 +13,14 @@ advance for the same customer/contract, within January and on/after receipt.
 Share service_revenue_recognition claims across workflows. Approval reserves no
 balance; posting rechecks remaining. Preserve old history/bytes; no live connection.
 
+Report compatibility: delivered `AdvancesSnapshot` has four fields and report
+schema1. Preserve the exact schema1 shape/digests for a legacy four-field capture.
+A small appended optional earnings field can use `None` as the legacy marker;
+new capture passes an actual tuple (including empty) and renders explicit schema2.
+Do not infer report version from whether the earnings tuple is empty or query
+current storage when rendering a legacy capture. Cover both legacy and new
+pre-earning reports across later posting.
+
 ## Task 1: reviewed earning with atomic allocation and reports
 
 **Files:** Extend advances/evidence/review/approval/workspace/HTTP/CLI/static and

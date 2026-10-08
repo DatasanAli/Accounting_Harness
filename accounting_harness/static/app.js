@@ -290,6 +290,7 @@ $('receipt-form').addEventListener('submit', async event => {
 function renderCashChoices() {
   for (const [id, kinds] of [['cash-source-select', ['cash_movement']],
     ['recognition-source-select', ['incurred_expense', 'service_completion']],
+    ['earning-completion-select', ['advance_completion']],
     ['prepayment-source-select', ['customer_prepayment']], ['advance-cash-select', ['cash_movement']],
     ['invoice-source-select', ['customer_invoice']], ['completion-source-select', ['service_completion']],
     ['bill-source-select', ['vendor_bill']], ['incurrence-source-select', ['incurred_expense']],
@@ -331,6 +332,19 @@ function renderCashChoices() {
     invoices.append(option);
   }
   invoices.value = selectedInvoice;
+  const advances = $('earning-advance-select');
+  const selectedAdvance = advances.value;
+  advances.replaceChildren(el('option', 'Choose a posted advance'));
+  advances.firstChild.value = '';
+  for (const advance of state.advances.advances) {
+    const option = el('option', advance.customer_name + ' · ' + advance.contract_id + ' · Remaining ' + money(advance.remaining_amount));
+    option.value = advance.advance_id;
+    option.disabled = advance.remaining_amount === '0.00';
+    advances.append(option);
+  }
+  advances.value = selectedAdvance;
+  $('prepare-earning').disabled = busy;
+  $('register-earning-evidence').disabled = busy;
   $('prepare-collection').disabled = busy;
   $('register-collection-evidence').disabled = busy;
   $('prepare-payment').disabled = busy;
@@ -399,6 +413,35 @@ $('collection-proposal-form').addEventListener('submit', async event => {
     await request('/api/invoice-collection-proposals', payload);
     await refresh(); showView('review', true);
     notify('Collection draft prepared. Inspect both documents and confirm the exact revision separately.');
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+$('earning-evidence-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy) return;
+  const input = Object.fromEntries(new FormData(event.target));
+  const document = {...input, schema_version: 2, synthetic: true, entity_id: state.entity_id,
+    currency: 'USD', kind: 'advance_completion', document_date: input.completion_date};
+  busy = true; render();
+  try {
+    await request('/api/operation-sources', {document});
+    selectedSource = document.document_id; remember('source', selectedSource);
+    await refresh();
+    $('earning-completion-select').value = document.document_id;
+    $('earning-proposal-panel').open = true;
+    notify('Completion evidence registered. Select its posted advance and prepare a draft for human review.');
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+$('earning-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy) return;
+  const payload = Object.fromEntries(new FormData(event.target));
+  busy = true; render();
+  try {
+    await request('/api/advance-earning-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Earning draft prepared. Inspect both documents and confirm the exact revision separately.');
   } catch (error) { await refresh(); notify(error.message, 'error'); }
   finally { busy = false; render(); }
 });
@@ -500,7 +543,7 @@ function renderAdvances() {
     ['Principal', money(report.principal_amount)], ['Earned', money(report.earned_amount)],
     ['Remaining obligation', money(report.remaining_amount)], ['Unassigned residual', amounts(report.unassigned_control_amount)],
     ['Reconciliation', report.reconciled ? 'Reconciled' : 'Unassigned liability: correction workflow required']]));
-  summary.append(el('p', report.enabled ? 'Customer advances remain liabilities until separately evidenced earning is supported. Managed advance corrections are unavailable.'
+  summary.append(el('p', report.enabled ? 'Customer advances remain liabilities until separately evidenced completion is reviewed and posted. Managed advance and earning corrections are unavailable.'
     : 'Preparing the first valid advance activates liability control after a zero unassigned balance check.', 'action-hint'));
   digest(summary, 'Captured snapshot · ' + report.policy, report.snapshot_digest);
   digest(summary, 'Reproducible report digest', report.report_digest);
@@ -518,6 +561,10 @@ function renderAdvances() {
         ['Principal', money(advance.principal_amount)], ['Earned', money(advance.earned_amount)], ['Remaining', money(advance.remaining_amount)]]),
       el('p', 'Prepayment evidence: ' + advance.prepayment_source_id + ' · Cash evidence: ' + advance.cash_source_id));
     card.append(add(el('details'), el('summary', 'Advance and approval trace'), el('pre', advance.trace_json)));
+    for (const earning of report.earnings.filter(item => item.advance_id === advance.advance_id)) {
+      card.append(add(el('details'), el('summary', 'Earned ' + money(earning.earned_amount) + ' · ' + earning.effective_date),
+        el('pre', earning.trace_json)));
+    }
     node.append(card);
   }
 }

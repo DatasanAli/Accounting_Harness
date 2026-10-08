@@ -145,6 +145,10 @@ class Workspace:
         if row[0] == 'advance-v1':
             advances = AdvancesService(store.ledger, store.registry)
             return advances.store, advances.app
+        if row[0] == 'advance-earning-v1':
+            AdvancesService(store.ledger, store.registry)
+            earnings = SQLiteReviewStore(store.ledger, store.registry, policy_version='advance-earning-v1')
+            return earnings, ReviewApplication(earnings)
         if row[0] == 'invoice-v1':
             receivables = ReceivablesService(store.ledger, store.registry)
             return receivables.store, receivables.app
@@ -228,6 +232,15 @@ class Workspace:
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
+    def prepare_earning(self, data):
+        fields(data, dict(advance_id=str, completion_source_id=str))
+        with self.storage() as (registry, ledger, _, _, _):
+            service = AdvancesService(ledger, registry)
+            draft = service.propose_earning(**data, expected_revision=0, actor_id='advance-earning-template',
+                idempotency_key='web-advance-earning:' + digest(data))
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
+
     def state(self):
         with self.storage() as (registry, ledger, store, app, engine):
             sources = self._source_list(registry, ledger)
@@ -260,12 +273,12 @@ class Workspace:
                     trace=[dict(sequence=c.sequence, state=c.state, reason=c.reason,
                                 recorded_at_ms=c.recorded_at_ms) for c in engine.trace(run_id)]))
             advances = advances_report(AdvancesService(ledger, registry).snapshot(), as_of='2026-01-31')
-            for item in [advances, *advances['customers'], *advances['advances']]:
+            for item in [advances, *advances['customers'], *advances['advances'], *advances['earnings']]:
                 for field in ('principal', 'earned', 'remaining', 'unearned_control', 'subledger', 'unassigned_control'):
                     if field + '_cents' in item:
                         cents = item[field + '_cents']
                         item[field + '_amount'] = ('-' if cents < 0 else '') + str(Money(abs(cents)))
-            for advance in advances['advances']:
+            for advance in [*advances['advances'], *advances['earnings']]:
                 advance['trace_json'] = json.dumps(advance, indent=2, sort_keys=True)
             receivables = receivables_report(ReceivablesService(ledger, registry).snapshot(), as_of='2026-01-31')
             for field in ('ar_control', 'subledger', 'unassigned_control'):
@@ -315,6 +328,8 @@ class Workspace:
             return self.register_source(data)
         if action == 'operation-sources':
             return self.register_operation_source(data)
+        if action == 'advance-earning-proposals':
+            return self.prepare_earning(data)
         if action == 'advance-proposals':
             return self.prepare_advance(data)
         if action == 'invoice-proposals':
@@ -692,3 +707,45 @@ def demo_advance():
         print('Approval:', posted['approval_id'], '; actor: local-operator; policy: advance-v1')
         print('Snapshot:', report['snapshot_digest'], '; report:', report['report_digest'])
         print('Restart and exact retries retain one journal; managed advance reversals unavailable; zero model calls.')
+
+
+def demo_advance_earning():
+    from tempfile import TemporaryDirectory
+    with TemporaryDirectory(prefix='accounting-advance-earning-') as directory:
+        workspace = Workspace(directory)
+        common = dict(schema_version=2, synthetic=True, entity_id=workspace.catalog.entity_id,
+            currency='USD', amount='600.00', document_date='2026-01-22', event_id='advance-cash-1',
+            counterparty_id='customer-1', counterparty='Fictional advance customer', description='Synthetic receipt before service')
+        for document in (dict(common, document_id='prepayment-source', kind='customer_prepayment', contract_id='contract-1'),
+                         dict(common, document_id='cash-source', kind='cash_movement', direction='in', purpose='customer_advance')):
+            workspace.action('operation-sources', dict(document=document))
+        draft = workspace.action('advance-proposals', dict(prepayment_source_id='prepayment-source',cash_source_id='cash-source'))
+        workspace.action('approve-post', dict(draft_id=draft['draft_id'],revision=draft['revision'],confirmed_digest=draft['content_digest']))
+        with workspace.storage() as (registry, ledger, _, _, _):
+            frozen = AdvancesService(ledger, registry).snapshot()
+        before = advances_report(frozen, as_of='2026-01-31')
+        completion = dict(common, document_id='completion-source', kind='advance_completion', contract_id='contract-1',
+            event_id='completion-1', amount='200.00', document_date='2026-01-31',completion_date='2026-01-31')
+        workspace.action('operation-sources', dict(document=completion))
+        request = dict(advance_id=before['advances'][0]['advance_id'],completion_source_id='completion-source')
+        draft = workspace.action('advance-earning-proposals', request)
+        assert workspace.state()['journal_count'] == 1
+        posting = dict(draft_id=draft['draft_id'],revision=draft['revision'],confirmed_digest=draft['content_digest'])
+        posted = workspace.action('approve-post', posting)
+        reopened = Workspace(directory)
+        assert reopened.action('advance-earning-proposals', request) == draft
+        assert reopened.action('approve-post', posting) == posted
+        state = reopened.state()
+        report = state['advances']
+        assert state['journal_count'] == 2
+        assert [report[k] for k in ('principal_cents','earned_cents','remaining_cents','unearned_control_cents','unassigned_control_cents')] == [60000,20000,40000,40000,0]
+        balances = {r['account']:(r['debit'],r['credit']) for r in state['trial_balance']['rows']}
+        assert balances['1000'] == ('600.00','0.00') and balances['2100'] == ('0.00','400.00')
+        assert balances['4000'] == ('0.00','200.00')
+        assert advances_report(frozen,as_of='2026-01-31') == before
+        print('Before confirmation: one receipt journal, zero earning effects; completion alone cannot post.')
+        print('Cash unchanged 600.00; Unearned Revenue debit 200.00; Service Revenue credit 200.00.')
+        print('Principal 600.00; earned 200.00; remaining 400.00; control residual 0.00.')
+        print('Approval:', posted['approval_id'], '; actor: local-operator; policy: advance-earning-v1')
+        print('Snapshot:', report['snapshot_digest'], '; report:', report['report_digest'])
+        print('Captured pre-earning report remains 600.00; restart/exact retries retain two journals; zero model calls.')

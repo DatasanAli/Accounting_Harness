@@ -85,7 +85,8 @@ def economic_claims(records):
     identity cannot recognize the same expense or service event a second time.
     """
     roles = {'cash_movement': 'cash_movement', 'incurred_expense': 'expense_recognition',
-             'service_completion': 'service_revenue_recognition'}
+             'service_completion': 'service_revenue_recognition',
+             'advance_completion': 'service_revenue_recognition'}
     claims = []
     for record in records:
         document = json.loads(record.canonical_content)

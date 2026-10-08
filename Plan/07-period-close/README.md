@@ -45,6 +45,8 @@ Copyable prompt:
 
 ### Step 21: Core financial statements
 
+See the [captured statement implementation plan](STEP_21_PLAN.md).
+
 - **Build:** Derive income statement, statement of owner's equity and balance sheet from a defined ledger cutoff.
 - **Test:** Reference revenue $2,700.00, expenses $1,600.00, net income $1,100.00; assets $11,500.00 equal liabilities $600.00 plus equity $10,900.00.
 - **Verify manually:** Produce the three linked statements with account-level drilldown.

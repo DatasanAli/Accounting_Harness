@@ -41,6 +41,28 @@
       <section id="view-evidence" class="view" aria-labelledby="evidence-heading">
         <div class="section-heading"><h2 id="evidence-heading">Evidence workspace</h2><span class="muted">01 Evidence → 02 Proposal → 03 Human review</span></div>
         <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered evidence"><div class="card-heading"><h3>Registered evidence</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">Inspect registered evidence and its enrollment state. New receipts use the form below.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
+        <details class="card setup-card" id="earning-evidence-panel"><summary>Register completed service against a customer advance</summary>
+          <p>Record the value earned by this completion. Its customer and contract must match the posted advance; its completion date must be on or after the receipt date.</p>
+          <form id="earning-evidence-form" class="receipt-form">
+            <label>Completion event ID <input name="event_id" required maxlength="1000" placeholder="advance-completion-001"></label>
+            <label>Completion document ID <input name="document_id" required maxlength="1000" placeholder="source-advance-completion-001"></label>
+            <label>Customer ID <input name="counterparty_id" required maxlength="1000" placeholder="customer-1"></label>
+            <label>Customer name <input name="counterparty" required maxlength="1000" placeholder="Fictional customer"></label>
+            <label>Contract ID <input name="contract_id" required maxlength="1000" placeholder="contract-1"></label>
+            <label>Earned amount (USD) <input name="amount" required inputmode="decimal" pattern="[0-9]+\.[0-9]{2}" placeholder="200.00"></label>
+            <label>Completion date <input name="completion_date" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-31"></label>
+            <label>Completion evidence <textarea name="description" required maxlength="1000" rows="2"></textarea></label>
+            <button id="register-earning-evidence" class="button" type="submit">Register fictional completion evidence</button>
+          </form>
+        </details>
+        <details class="card setup-card" id="earning-proposal-panel"><summary>Prepare supported advance earning</summary>
+          <form id="earning-proposal-form" class="receipt-form">
+            <label>Posted customer advance <select name="advance_id" id="earning-advance-select" required></select></label>
+            <label>Completion evidence <select name="completion_source_id" id="earning-completion-select" required></select></label>
+            <button id="prepare-earning" class="button" type="submit">Prepare earning draft</button>
+            <p class="action-hint">The full supported completion value applies to one advance. Review its original prepayment, completion, exact intent and journal before separate human confirmation. Approval reserves no balance; posting checks remaining unearned principal again. Cash stays unchanged.</p>
+          </form>
+        </details>
         <details class="card setup-card" id="advance-evidence-panel"><summary>Register a customer prepayment and cash receipt</summary>
           <p>Record an incoming advance for one fully prepaid service obligation. The paired facts establish a liability; earned revenue remains zero. Use a separate contract for each obligation. Both facts must share a January 2026 receipt date.</p>
           <form id="advance-evidence-form" class="receipt-form">

@@ -2,7 +2,7 @@
 
 Updated: 2026-10-08.
 
-**Completed work: Steps 01–11. Step 12 adapters/offline evaluation are implemented; live provider connection is explicitly deferred. Step 12a localhost workspace is delivered with verified GitHub CI. Step 13a evidence enrollment is delivered with verified GitHub CI. Step 13b cash templates are delivered with verified GitHub CI. Step 14a vendor bills are delivered with verified GitHub CI. Step 14b partial settlement is delivered with verified GitHub CI. Step 15a invoice recognition is delivered with verified GitHub CI. Step 15b collection and aging is delivered with verified GitHub CI. Step 16a customer advances are locally verified and reviewed; upload/CI pending.**
+**Completed work: Steps 01–11. Step 12 adapters/offline evaluation are implemented; live provider connection is explicitly deferred. Step 12a localhost workspace is delivered with verified GitHub CI. Step 13a evidence enrollment is delivered with verified GitHub CI. Step 13b cash templates are delivered with verified GitHub CI. Step 14a vendor bills are delivered with verified GitHub CI. Step 14b partial settlement is delivered with verified GitHub CI. Step 15a invoice recognition is delivered with verified GitHub CI. Step 15b collection and aging is delivered with verified GitHub CI. Step 16a customer advances are delivered with verified GitHub CI. Step 16b supported earning is locally verified and independently reviewed; upload/CI pending.**
 
 The user requested the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independent numbered deliveries in this request;
@@ -19,7 +19,7 @@ See [the working plan](LOCALHOST_APP_PLAN.md).
 | Fictional reference month | Created with independent expected results |
 | Foundation verification | See the observed results in the verification record |
 | Money and chart of accounts | Implemented: exact USD cents, immutable accounts/catalog, validated JSON loader |
-| Application verification | 370 tests passed, including advance liabilities, atomic initialization, collection/aging, final approval seals and localhost boundaries |
+| Application verification | 387 tests passed, including advance earning/remaining, captured report compatibility, atomic migrations, final approval seals and localhost boundaries |
 | Demonstration | 13 accounts; 0.10 + 0.20 = 0.30 USD; excess precision rejected |
 | Journal validation | Implemented: pure validation, field/line findings, exact totals, source/account/date checks |
 | Journal demonstration | Accepts 1000.00 / 1000.00; rejects 1000.00 / 999.00 with a 1.00 difference |
@@ -41,7 +41,7 @@ See [the working plan](LOCALHOST_APP_PLAN.md).
 | Provider proposal evaluation | 20/20 synthetic-response cases; 8/8 exact proposals, 12/12 review handoffs; not model accuracy |
 | Authenticated roles and integrations | Not implemented |
 | Delivery target | GitHub repository and CI; persistent localhost UI and CLI, no hosted deployment |
-| Next step | Step 16b supported earning after exact Step 16a CI |
+| Next step | Step 16c payable seal hardening after exact Step 16b CI |
 
 Read the [Step 01 verification record](01-foundation/VERIFICATION.md), [Step 02 verification record](02-ledger-core/STEP_02_VERIFICATION.md), [Step 03 verification record](02-ledger-core/STEP_03_VERIFICATION.md), [Step 04 verification record](02-ledger-core/STEP_04_VERIFICATION.md), [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md), [Step 06 verification record](02-ledger-core/STEP_06_VERIFICATION.md), and [Step 07 verification record](03-evidence-and-review/STEP_07_VERIFICATION.md) for observed checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) provide delivery evidence for each commit. The completion response must identify the exact commit and CI run.
 
@@ -99,4 +99,6 @@ Step 15a: [contract](05-service-bookkeeping/STEP_15A_PLAN.md) and [verification]
 
 Step 15b: [contract](05-service-bookkeeping/STEP_15B_PLAN.md) and [verification](05-service-bookkeeping/STEP_15B_VERIFICATION.md). 345 tests, 18 demos and browser collection/aging passed; independent review approved with no findings. Delivered as [f29ac94](https://github.com/DatasanAli/Accounting_Harness/commit/f29ac946ae743c630100feae42ebc1d3c458136a); [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37802605944). Next: [Step 16a](05-service-bookkeeping/STEP_16A_PLAN.md).
 
-Step 16a: [contract](05-service-bookkeeping/STEP_16A_PLAN.md) and [verification](05-service-bookkeeping/STEP_16A_VERIFICATION.md). 370 tests, 19 demos and browser advance/restart passed; independent review approved with no findings. Upload/exact CI pending. Next: [Step 16b](05-service-bookkeeping/STEP_16B_PLAN.md), then [16c payable seal hardening](05-service-bookkeeping/STEP_16C_PLAN.md).
+Step 16a: [contract](05-service-bookkeeping/STEP_16A_PLAN.md) and [verification](05-service-bookkeeping/STEP_16A_VERIFICATION.md). 370 tests, 19 demos and browser advance/restart passed; independent review approved with no findings. Delivered as [8deae9b](https://github.com/DatasanAli/Accounting_Harness/commit/8deae9b781ddf1a8621647cd0e8d76017290e0b6); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37805104017). Next: [Step 16b](05-service-bookkeeping/STEP_16B_PLAN.md), then [16c payable seal hardening](05-service-bookkeeping/STEP_16C_PLAN.md).
+
+Step 16b: [contract](05-service-bookkeeping/STEP_16B_PLAN.md) and [verification](05-service-bookkeeping/STEP_16B_VERIFICATION.md). 387 tests, 20 demos and browser earning flow passed. Independent review approved with no findings; upload/exact CI pending. Next: [Step 16c](05-service-bookkeeping/STEP_16C_PLAN.md).
