@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -40,7 +41,8 @@ class ReviewApplication:
         self.store = store
         self.ledger = store.ledger
         self.db = store.db
-        with self.ledger._transaction(write=True):
+        # Initialization may join a service-owned write transaction so schema setup rolls back together.
+        with (nullcontext() if self.db.in_transaction else self.ledger._transaction(write=True)):
             self._initialize()
 
     def _initialize(self):
@@ -150,6 +152,9 @@ class ReviewApplication:
             if current.policy_version in ('invoice-v1', 'invoice-collection-v1'):
                 from accounting_harness.receivables import prepare_receivable_post
                 prepare_receivable_post(self.store, approval, current, entry)
+            if current.policy_version == 'advance-v1':
+                from accounting_harness.advances import prepare_advance_post
+                prepare_advance_post(self.store, approval, current, entry)
             receipt = self.ledger._store_entry(entry, actor_id)
             self.db.execute('INSERT INTO review_postings VALUES (?,?,?)',
                             (current.draft_id, approval_id, entry.id))

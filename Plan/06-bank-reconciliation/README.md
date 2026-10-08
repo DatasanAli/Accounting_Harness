@@ -46,7 +46,8 @@ Copyable prompt:
 
 The current frozen 13-account catalog has no bank-fee expense account. Before
 implementing the reviewed fee, deliver [19a additive bank-fee account](STEP_19A_PLAN.md)
-if it is still needed, followed by 19b reconciliation and reviewed adjustment. Preserve original ledger context,
+if it is still needed, followed by [19b reviewed bank fee](STEP_19B_PLAN.md) and
+[19c captured reconciliation](STEP_19C_PLAN.md). Preserve original ledger context,
 approval/retry/provider bytes and captured snapshots; do not relabel software or
 rent expense as bank fees. Introduce a clearly named fictional bank-fee expense
 account with immutable metadata and audit, and use the effective captured catalog

@@ -459,7 +459,7 @@ class CollectionMigrationTests(unittest.TestCase):
             self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='customer_invoice_collections'").fetchone())
             if schema == 'review_schema': SQLiteReviewStore(self.ledger,self.registry)
         self.service = ReceivablesService(self.ledger,self.registry)
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(5,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(6,)])
         self.assertEqual(db.execute('SELECT version FROM receivables_schema').fetchall(),[(2,)])
         self.assertEqual({t:db.execute(f'SELECT * FROM {t}').fetchall() for t in tables},before)
         self.assertEqual(self.registry.list_documents(),source_before)

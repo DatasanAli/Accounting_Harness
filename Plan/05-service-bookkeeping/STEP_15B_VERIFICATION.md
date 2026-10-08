@@ -63,8 +63,7 @@ over-collection, reused cash, wrong target/customer/date, forged split allocatio
 stale approval at final seal, migration/write rollback, cutoff aging, original
 invoice history, server-derived HTTP fields and exact large-cent display.
 
-Commit, remote comparison and exact-SHA GitHub CI will be recorded after final
-checks and review; no remote completion is claimed yet.
+Delivered as [f29ac94](https://github.com/DatasanAli/Accounting_Harness/commit/f29ac946ae743c630100feae42ebc1d3c458136a). Local HEAD and remote main matched. [GitHub Actions run 37802605944](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37802605944) completed successfully for that exact SHA, including the full suite and all 18 demos.
 
 ## Limits and rollback
 

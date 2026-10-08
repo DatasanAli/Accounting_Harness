@@ -169,7 +169,9 @@
             {
               "id": "15b",
               "title": "Recorded collection and aging",
-              "status": "complete"
+              "status": "complete",
+              "commit": "f29ac946ae743c630100feae42ebc1d3c458136a",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37802605944"
             }
           ]
         },
@@ -181,11 +183,16 @@
             {
               "id": "16a",
               "title": "Reviewed customer advance receipt",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "16b",
               "title": "Supported earning of customer advances",
+              "status": "ready"
+            },
+            {
+              "id": "16c",
+              "title": "Payable approval seal and migration hardening",
               "status": "planned"
             }
           ]

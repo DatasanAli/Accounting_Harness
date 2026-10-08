@@ -12,6 +12,22 @@ Status: planned; no behavior in this phase is implemented yet.
 
 Separate cutoff, adjustment, reporting, closing and locking. Implement fixed known adjustments first; policy-based depreciation and allowance estimates are later extensions. Preserve pre-close report semantics using entry kinds and snapshots. Owner capital/drawings for the sample must not silently become corporate retained earnings/dividends.
 
+Detailed step plans must resolve these existing boundaries before implementation:
+
+- Activated AP/AR/advance controls require matching approved subsidiary effects.
+  Accrued expense/revenue must use explicit unbilled accrual effects or another
+  clearly classified supported liability/asset; never bypass guards or fabricate
+  an issued vendor bill/customer invoice. Shared recognition-event claims remain.
+- Prepaid consumption must bind original posted asset evidence and an explicit
+  coverage/consumption policy, with cumulative consumption and reversal dependency
+  checks. Description text is not a twelve-month allocation policy.
+- Financial report snapshots must capture closing-entry classification when close
+  exists. Pre-close statements consistently exclude closing transfers; the
+  post-close trial balance includes them. Do not add pre-close profit a second
+  time to capital that already includes it. Historical report policies remain
+  reproducible from their captured data.
+
+
 ## Small build steps
 
 Build only one numbered step per request. Split a row further if it cannot be demonstrated and reviewed as one small change.

@@ -5,6 +5,7 @@ const views = {
   evidence: ['Evidence', 'Start with a receipt. Keep every decision connected to its evidence.'],
   review: ['Review queue', 'Your judgment is the last step between a proposal and the books.'],
   ledger: ['Ledger', 'Exact balances and a complete trail back to each approved receipt.'],
+  advances: ['Customer advances', 'Recorded customer prepayments and the service obligations still unearned.'],
   receivables: ['Customer invoices', 'Completed service invoices and the amount customers owe.'],
   payables: ['Vendor bills', 'Reviewed vendor expenses and the amount still payable.'],
   runs: ['Agent runs', 'See what was requested, what happened, and where the agent stopped.'],
@@ -188,7 +189,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -289,6 +290,7 @@ $('receipt-form').addEventListener('submit', async event => {
 function renderCashChoices() {
   for (const [id, kinds] of [['cash-source-select', ['cash_movement']],
     ['recognition-source-select', ['incurred_expense', 'service_completion']],
+    ['prepayment-source-select', ['customer_prepayment']], ['advance-cash-select', ['cash_movement']],
     ['invoice-source-select', ['customer_invoice']], ['completion-source-select', ['service_completion']],
     ['bill-source-select', ['vendor_bill']], ['incurrence-source-select', ['incurred_expense']],
     ['collection-cash-select', ['cash_movement']], ['payment-cash-select', ['cash_movement']]]) {
@@ -297,6 +299,7 @@ function renderCashChoices() {
     select.replaceChildren(el('option', 'Choose registered evidence'));
     select.firstChild.value = '';
     state.sources.filter(source => kinds.includes(source.document.kind) &&
+      (id !== 'advance-cash-select' || (source.document.direction === 'in' && source.document.purpose === 'customer_advance')) &&
       (id !== 'collection-cash-select' || (source.document.direction === 'in' && source.document.purpose === 'settlement')) &&
       (id !== 'payment-cash-select' || (source.document.direction === 'out' && source.document.purpose === 'settlement'))).forEach(source => {
       const option = el('option', source.source_id + ' · ' + money(source.document.amount));
@@ -332,6 +335,8 @@ function renderCashChoices() {
   $('register-collection-evidence').disabled = busy;
   $('prepare-payment').disabled = busy;
   $('register-payment-evidence').disabled = busy;
+  $('prepare-advance').disabled = busy;
+  $('register-advance-evidence').disabled = busy;
   $('prepare-invoice').disabled = busy;
   $('register-invoice-evidence').disabled = busy;
   $('prepare-bill').disabled = busy;
@@ -397,6 +402,50 @@ $('collection-proposal-form').addEventListener('submit', async event => {
   } catch (error) { await refresh(); notify(error.message, 'error'); }
   finally { busy = false; render(); }
 });
+$('advance-evidence-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const input = Object.fromEntries(new FormData(event.currentTarget));
+  const common = {schema_version: 2, synthetic: true, entity_id: state.entity_id, currency: 'USD',
+    event_id: input.event_id, counterparty_id: input.counterparty_id, counterparty: input.counterparty,
+    document_date: input.document_date, amount: input.amount};
+  const prepayment = {...common, document_id: input.prepayment_source_id, kind: 'customer_prepayment',
+    contract_id: input.contract_id, description: input.prepayment_description};
+  const cash = {...common, document_id: input.cash_source_id, kind: 'cash_movement',
+    direction: 'in', purpose: 'customer_advance',
+    description: input.cash_description};
+  if (prepayment.document_id === cash.document_id) {
+    notify('Use distinct prepayment and cash document IDs.', 'error'); return;
+  }
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/operation-sources', {document: prepayment});
+    await request('/api/operation-sources', {document: cash});
+    selectedSource = prepayment.document_id; remember('source', selectedSource);
+    await refresh();
+    $('prepayment-source-select').value = prepayment.document_id;
+    $('advance-cash-select').value = cash.document_id;
+    $('advance-proposal-panel').open = true;
+    notify('Both fictional facts are registered. Prepare the advance draft, then review and approve separately.');
+  } catch (error) {
+    await refresh();
+    notify(error.message + ' One document may be registered. Retry with the same IDs and unchanged facts.', 'error');
+  } finally { busy = false; if (state) renderCashChoices(); }
+});
+$('advance-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/advance-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Advance proposal recorded. Inspect both documents and the exact Cash/Unearned Revenue journal before approval.');
+  } catch (error) {
+    await refresh(); notify(error.message + ' Retry the same pair to recover an existing proposal.', 'error');
+  } finally { busy = false; if (state) render(); }
+});
+
 $('invoice-evidence-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (busy || !state) return;
@@ -440,6 +489,38 @@ $('invoice-proposal-form').addEventListener('submit', async event => {
     await refresh(); notify(error.message + ' Retry the same pair to recover an existing proposal.', 'error');
   } finally { busy = false; if (state) render(); }
 });
+
+function renderAdvances() {
+  const node = $('advances-content'); node.replaceChildren();
+  const report = state.advances;
+  if (!report) return;
+  const amounts = value => value.startsWith('-') ? '-' + money(value.slice(1)) : money(value);
+  const summary = el('section', null, 'card draft-body');
+  summary.append(metadata([['As of', report.as_of], ['Unearned Revenue control', amounts(report.unearned_control_amount)],
+    ['Principal', money(report.principal_amount)], ['Earned', money(report.earned_amount)],
+    ['Remaining obligation', money(report.remaining_amount)], ['Unassigned residual', amounts(report.unassigned_control_amount)],
+    ['Reconciliation', report.reconciled ? 'Reconciled' : 'Unassigned liability: correction workflow required']]));
+  summary.append(el('p', report.enabled ? 'Customer advances remain liabilities until separately evidenced earning is supported. Managed advance corrections are unavailable.'
+    : 'Preparing the first valid advance activates liability control after a zero unassigned balance check.', 'action-hint'));
+  digest(summary, 'Captured snapshot · ' + report.policy, report.snapshot_digest);
+  digest(summary, 'Reproducible report digest', report.report_digest);
+  node.append(summary);
+  if (!report.advances.length) node.append(empty('No posted customer advances', 'Register prepayment and recorded cash evidence, prepare a proposal, then approve it in the review queue.'));
+  for (const customer of report.customers) {
+    node.append(add(el('section', null, 'card draft-body'), el('h3', customer.names.join(' / ')),
+      metadata([['Customer ID', customer.customer_id], ['Total principal', money(customer.principal_amount)],
+        ['Total earned', money(customer.earned_amount)], ['Total remaining', money(customer.remaining_amount)]])));
+  }
+  for (const advance of report.advances) {
+    const card = el('article', null, 'card draft-body');
+    card.append(el('h3', advance.customer_name + ' · ' + advance.contract_id),
+      metadata([['Customer ID', advance.customer_id], ['Receipt date', advance.effective_date],
+        ['Principal', money(advance.principal_amount)], ['Earned', money(advance.earned_amount)], ['Remaining', money(advance.remaining_amount)]]),
+      el('p', 'Prepayment evidence: ' + advance.prepayment_source_id + ' · Cash evidence: ' + advance.cash_source_id));
+    card.append(add(el('details'), el('summary', 'Advance and approval trace'), el('pre', advance.trace_json)));
+    node.append(card);
+  }
+}
 
 function renderReceivables() {
   const node = $('receivables-content'); node.replaceChildren();

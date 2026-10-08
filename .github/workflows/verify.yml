@@ -53,3 +53,5 @@ jobs:
         run: python3 -m accounting_harness demo-invoice
       - name: Demonstrate recorded invoice collection and captured aging
         run: python3 -m accounting_harness demo-collection
+      - name: Demonstrate reviewed customer advance and liability control
+        run: python3 -m accounting_harness demo-advance

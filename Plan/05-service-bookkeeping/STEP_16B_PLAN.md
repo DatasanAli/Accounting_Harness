@@ -29,4 +29,4 @@ focused tests. Parent owns docs/CI/browser/delivery.
 - [ ] Add completion/earning UI, exact preview and explicit human confirmation;
   retain principal/earned/remaining and control reconciliation in captured report.
 - [ ] Add demo-advance-earning; verify required checks/all demos and freeze for
-  parent browser/review/commit/push/exact-CI verification before Step 17.
+  parent browser/review/commit/push/exact-CI verification before Step 16c payable-seal hardening and then Step 17.

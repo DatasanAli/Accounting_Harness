@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'customer_prepayment': {'event_id', 'counterparty_id', 'contract_id'},
     'customer_invoice': {'event_id', 'counterparty_id', 'invoice_number', 'due_date'},
     'vendor_bill': {'event_id', 'counterparty_id', 'bill_number', 'due_date'},
     'cash_movement': {'event_id', 'counterparty_id', 'direction', 'purpose'},
