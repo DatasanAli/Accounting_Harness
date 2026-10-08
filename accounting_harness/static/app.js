@@ -1668,3 +1668,27 @@ function renderRevenueAccruals() {
   }
   node.append(el('p', report.report_policy + ' · Snapshot ' + report.snapshot_digest + ' · Report ' + report.report_digest, 'action-hint'));
 }
+
+
+$('report-export-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = $('download-reports');
+  button.disabled = true;
+  $('report-export-status').textContent = 'Capturing linked reports…';
+  try {
+    const kind = $('report-export-format').value;
+    const query = new URLSearchParams({as_of: $('report-export-cutoff').value, format: kind});
+    const response = await fetch('/api/report-export?' + query);
+    if (!response.ok) throw new Error((await response.json()).error || 'Download failed');
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = kind === 'json' ? 'report.json' : 'reports.zip';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    $('report-export-status').textContent = 'Downloaded ' + link.download + ' · Package ' + response.headers.get('X-Report-Package-Digest');
+  } catch (error) {
+    $('report-export-status').textContent = 'Unable to download reports: ' + error.message;
+  } finally { button.disabled = false; }
+});

@@ -251,6 +251,18 @@
           </form>
           <p>This separate capture explains changes in Cash from January 1. Opening Cash is zero. Refresh keeps the displayed capture; capture again to include later postings.</p>
         </div>
+        <div class="card setup-card">
+          <h3>Portable reports</h3>
+          <form id="report-export-form" class="receipt-form">
+            <label>Download inclusive cutoff <input id="report-export-cutoff" name="as_of" type="date" min="2026-01-01" max="2026-01-31" required value="2026-01-31"></label>
+            <label>Download format <select id="report-export-format" name="format"><option value="json">JSON report package</option><option value="zip">CSV + JSON manifest (ZIP)</option></select></label>
+            <button id="download-reports" class="button" type="submit">Capture and download reports</button>
+          </form>
+          <p>Each download captures all four linked reports together from the current books. Your displayed captures stay available. Keep the JSON manifest with its CSV to reproduce the reports offline.</p>
+          <p>Package hashes check internal consistency. These unsigned reports do not prove origin or grant approval or posting permission.</p>
+          <p>Offline read-only preview: <code>python3 -m accounting_harness verify-report-export /path/to/report.json</code> (also accepts the ZIP package).</p>
+          <p id="report-export-status" class="digest" aria-live="polite"></p>
+        </div>
         <div id="cash-flow-report" class="stack" aria-live="polite"></div>
         <div id="financial-reports" class="stack" aria-live="polite"></div>
       </section>

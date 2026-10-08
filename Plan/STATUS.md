@@ -2,9 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–23a (23a upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–23b (23b upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Active:** finish Step 23a delivery, then [Step 23b portable reports](07-period-close/STEP_23B_PLAN.md).
+**Next:** [Step 24a project attribution](08-service-management/STEP_24A_PLAN.md), after the current delivery’s exact CI check.
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -23,15 +23,14 @@ supported prepaid consumption and evidenced unbilled expense/revenue accruals.
 Every posted operation retains its source, effective date and actor; managed
 controls enforce their approved effects.
 
-Latest local Step 23a checks: **608 tests and 32 demonstrations passed**.
-Native January 31/15 cash bridges, approved bill/payment trace, retained captures,
-390px layout and frozen-code restart passed with unchanged accounting state.
-Reference operating cash is −400.00, financing 9,800.00 and ending Cash 9,400.00.
-An initial approval-content identity finding was fixed; scoped review approved
-with no new findings. Final full-suite and restart checks include the fix.
-Commit/remote/exact CI follow local acceptance. Prior delivery evidence is below.
+Latest local Step 23b checks: **628 tests and 33 demonstrations passed**.
+Native JSON/ZIP downloads are deterministic and reproduce the linked reports
+without the server. January31/15 cutoff, altered-package refusal, 390px layout and
+final fixed-code restart passed with unchanged accounting state and old reports.
+The CSV field-limit review finding was fixed and scoped review approved with no
+new findings. Commit/push/exact CI are pending; prior delivery evidence is below.
 Commands and coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); observed
-boundaries are in [Step 23a verification](07-period-close/STEP_23A_VERIFICATION.md).
+boundaries are in [Step 23b verification](07-period-close/STEP_23B_VERIFICATION.md).
 A foundation check is not application proof.
 
 The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
@@ -42,7 +41,7 @@ real calls require explicit startup configuration and remain unverified. Existin
 agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
-Captured financial statements, direct cash flow, confirmed close and durable date locks are implemented.
+Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
 Authenticated roles, management reporting, integration contracts,
 and verified recovery are still planned. The existing local operator is not an
 authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
@@ -77,6 +76,7 @@ retained in the verification record and Git history.
 | 20d | [Adjusted operational month](07-period-close/STEP_20D_VERIFICATION.md) | [56d2548](https://github.com/DatasanAli/Accounting_Harness/commit/56d2548598b089358ad8e1af579446eb9b77ee2e) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37830844808) |
 | 21 | [Captured financial statements](07-period-close/STEP_21_VERIFICATION.md) | [511d932](https://github.com/DatasanAli/Accounting_Harness/commit/511d93203a82227b00794462267b372a2e275178) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37832868799) |
 | 22 | [Confirmed close and date locks](07-period-close/STEP_22_VERIFICATION.md) | [1bdb15e](https://github.com/DatasanAli/Accounting_Harness/commit/1bdb15e9e98dc1f188fb5de2b410c5f9793b620c) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37834858650) |
+| 23a | [Captured direct cash flow](07-period-close/STEP_23A_VERIFICATION.md) | [969b783](https://github.com/DatasanAli/Accounting_Harness/commit/969b783b2cf105114501403c0879380d696743c5) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37836761506) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

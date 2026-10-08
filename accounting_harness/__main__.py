@@ -221,6 +221,9 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("demo-adjusted-month", help="assemble the supported adjusted reference month with explicit synthetic approvals")
     commands.add_parser("demo-close", help="explicitly close January and refuse backdated entries")
+    commands.add_parser("demo-report-export", help="round-trip captured reports as exact offline JSON and CSV packages")
+    export = commands.add_parser("verify-report-export", help="verify a bounded report JSON/ZIP file offline; never import journals")
+    export.add_argument("path", help="local report.json or reports.zip file")
     commands.add_parser("demo-cash-flow", help="capture direct cash categories and the exact cash bridge")
     commands.add_parser("demo-statements", help="capture linked income, owner equity and balance-sheet statements")
     commands.add_parser("demo-accounts", help="show the fictional account catalog and exact arithmetic")
@@ -272,6 +275,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "demo-close":
             from accounting_harness.closing import demo_close
             demo_close()
+        elif args.command == "demo-report-export":
+            from accounting_harness.report_export import demo_report_export
+            demo_report_export()
+        elif args.command == "verify-report-export":
+            from accounting_harness.report_export import verify_report_file
+            verify_report_file(args.path)
         elif args.command == "demo-cash-flow":
             from accounting_harness.cash_flow import demo_cash_flow
             demo_cash_flow()

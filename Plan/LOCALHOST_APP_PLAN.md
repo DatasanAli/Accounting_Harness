@@ -135,4 +135,6 @@ linked reversals, not deletion or a database reset.
 
 - Step22: local588 tests/31 demos, native exact close/retry/backdate refusal/390px/frozen restart pass; independent review approved without findings. Commit `1bdb15e` matches remote and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37834858650); see [verification](07-period-close/STEP_22_VERIFICATION.md).
 
-- Step 23a: local 608 tests/32 demos, native cash bridges/AP trace/390px/unchanged state/frozen restart pass. Approval-content identity review finding fixed and scoped review approved. Commit/remote/exact CI pending; see [verification](07-period-close/STEP_23A_VERIFICATION.md).
+- Step 23a: local 608 tests/32 demos, native cash bridges/AP trace/390px/unchanged state/frozen restart pass. Approval-content identity review finding fixed and scoped review approved. Commit `969b783` matches remote and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37836761506); see [verification](07-period-close/STEP_23A_VERIFICATION.md).
+
+- Step 23b: local 628 tests/33 demos, native deterministic JSON/ZIP, offline readback/refusal, unchanged books/reports, true 390px and final restart passed. CSV limit review finding fixed; scoped review approved. Commit/push/exact CI pending; see [verification](07-period-close/STEP_23B_VERIFICATION.md).

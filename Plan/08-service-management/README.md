@@ -1,6 +1,6 @@
 # Phase 08: Service costing, budgets and analysis
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: Step 24a project attribution is ready after Step 23b exact delivery verification. No behavior in this phase is implemented yet.
 
 **Depends on:** Steps 02–23. These outputs read supported actuals and label assumptions separately.
 

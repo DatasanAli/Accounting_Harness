@@ -120,6 +120,13 @@ class Workspace:
             capture = capture_cash_flow(ledger, as_of)
         return cash_flow_statement(capture)
 
+    def report_package(self, as_of):
+        from accounting_harness.cash_flow import capture_cash_flow
+        from accounting_harness.report_export import report_package
+        with self.storage() as (_, ledger, _, _, _):
+            capture = capture_cash_flow(ledger, as_of)
+        return report_package(capture)
+
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
                      note='No model calls. Fixed fictional examples.'),

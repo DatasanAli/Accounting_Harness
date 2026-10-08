@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "22",
-  "next_step": "23",
+  "current_step": "23",
+  "next_step": "24",
   "phases": [
     {
       "id": "01",
@@ -311,17 +311,19 @@
         {
           "id": "23",
           "title": "Cash flow and reproducible exports",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "23a",
               "title": "Captured direct cash-flow statement",
-              "status": "complete"
+              "status": "complete",
+              "commit": "969b783b2cf105114501403c0879380d696743c5",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37836761506"
             },
             {
               "id": "23b",
               "title": "Portable reproducible report packages",
-              "status": "ready"
+              "status": "complete"
             }
           ]
         }
@@ -335,12 +337,12 @@
         {
           "id": "24",
           "title": "Project and cost dimensions",
-          "status": "planned",
+          "status": "ready",
           "substeps": [
             {
               "id": "24a",
               "title": "Project attribution of recorded actuals",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "24b",

@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: Step 23a cash flow passes 608 tests, 32 demos, native cutoff/trace/mobile/restart checks. The initial review finding was fixed and scoped review approved it. Upload/exact CI follow; see [verification](STEP_23A_VERIFICATION.md). Step 23b portable report packages follows.
+Status: all local phase behavior is implemented. Step 23b passes 628 tests, 33 demos, native deterministic downloads, server-off readback, 390px layout and final restart checks. Its CSV limit review finding was fixed and scoped review approved. Commit/push/exact CI are pending; see [verification](STEP_23B_VERIFICATION.md). Step 24a project attribution follows after verified delivery.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 

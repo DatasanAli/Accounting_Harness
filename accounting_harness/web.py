@@ -32,10 +32,14 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *_):
         pass  # No request bodies, paths or evidence in terminal access logs.
 
-    def respond(self, status, value, kind='application/json'):
-        body = json.dumps(value).encode() if kind == 'application/json' else value
+    def respond(self, status, value, kind='application/json', *, filename=None, package_digest=None):
+        body = json.dumps(value).encode() if kind == 'application/json' and not isinstance(value, bytes) else value
         self.send_response(status)
-        self.send_header('Content-Type', kind + '; charset=utf-8')
+        self.send_header('Content-Type', kind + ('; charset=utf-8' if kind != 'application/zip' else ''))
+        if filename:
+            self.send_header('Content-Disposition', 'attachment; filename="' + filename + '"')
+        if package_digest:
+            self.send_header('X-Report-Package-Digest', package_digest)
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
@@ -55,6 +59,24 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ASSETS:
             name, kind = ASSETS[self.path]
             return self.respond(200, (STATIC / name).read_bytes(), kind)
+        if urlsplit(self.path).path == '/api/report-export':
+            try:
+                from accounting_harness.report_export import export_report_package
+                values = parse_qs(urlsplit(self.path).query, strict_parsing=True,
+                                  keep_blank_values=True, max_num_fields=2)
+                if set(values) != {'as_of','format'} or any(len(v) != 1 for v in values.values()):
+                    raise ValueError('report export requires as_of and format exactly once')
+                kind = values['format'][0]
+                if kind not in ('json','zip'):
+                    raise ValueError('report format must be json or zip')
+                package = self.server.workspace.report_package(values['as_of'][0])
+                raw = export_report_package(package,kind)
+                return self.respond(200,raw,'application/json' if kind == 'json' else 'application/zip',
+                    filename='report.json' if kind == 'json' else 'reports.zip',package_digest=package['package_digest'])
+            except (ValueError, TypeError) as error:
+                return self.respond(409, dict(error=str(error)))
+            except (sqlite3.Error, PersistenceBusy):
+                return self.respond(503, dict(error='workspace busy or unavailable; retry export'))
         if urlsplit(self.path).path in ('/api/financial-statements', '/api/cash-flow'):
             try:
                 values = parse_qs(urlsplit(self.path).query, strict_parsing=True,

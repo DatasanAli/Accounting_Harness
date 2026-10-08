@@ -43,7 +43,7 @@ and unchanged earlier financial statements.
   exact binding/actor identity for both approvals; eight mutation cases failed
   before the fix and passed afterward. Scoped review marked the finding addressed
   with no new findings. The final full suite and frozen restart include this fix.
-- Exact commit/remote/CI checks follow local acceptance.
+- Delivered commit [969b783](https://github.com/DatasanAli/Accounting_Harness/commit/969b783b2cf105114501403c0879380d696743c5) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37836761506) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py
