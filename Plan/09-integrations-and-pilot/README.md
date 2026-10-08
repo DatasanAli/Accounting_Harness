@@ -42,6 +42,8 @@ Build only one numbered step per request. Split a row further if it cannot be de
 
 ### Step 29: Authenticated operator and entity access
 
+See the [access contract](STEP_29_PLAN.md), split into [identity/session core](STEP_29A_PLAN.md) and [authenticated application/UI](STEP_29B_PLAN.md).
+
 - **Build:** Add authenticated roles and deny-by-default entity-scoped service authorization for a narrowly scoped deployment.
 - **Test:** Cross-entity read/write denied; forged reviewer rejected; agent lacks human role; session expiry and permission revocation are exercised.
 - **Verify manually:** Demonstrate preparer/reviewer boundaries with two synthetic identities and entities.
@@ -52,6 +54,8 @@ Copyable prompt:
 > Build Step 29: Authenticated operator and entity access. Follow Plan/09-integrations-and-pilot/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 30: One sandbox read adapter
+
+See the [offline QuickBooks JournalEntry contract](STEP_30_PLAN.md). The local ledger remains authoritative; no real sandbox connection is part of this request.
 
 - **Build:** Select one accounting system, decide authoritative-ledger ownership, and import one object type through a sandbox adapter.
 - **Test:** Pagination, stable IDs, duplicate retry, rate limiting, interrupted resume and field/currency mapping pass; imported totals reconcile.
@@ -64,6 +68,8 @@ Copyable prompt:
 
 ### Step 31: Review workbench
 
+See the [complete workbench contract](STEP_31_PLAN.md), split into [owner/prepaid cash entries](STEP_31A_PLAN.md), [operational agent proposals](STEP_31B_PLAN.md) and [integrated UI](STEP_31C_PLAN.md).
+
 - **Build:** Add one web screen for source, proposal, validation, approval/rejection and trace links using existing services.
 - **Test:** Cannot approve a changed draft; permission checks work on direct API calls; keyboard review flow works; posted result is traceable.
 - **Verify manually:** Review one supported expense end to end in the browser.
@@ -75,6 +81,8 @@ Copyable prompt:
 
 ### Step 32: One sandbox journal export
 
+See the [approved offline export contract](STEP_32_PLAN.md), including uncertain outcomes and exact readback.
+
 - **Build:** Export an explicitly approved journal to the chosen sandbox with local/remote IDs and status reconciliation.
 - **Test:** Retry and timeout recovery create one external journal; changed approval fails; export/import totals match; drift remains an exception.
 - **Verify manually:** Export one approved fictional journal and verify the remote record.
@@ -85,6 +93,8 @@ Copyable prompt:
 > Build Step 32: One sandbox journal export. Follow Plan/09-integrations-and-pilot/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 33: Recovery and operational visibility
+
+See the [coherent recovery and visibility plan](STEP_33_PLAN.md), split into [verified restore](STEP_33A_PLAN.md) and [operational status](STEP_33B_PLAN.md).
 
 A browser-workspace copy during Step 19a reproduced a current limitation: the run
 log binds absolute ledger/registry paths, so opening the copy at a new destination
@@ -104,6 +114,8 @@ Copyable prompt:
 > Build Step 33: Recovery and operational visibility. Follow Plan/09-integrations-and-pilot/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 34: Controlled pilot acceptance
+
+See the [synthetic release rehearsal and deferred live gates](STEP_34_PLAN.md).
 
 - **Build:** Document the actual pilot scope/policies and run a capped, reviewed end-to-end period with the selected users and data permissions.
 - **Test:** Agreed accounting scenarios and zero-unauthorized-action gate pass; exception handling, rollback and reconciliation are demonstrated; release evidence names exact commit.

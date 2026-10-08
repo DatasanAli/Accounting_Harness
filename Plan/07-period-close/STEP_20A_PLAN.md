@@ -93,22 +93,22 @@ approval hooks, ledger reversal dependency guard, workspace/HTTP/CLI/static.
 Parent owns docs/CI/browser/delivery. Use the existing posted-purchase primitive;
 do not build an unrelated procurement feature in this slice.
 
-- [ ] RED: post a synthetic 1,200.00 purchase using the supported ledger primitive,
+- [x] RED: post a synthetic 1,200.00 purchase using the supported ledger primitive,
   bind January 1–December 31 coverage, prepare 100.00 January consumption, and prove no
   additional journal before exact human confirmation. After posting: expense 100.00,
   prepaid 1,100.00, cash unchanged and no control residual.
-- [ ] Independently check quotient/remainder allocation including uneven cents,
+- [x] Independently check quotient/remainder allocation including uneven cents,
   leap-year month boundaries, invalid partial coverage and zero allocations.
-- [ ] Refuse missing/unposted/reversed/wrong-account/changed-amount originals,
+- [x] Refuse missing/unposted/reversed/wrong-account/changed-amount originals,
   unsupported dates, conflicting coverage, repeated month under another identity,
   stale revisions, forged lines/intent, excess use and intervening reversal.
-- [ ] Verify exact concurrent retries, competing same-month proposals, write faults,
+- [x] Verify exact concurrent retries, competing same-month proposals, write faults,
   final-seal supersession, dependency reversal refusal, immutable records and
   atomic initialization with historical AP/AR/advance approval bytes unchanged.
-- [ ] Test current control/residual honestly and frozen prior capture/digest after
+- [x] Test current control/residual honestly and frozen prior capture/digest after
   later activity. Return exact server decimal/canonical trace strings to the UI.
-- [ ] Add coverage/consumption preparation and remaining-asset UI with the existing
+- [x] Add coverage/consumption preparation and remaining-asset UI with the existing
   separate review/confirmation. Add `demo-prepaid-consumption` with the 100.00/1,100.00
   example, duplicate refusal and preserved original cash movement.
-- [ ] Run focused then guarded full checks/all demos/JS/diff; freeze for parent
+- [x] Run focused then guarded full checks/all demos/JS/diff; freeze for parent
   browser and independent review, then commit/push/exact CI before Step 20b.

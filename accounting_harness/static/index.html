@@ -20,6 +20,7 @@
       <button class="nav-item" data-view="receivables"><span aria-hidden="true">▣</span>Customer invoices</button>
       <button class="nav-item" data-view="advances"><span aria-hidden="true">▣</span>Customer advances</button>
       <button class="nav-item" data-view="payables"><span aria-hidden="true">▣</span>Vendor bills</button>
+      <button class="nav-item" data-view="prepaid"><span aria-hidden="true">◷</span>Prepaid insurance</button>
       <button class="nav-item" data-view="bank"><span aria-hidden="true">▤</span>Bank statements</button>
       <button class="nav-item" data-view="runs"><span aria-hidden="true">↗</span>Agent runs</button>
       <button class="nav-item" data-view="providers"><span aria-hidden="true">⌘</span>Providers</button>
@@ -260,6 +261,35 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
         <section id="bank-fee-setup" class="card" aria-label="Bank fee account setup"></section>
         <div id="bank-list" class="stack"></div>
         <div id="bank-detail" class="stack"></div>
+      </section>
+      <section id="view-prepaid" class="view" aria-labelledby="prepaid-heading" hidden>
+        <div class="section-heading"><h2 id="prepaid-heading">Prepaid insurance</h2><span class="muted">Explicit coverage. Supported monthly consumption.</span></div>
+        <details class="card setup-card" id="prepaid-coverage-panel"><summary>Register insurance coverage for a posted purchase</summary>
+          <p>The existing purchase must debit Prepaid Insurance and credit Cash for the full principal. Coverage uses complete calendar months.</p>
+          <form id="prepaid-coverage-form" class="receipt-form">
+            <label>Coverage document ID <input name="document_id" required maxlength="1000" placeholder="coverage-001"></label>
+            <label>Original posted journal ID <input name="original_journal_id" required maxlength="1000"></label>
+            <label>Original purchase source ID <input name="original_source_id" required maxlength="1000"></label>
+            <label>Coverage evidence date <input name="document_date" type="date" min="2026-01-01" max="2026-01-31" required value="2026-01-01"></label>
+            <label>Full principal (USD) <input name="amount" required inputmode="decimal" pattern="[0-9]+\.[0-9]{2}" value="1200.00"></label>
+            <label>Insurer <input name="counterparty" required maxlength="1000"></label>
+            <label>Coverage start <input name="coverage_start" type="date" required value="2026-01-01"></label>
+            <label>Coverage end <input name="coverage_end" type="date" required value="2026-12-31"></label>
+            <label>Coverage evidence <textarea name="description" required maxlength="1000" rows="2"></textarea></label>
+            <button class="button" type="submit">Register coverage evidence</button>
+            <p class="action-hint">Equal monthly cents, with remainder cents assigned to the earliest months. Registration creates no journal.</p>
+          </form>
+        </details>
+        <details class="card setup-card" id="prepaid-proposal-panel"><summary>Prepare monthly insurance consumption</summary>
+          <form id="prepaid-proposal-form" class="receipt-form">
+            <label>Registered coverage <select id="prepaid-coverage-select" name="coverage_source_id" required></select></label>
+            <label>Allocation month <input name="allocation_month" type="month" min="2026-01" max="2026-01" required value="2026-01"></label>
+            <label>Current draft revision (0 for first preparation) <input name="expected_revision" type="number" min="0" step="1" required value="0"></label>
+            <button class="button" type="submit">Prepare consumption draft</button>
+            <p class="action-hint">Review the original purchase, coverage and exact allocation before confirming the journal separately. Correct rejected drafts using their current revision.</p>
+          </form>
+        </details>
+        <div id="prepaid-report" class="stack"></div>
       </section>
       <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><div id="run-list" class="stack"></div></section>
       <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>

@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  prepaid: ['Prepaid insurance', 'Coverage, supported consumption and the remaining recorded asset.'],
   evidence: ['Evidence', 'Start with a receipt. Keep every decision connected to its evidence.'],
   review: ['Review queue', 'Your judgment is the last step between a proposal and the books.'],
   ledger: ['Ledger', 'Exact balances and a complete trail back to each approved receipt.'],
@@ -198,7 +199,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderBank(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderBank(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -297,7 +298,7 @@ $('receipt-form').addEventListener('submit', async event => {
 });
 
 function renderCashChoices() {
-  for (const [id, kinds] of [['cash-source-select', ['cash_movement']],
+  for (const [id, kinds] of [['prepaid-coverage-select', ['prepaid_coverage']], ['cash-source-select', ['cash_movement']],
     ['recognition-source-select', ['incurred_expense', 'service_completion']],
     ['earning-completion-select', ['advance_completion']],
     ['prepayment-source-select', ['customer_prepayment']], ['advance-cash-select', ['cash_movement']],
@@ -1248,3 +1249,50 @@ setInterval(() => {
 }, 1000);
 showView(activeView);
 refresh().then(ok => { if (ok && pendingRun) notify('A previous run is retained. Inspect its status or recover the same run before starting another.', 'progress'); });
+
+$('prepaid-coverage-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const document = {...Object.fromEntries(new FormData(event.target)), schema_version: 2, synthetic: true,
+    entity_id: state.entity_id, currency: 'USD', kind: 'prepaid_coverage', allocation_policy: 'equal-months-cents-v1'};
+  busy = true; render();
+  try {
+    await request('/api/operation-sources', {document});
+    await refresh(); $('prepaid-coverage-select').value = document.document_id; $('prepaid-proposal-panel').open = true;
+    notify('Coverage registered. Prepare the supported monthly allocation, then confirm it separately in review.');
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+$('prepaid-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.target));
+  payload.expected_revision = Number(payload.expected_revision);
+  busy = true; render();
+  try {
+    const result = await request('/api/prepaid-proposals', payload);
+    await refresh();
+    if (result.state === 'no_journal_required') notify('This month allocates 0.00 USD. No journal is required.');
+    else { showView('review', true); notify('Consumption draft prepared. Confirm the exact revision separately after reviewing its evidence.'); }
+  } catch (error) { await refresh(); notify(error.message, 'error'); }
+  finally { busy = false; render(); }
+});
+function renderPrepaid() {
+  const node = $('prepaid-report'); node.replaceChildren();
+  const report = state.prepaid;
+  node.append(add(el('div', null, 'card'), el('h3', 'Remaining insurance asset'),
+    metadata([['Principal', money(report.principal_amount)], ['Supported consumption', money(report.consumed_amount)],
+      ['Supported remainder', money(report.remaining_amount)], ['1200 control balance', report.control_amount + ' USD'],
+      ['Unassigned control residual', report.unassigned_control_amount + ' USD']]),
+    el('p', 'An unrelated account movement is shown in the residual and does not count as supported policy consumption.', 'action-hint')));
+  if (!report.policies.length) node.append(empty('No prepared coverage policies', 'Register coverage for an existing posted purchase and prepare its monthly allocation.'));
+  for (const policy of report.policies) {
+    const card = add(el('article', null, 'card'), el('h3', policy.coverage_source_id),
+      metadata([['Original journal', policy.original_journal_id], ['Coverage', policy.coverage_start + ' to ' + policy.coverage_end],
+        ['Principal', money(policy.principal_amount)], ['Consumed', money(policy.consumed_amount)], ['Remaining', money(policy.remaining_amount)]]));
+    for (const item of policy.allocations) card.append(el('p', item.effective_date + ' · Posted journal ' + item.journal_id));
+    card.append(add(el('details'), el('summary', 'Coverage, allocation and approval trace'), el('pre', policy.trace_json)));
+    node.append(card);
+  }
+  node.append(el('p', report.report_policy + ' · Snapshot ' + report.snapshot_digest, 'action-hint'));
+}

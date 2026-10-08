@@ -155,6 +155,9 @@ class ReviewApplication:
             if current.policy_version in ('advance-v1', 'advance-earning-v1'):
                 from accounting_harness.advances import prepare_advance_post
                 prepare_advance_post(self.store, approval, current, entry)
+            if current.policy_version == 'prepaid-consumption-v1':
+                from accounting_harness.prepaid import prepare_prepaid_post
+                prepare_prepaid_post(self.store, approval, current, entry)
             if current.policy_version == 'bank-fee-v1':
                 from accounting_harness.bank_fees import prepare_fee_post
                 prepare_fee_post(self.store, approval, current, entry)

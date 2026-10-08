@@ -397,6 +397,9 @@ class SQLiteLedger:
         digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
         if canonical != source.canonical_content or digest != source.content_digest:
             raise ValueError('registered source content/digest differs')
+        if document['kind'] == 'prepaid_coverage':
+            from accounting_harness.prepaid import PrepaidService
+            PrepaidService(self, registry)
         if document['kind'] == 'bank_fee':
             from accounting_harness.bank_fees import bank_evidence
             if document != bank_evidence(self, document['bank_account_id'], document['transaction_id']):
@@ -496,6 +499,9 @@ class SQLiteLedger:
                 "SELECT 1 FROM reversals WHERE original_id=?", (original_id,),
             ).fetchone():
                 raise ValueError("original journal is already reversed")
+            if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='prepaid_effects'").fetchone():
+                if self._connection.execute('SELECT 1 FROM prepaid_effects WHERE original_journal_id=? OR journal_id=?', (original_id,original_id)).fetchone():
+                    raise ValueError('operational_reversal_not_supported: prepaid dependency requires linked correction policy')
             if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='bank_fee_effects'").fetchone():
                 if self._connection.execute('SELECT 1 FROM bank_fee_effects WHERE journal_id=?', (original_id,)).fetchone():
                     raise ValueError('operational_reversal_not_supported: bank fees require linked consumption and matching correction')

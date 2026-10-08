@@ -121,4 +121,6 @@ linked reversals, not deletion or a database reset.
 
 - Step 19b: delivered as `757e6fd`, exact CI run 37817880835 passed; 470 tests/24 demos, browser prepare/review/post/match/restart and independent review with no new findings. See [verification](06-bank-reconciliation/STEP_19B_VERIFICATION.md).
 
-- Step19c: local485 tests/25 demos, browser timing/completion/drift/re-completion/restart and independent review without findings; exact delivery pending. See [verification](06-bank-reconciliation/STEP_19C_VERIFICATION.md).
+- Step 19c: delivered as `c4edae4`, exact CI37820570127 passed; 485 tests/25 demos, browser timing/completion/drift/re-completion/restart and independent review without findings. See [verification](06-bank-reconciliation/STEP_19C_VERIFICATION.md).
+
+- Step 20a: local508 tests/26 demos and browser coverage/prepare/approve/restart passed; independent review approved with no findings; exact delivery pending. See [verification](07-period-close/STEP_20A_VERIFICATION.md).

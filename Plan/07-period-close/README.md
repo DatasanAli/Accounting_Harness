@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: planned; Step 20a prepaid consumption is next after exact Step 19c delivery. No behavior in this phase is implemented yet.
+Status: Step 20a prepaid consumption passes local/browser checks; independent review approved with no findings; exact delivery is pending. See [verification](STEP_20A_VERIFICATION.md). Step 20b expense accrual follows separately.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 

@@ -21,6 +21,7 @@ from accounting_harness.payables import PayablesService, payables_report
 from accounting_harness.receivables import ReceivablesService, receivables_report
 from accounting_harness.advances import AdvancesService, advances_report
 from accounting_harness.reconciliation import ReconciliationService
+from accounting_harness.prepaid import PrepaidService, prepaid_report
 from accounting_harness.bank import BankStatementService
 from accounting_harness.bank_fees import BankFeeService, bank_evidence, fee_operation, require_available
 from accounting_harness.domain.money import Money
@@ -168,6 +169,9 @@ class Workspace:
             WHERE draft_id=? ORDER BY revision DESC LIMIT 1''', (draft_id,)).fetchone()
         if row is None:
             raise KeyError(draft_id)
+        if row[0] == 'prepaid-consumption-v1':
+            prepaid = PrepaidService(store.ledger, store.registry)
+            return prepaid.store, prepaid.app
         if row[0] == 'bank-fee-v1':
             fees = BankFeeService(store.ledger, store.registry)
             return fees.store, fees.app
@@ -198,6 +202,16 @@ class Workspace:
             raise ValueError('unknown stored draft policy')
         cash = SQLiteReviewStore(store.ledger, store.registry, policy_version='cash-v1')
         return cash, ReviewApplication(cash)
+
+    def prepare_prepaid(self, data):
+        fields(data, dict(coverage_source_id=str, allocation_month=str, expected_revision=int))
+        with self.storage() as (registry, ledger, _, _, _):
+            draft = PrepaidService(ledger, registry).propose(**data, actor_id='local-operator',
+                idempotency_key='web-prepaid:' + digest(data))
+            if isinstance(draft, dict):
+                return draft
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
 
     def prepare_bank_fee(self, data):
         fields(data, dict(bank_account_id=str, transaction_id=str, classification=str, reason=str, expected_revision=int))
@@ -323,6 +337,7 @@ class Workspace:
                     attempts=checkpoint.provider_attempts, reserved_nanodollars=checkpoint.cost_units,
                     trace=[dict(sequence=c.sequence, state=c.state, reason=c.reason,
                                 recorded_at_ms=c.recorded_at_ms) for c in engine.trace(run_id)]))
+            prepaid = prepaid_report(PrepaidService(ledger, registry).snapshot(), as_of='2026-01-31')
             advances = advances_report(AdvancesService(ledger, registry).snapshot(), as_of='2026-01-31')
             for item in [advances, *advances['customers'], *advances['advances'], *advances['earnings']]:
                 for field in ('principal', 'earned', 'remaining', 'unearned_control', 'subledger', 'unassigned_control'):
@@ -372,7 +387,7 @@ class Workspace:
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
                 bank_fee_account_activation=self._account_activation(ledger),
                 bank_statements=BankStatementService(ledger).list_statements(),
-                journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances,
+                journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid,
                 trial_balance=dict(as_of=report.as_of.isoformat(), policy=report.policy,
                     snapshot_digest=digest(report_identity), catalog=catalog,
                     included_entry_ids=list(report.included_entry_ids),
@@ -384,6 +399,8 @@ class Workspace:
         if action in ('bank-timing', 'bank-reconcile'):
             with self.storage() as (_, ledger, _, _, _):
                 return ReconciliationService(ledger).action(action.removeprefix('bank-'), data, actor_id='local-operator')
+        if action == 'prepaid-proposals':
+            return self.prepare_prepaid(data)
         if action == 'bank-fee-proposals':
             return self.prepare_bank_fee(data)
         if action == 'bank-fee-account':

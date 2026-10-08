@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'prepaid_coverage': {'original_journal_id', 'original_source_id', 'coverage_start', 'coverage_end', 'allocation_policy'},
     'bank_fee': {'event_id', 'bank_account_id', 'transaction_id', 'bank_content_digest', 'bank_reference', 'bank_description', 'signed_amount'},
     'advance_completion': {'event_id', 'counterparty_id', 'contract_id', 'completion_date'},
     'customer_prepayment': {'event_id', 'counterparty_id', 'contract_id'},
@@ -77,6 +78,11 @@ def _content(document: object, entity_id: str) -> tuple[str, str]:
             raise ValueError('bank fee evidence must retain the whole negative movement')
         if len(document['bank_content_digest']) != 64 or any(c not in '0123456789abcdef' for c in document['bank_content_digest']):
             raise ValueError('invalid bank content digest')
+    if kind == 'prepaid_coverage':
+        from accounting_harness.prepaid import coverage_months, ALLOCATION
+        coverage_months(document['coverage_start'], document['coverage_end'])
+        if document['allocation_policy'] != ALLOCATION:
+            raise ValueError('unsupported prepaid allocation policy')
     if kind == 'cash_movement':
         if document['direction'] not in ('in', 'out'):
             raise ValueError('cash direction must be in or out')

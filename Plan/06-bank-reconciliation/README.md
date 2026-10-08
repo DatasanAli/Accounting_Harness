@@ -1,6 +1,6 @@
 # Phase 06: Bank reconciliation
 
-Status: Step 17 bank import is delivered with verified CI; see [import verification](STEP_17_VERIFICATION.md). Step 18 matching is delivered with verified CI. Step 19a account activation is delivered with verified CI. Step 19b fee posting is delivered with verified CI. Step 19c reconciliation passes local/browser checks and independent review; exact delivery is pending. See [reconciliation verification](STEP_19C_VERIFICATION.md). See [fee verification](STEP_19B_VERIFICATION.md). See [activation verification](STEP_19A_VERIFICATION.md). See [matching verification](STEP_18_VERIFICATION.md).
+Status: Step 17 bank import is delivered with verified CI; see [import verification](STEP_17_VERIFICATION.md). Step 18 matching is delivered with verified CI. Step 19a account activation is delivered with verified CI. Step 19b fee posting is delivered with verified CI. Step 19c reconciliation is delivered with verified GitHub CI. See [reconciliation verification](STEP_19C_VERIFICATION.md). See [fee verification](STEP_19B_VERIFICATION.md). See [activation verification](STEP_19A_VERIFICATION.md). See [matching verification](STEP_18_VERIFICATION.md).
 
 **Depends on:** Steps 02–16.
 

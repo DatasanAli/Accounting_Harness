@@ -36,8 +36,7 @@ strengthening asserted literal zero residual for an ambiguous-bank case; all
 **15 focused reconciliation tests** then passed in 1.778 seconds. No application
 code changed after the broad verification.
 
-Independent review approved spec compliance and quality with no findings. Exact
-commit/upload/CI checks remain pending; local success is not a GitHub result.
+Independent review approved spec compliance and quality with no findings. Delivered as [c4edae4](https://github.com/DatasanAli/Accounting_Harness/commit/c4edae4bc77151bad6dd796a89d5200158f1aa8c); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37820570127). Remote main matched the local commit.
 
 ```sh
 python3 scripts/verify_foundation.py

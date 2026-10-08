@@ -287,4 +287,4 @@ class PayableSealTests(unittest.TestCase):
         self.assertEqual(self.schema(), schema)
         PayablesService(self.ledger, self.registry)
         self.assertEqual(db.execute('SELECT version FROM payables_schema').fetchall(), [(3,)])
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(8,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(), [(9,)])

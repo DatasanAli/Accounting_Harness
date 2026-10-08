@@ -247,7 +247,8 @@
               "id": "19c",
               "title": "Captured reconciliation and completion",
               "status": "complete",
-              "delivery_gate": "Local checks/browser/independent review passed; exact upload/CI pending."
+              "commit": "c4edae4bc77151bad6dd796a89d5200158f1aa8c",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37820570127"
             }
           ]
         }
@@ -266,12 +267,13 @@
             {
               "id": "20a",
               "title": "Supported prepaid insurance consumption",
-              "status": "ready"
+              "status": "complete",
+              "delivery_gate": "Local checks/browser/independent review passed; exact upload/CI pending."
             },
             {
               "id": "20b",
               "title": "Evidenced unbilled expense accrual",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "20c",
@@ -361,7 +363,19 @@
         {
           "id": "29",
           "title": "Authenticated operator and entity access",
-          "status": "planned"
+          "status": "planned",
+          "substeps": [
+            {
+              "id": "29a",
+              "title": "Local identities, sessions and entity grants",
+              "status": "planned"
+            },
+            {
+              "id": "29b",
+              "title": "Authenticated application and UI",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "30",
@@ -371,7 +385,24 @@
         {
           "id": "31",
           "title": "Review workbench",
-          "status": "planned"
+          "status": "planned",
+          "substeps": [
+            {
+              "id": "31a",
+              "title": "Reviewed owner and prepaid cash entries",
+              "status": "planned"
+            },
+            {
+              "id": "31b",
+              "title": "Bounded operational agent proposals",
+              "status": "planned"
+            },
+            {
+              "id": "31c",
+              "title": "Integrated authenticated workbench",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "32",
@@ -381,7 +412,19 @@
         {
           "id": "33",
           "title": "Recovery and operational visibility",
-          "status": "planned"
+          "status": "planned",
+          "substeps": [
+            {
+              "id": "33a",
+              "title": "Coherent backup and verified relocation",
+              "status": "planned"
+            },
+            {
+              "id": "33b",
+              "title": "Redacted operational status",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "34",
