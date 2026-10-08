@@ -1,6 +1,6 @@
 # Phase 05: Daily service-business operations
 
-Status: Step 13a is delivered; Step 13b cash templates are delivered with verified CI. See [13a verification](STEP_13A_VERIFICATION.md) and [13b verification](STEP_13B_VERIFICATION.md). Step 14a vendor bill recognition is locally verified and reviewed; remote/CI delivery follows. Step 14b partial settlement is next.
+Status: Step 13a is delivered; Step 13b cash templates are delivered with verified CI. See [13a verification](STEP_13A_VERIFICATION.md) and [13b verification](STEP_13B_VERIFICATION.md). Step 14a vendor bill recognition is delivered with verified CI. Step 14b partial settlement is locally verified; see [payment verification](STEP_14B_VERIFICATION.md). Upload/CI pending; Step 15a follows verified delivery.
 
 **Depends on:** Steps 02–11 and Step 12 offline contracts. Live model connection is deferred by user. Each workflow uses existing evidence, approval, and posting services.
 
@@ -46,6 +46,8 @@ Copyable prompt:
 > Build Step 14: Vendor bills and partial settlement. Follow Plan/05-service-bookkeeping/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 15: Customer invoices and collection
+
+Split into [15a invoice recognition](STEP_15A_PLAN.md) and [15b collection and aging](STEP_15B_PLAN.md), under [the Step 15 contract](STEP_15_PLAN.md).
 
 - **Build:** Add service-completion evidence, receivable invoice, due date, receipt allocation and aging.
 - **Test:** A $2,500.00 invoice and $1,500.00 receipt leave $1,000.00 receivable; collection does not recognize revenue twice; aging cutoff and over-allocation are checked.

@@ -128,7 +128,7 @@ class ReviewApplication:
             # The existing ledger primitive rechecks period, accounts, sources,
             # balance and integer storage limits inside this same transaction.
             entry = self.ledger._validate_entry(json.loads(current.proposal_json))
-            if current.policy_version == 'bill-v1':
+            if current.policy_version in ('bill-v1', 'bill-payment-v1'):
                 from accounting_harness.payables import prepare_payable_post
                 prepare_payable_post(self.store, approval, current, entry)
             receipt = self.ledger._store_entry(entry, actor_id)

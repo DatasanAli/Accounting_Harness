@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "13",
-  "next_step": "14",
+  "current_step": "14",
+  "next_step": "15",
   "phases": [
     {
       "id": "01",
@@ -136,24 +136,38 @@
         {
           "id": "14",
           "title": "Vendor bills and partial settlement",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "14a",
               "title": "Reviewed vendor bill recognition",
-              "status": "complete"
+              "status": "complete",
+              "commit": "ff9a1cba9f26d83010112657a52adcb45df9b505",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37794830614"
             },
             {
               "id": "14b",
               "title": "Recorded partial settlement",
-              "status": "ready"
+              "status": "complete"
             }
           ]
         },
         {
           "id": "15",
           "title": "Customer invoices and collection",
-          "status": "planned"
+          "status": "ready",
+          "substeps": [
+            {
+              "id": "15a",
+              "title": "Reviewed customer invoice recognition",
+              "status": "ready"
+            },
+            {
+              "id": "15b",
+              "title": "Recorded collection and aging",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "16",

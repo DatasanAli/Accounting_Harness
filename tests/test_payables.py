@@ -292,7 +292,7 @@ class PayablesTests(unittest.TestCase):
         self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(1,)])
         self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='draft_operation_intents'").fetchone())
         service = self.service()
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(2,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(3,)])
         self.assertEqual({t:db.execute(f'SELECT * FROM {t}').fetchall() for t in tables},before)
         self.assertEqual(self.ledger._context,context)
         self.assertEqual(test_review.ReviewTests.save(self,require_unused_evidence=True),old)

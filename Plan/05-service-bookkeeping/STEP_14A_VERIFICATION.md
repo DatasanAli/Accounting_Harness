@@ -89,5 +89,4 @@ perform accounting corrections.
 
 ## Delivery evidence
 
-The exact reviewed commit, remote SHA comparison and GitHub Actions result are
-recorded after upload; local passes are not substituted for GitHub verification.
+Delivered as [ff9a1cb](https://github.com/DatasanAli/Accounting_Harness/commit/ff9a1cba9f26d83010112657a52adcb45df9b505). Local HEAD and remote `main` matched. [GitHub Actions run 37794830614](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37794830614) completed successfully for that exact SHA, including the full suite and all 15 demonstrations.

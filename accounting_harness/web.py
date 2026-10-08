@@ -84,7 +84,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
         if self.path not in ('/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
-                             '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals'):
+                             '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals', '/api/bill-payment-proposals'):
             return self.respond(404, dict(error='not found'))
         try:
             result = self.server.workspace.action(self.path.removeprefix('/api/'), data)

@@ -65,6 +65,27 @@
             <p class="action-hint">Accounts, amount, dates and vendor come from the matched facts. Review both documents and approve the exact journal separately. Existing unassigned AP blocks setup. Rejected drafts retain their event claim; corrections require the local service API.</p>
           </form>
         </details>
+        <details class="card setup-card" id="payment-evidence-panel"><summary>Register a recorded vendor payment</summary>
+          <p>Record a fictional outgoing settlement that already occurred. This form never sends money or changes a bank account.</p>
+          <form id="payment-evidence-form" class="receipt-form">
+            <label>Payment event ID <input name="event_id" required maxlength="1000" placeholder="cash-out-001"></label>
+            <label>Cash document ID <input name="document_id" required maxlength="1000" placeholder="source-payment-001"></label>
+            <label>Vendor ID <input name="counterparty_id" required maxlength="1000" placeholder="vendor-synthetic-1"></label>
+            <label>Vendor name <input name="counterparty" required maxlength="1000"></label>
+            <label>Payment date <input name="document_date" type="date" min="2026-01-01" max="2026-01-31" required></label>
+            <label>Entire cash movement (USD) <input name="amount" inputmode="decimal" pattern="[0-9]+\.[0-9]{2}" required placeholder="100.00"></label>
+            <label>Recorded payment evidence <textarea name="description" required maxlength="1000" rows="2"></textarea></label>
+            <button id="register-payment-evidence" class="button" type="submit">Register fictional payment evidence</button>
+          </form>
+        </details>
+        <details class="card setup-card" id="payment-proposal-panel"><summary>Prepare a recorded bill settlement</summary>
+          <form id="payment-proposal-form" class="receipt-form">
+            <label>Posted vendor bill <select name="bill_id" id="payment-bill-select" required></select></label>
+            <label>Outgoing settlement evidence <select name="cash_source_id" id="payment-cash-select" required></select></label>
+            <button id="prepare-payment" class="button" type="submit">Prepare payment draft</button>
+            <p class="action-hint">The full cash movement applies to one bill. Amount and date come from its evidence. Review the bill, payment and exact journal before a separate human confirmation. Approval does not reserve the remaining balance; posting checks it again. Corrections require the local service API; managed reversals are unavailable.</p>
+          </form>
+        </details>
         <details class="card setup-card" id="cash-evidence-panel"><summary>Register cash and recognition facts</summary>
           <p>Enter two fictional assertions for one economic event: money moved, and an expense was incurred or a service completed. Both must have the same amount, counterparty and January date. Cash alone does not establish revenue or expense.</p>
           <form id="cash-evidence-form" class="receipt-form">

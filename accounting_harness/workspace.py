@@ -143,6 +143,10 @@ class Workspace:
         if row[0] == 'bill-v1':
             payables = PayablesService(store.ledger, store.registry)
             return payables.store, payables.app
+        if row[0] == 'bill-payment-v1':
+            PayablesService(store.ledger, store.registry)
+            payments = SQLiteReviewStore(store.ledger, store.registry, policy_version='bill-payment-v1')
+            return payments, ReviewApplication(payments)
         if row[0] != 'cash-v1':
             raise ValueError('unknown stored draft policy')
         cash = SQLiteReviewStore(store.ledger, store.registry, policy_version='cash-v1')
@@ -173,6 +177,15 @@ class Workspace:
             service = PayablesService(ledger, registry)
             draft = service.propose_bill(**data, expected_revision=0, actor_id='bill-template',
                 idempotency_key='web-bill:' + digest(data))
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
+
+    def prepare_bill_payment(self, data):
+        fields(data, dict(bill_id=str, cash_source_id=str))
+        with self.storage() as (registry, ledger, _, _, _):
+            service = PayablesService(ledger, registry)
+            draft = service.propose_payment(**data, expected_revision=0, actor_id='bill-payment-template',
+                idempotency_key='web-bill-payment:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -216,6 +229,9 @@ class Workspace:
                     bill[field + '_amount'] = str(Money(bill[field + '_cents']))
                 # JSON numbers can exceed JavaScript's exact range; render this text verbatim.
                 bill['trace_json'] = json.dumps(bill, indent=2, sort_keys=True)
+            for payment in payables['payments']:
+                payment['allocated_amount'] = str(Money(payment['allocated_cents']))
+                payment['trace_json'] = json.dumps(payment, indent=2, sort_keys=True)
             report = ledger.trial_balance('2026-01-31')
             snapshot = [ledger._entry_payload(e) for e in report.snapshot.entries]
             journals = [dict(payload, lines=[dict(account=line.account, side=line.side,
@@ -238,6 +254,8 @@ class Workspace:
             return self.register_operation_source(data)
         if action == 'bill-proposals':
             return self.prepare_bill(data)
+        if action == 'bill-payment-proposals':
+            return self.prepare_bill_payment(data)
         if action == 'cash-proposals':
             return self.prepare_cash(data)
         schemas = {
@@ -424,3 +442,54 @@ def demo_bill():
             print('Evidence:', source, evidence_digest)
         print('Report:', report['policy'], report['snapshot_digest'])
         print('Reopen and exact retries preserve one journal. Managed bill reversals unavailable; zero model calls.')
+
+
+def demo_bill_payment():
+    from tempfile import TemporaryDirectory
+    with TemporaryDirectory(prefix='accounting-bill-payment-') as directory:
+        workspace = Workspace(directory)
+        common = dict(schema_version=2, synthetic=True, entity_id=workspace.catalog.entity_id,
+            currency='USD', document_date='2026-01-10', amount='300.00', event_id='software-incurred-001',
+            counterparty='Fictional software vendor', counterparty_id='vendor-synthetic-1',
+            description='Synthetic independent expense evidence')
+        for document in (dict(common, document_id='source-bill-001', kind='vendor_bill',
+                              bill_number='B-001', due_date='2026-02-09'),
+                         dict(common, document_id='source-incurrence-001', kind='incurred_expense',
+                              incurred_date='2026-01-10', expense_account='5100')):
+            workspace.action('operation-sources', dict(document=document))
+        draft = workspace.action('bill-proposals', dict(bill_source_id='source-bill-001',
+                                                        incurrence_source_id='source-incurrence-001'))
+        workspace.action('approve-post', dict(draft_id=draft['draft_id'], revision=1,
+                                             confirmed_digest=draft['content_digest']))
+        with workspace.storage() as (registry, ledger, _, _, _):
+            captured = PayablesService(ledger, registry).snapshot()
+        before = payables_report(captured, as_of='2026-01-31')
+        payment = dict(common, document_id='source-payment-001', kind='cash_movement',
+            document_date='2026-01-15', amount='100.00', event_id='cash-out-001', direction='out',
+            purpose='settlement', description='Fictional recorded outgoing settlement; sends no money')
+        workspace.action('operation-sources', dict(document=payment))
+        request = dict(bill_id=before['bills'][0]['bill_id'], cash_source_id='source-payment-001')
+        first = workspace.action('bill-payment-proposals', request)
+        pending = workspace.state()
+        assert pending['journal_count'] == 1 and not pending['payables']['payments']
+        draft = next(d for d in pending['drafts'] if d['policy_version'] == 'bill-payment-v1')
+        confirmation = dict(draft_id=draft['draft_id'], revision=1, confirmed_digest=draft['content_digest'])
+        posted = workspace.action('approve-post', confirmation)  # Separate simulated human decision.
+        reopened = Workspace(directory)
+        assert reopened.action('bill-payment-proposals', request) == first
+        assert reopened.action('approve-post', confirmation) == posted
+        state = reopened.state()
+        report = state['payables']
+        rows = {r['account']: (r['debit'], r['credit']) for r in state['trial_balance']['rows']}
+        assert rows['5100'] == ('300.00','0.00') and rows['2000'] == ('0.00','200.00')
+        assert report['subledger_cents'] == report['ap_control_cents'] == 20000
+        assert report['unassigned_control_cents'] == 0 and len(report['payments']) == 1
+        assert payables_report(captured, as_of='2026-01-31') == before
+        print('Before confirmation: one bill journal, zero payment effects; no money is sent.')
+        print('AP debit 100.00; Cash credit 100.00; outstanding 200.00 USD; expense remains 300.00; residual 0.00.')
+        print('Approval:', posted['approval_id'], '; actor: local-operator; policy: bill-payment-v1')
+        for source, evidence_digest in draft['evidence'].items():
+            print('Evidence:', source, evidence_digest)
+        print('Operation sources: 3; report:', report['policy'], report['snapshot_digest'])
+        print('Captured pre-payment outstanding stays 300.00; exact reopen/retries preserve two journals.')
+        print('Managed bill/payment reversals unavailable; zero model calls.')

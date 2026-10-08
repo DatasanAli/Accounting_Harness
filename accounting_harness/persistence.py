@@ -410,6 +410,9 @@ class SQLiteLedger:
             if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='vendor_bills'").fetchone():
                 if self._connection.execute('SELECT 1 FROM vendor_bills WHERE journal_id=?', (original_id,)).fetchone():
                     raise ValueError('operational_reversal_not_supported: managed bills require a linked correction workflow')
+                if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='vendor_bill_payments'").fetchone():
+                    if self._connection.execute('SELECT 1 FROM vendor_bill_payments WHERE journal_id=?', (original_id,)).fetchone():
+                        raise ValueError('operational_reversal_not_supported: managed payments require a linked correction workflow')
                 if any(line.account == '2000' for line in entry.lines) and self._connection.execute(
                         'SELECT 1 FROM payables_context').fetchone():
                     raise ValueError('AP reversal requires a linked correction workflow; unassigned residual is not allowed')

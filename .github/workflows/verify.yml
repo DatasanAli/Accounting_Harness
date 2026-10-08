@@ -47,3 +47,5 @@ jobs:
         run: python3 -m accounting_harness demo-cash
       - name: Demonstrate reviewed vendor bill and payable reconciliation
         run: python3 -m accounting_harness demo-bill
+      - name: Demonstrate recorded partial vendor settlement
+        run: python3 -m accounting_harness demo-bill-payment
