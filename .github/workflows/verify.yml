@@ -57,3 +57,5 @@ jobs:
         run: python3 -m accounting_harness demo-advance
       - name: Demonstrate separately supported advance earning
         run: python3 -m accounting_harness demo-advance-earning
+      - name: Demonstrate immutable synthetic bank statement import
+        run: python3 -m accounting_harness demo-bank-import

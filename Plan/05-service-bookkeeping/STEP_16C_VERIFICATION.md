@@ -37,7 +37,7 @@ exercise created no journal.
 The guarded suite passed **398 tests** in 20.758 seconds; **44 focused payable
 tests** passed, including 11 new regressions. Foundation, all **20 demos** and
 diff validation passed. Independent review approved spec compliance and task
-quality with no findings. Commit, remote comparison and exact-SHA CI are pending.
+quality with no findings. Delivered as [0cc3e5f](https://github.com/DatasanAli/Accounting_Harness/commit/0cc3e5f9fc4f66d0412d45d31f9559ba22e2cea6); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37809290761). The remote main SHA matched the local commit.
 Required checks remain the guarded suite, foundation, all 20 existing demos and
 diff validation. The bill 300.00/payment 100.00 demonstration must still leave 200.00
 payable without another expense. No new UI or demonstration command is required.

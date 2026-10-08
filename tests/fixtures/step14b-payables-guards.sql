@@ -76,4 +76,3 @@ CREATE TRIGGER payables_post_guard BEFORE INSERT ON posting_events
                     AND EXISTS (SELECT 1 FROM journal_sources WHERE journal_id=NEW.journal_id AND source_id=p.cash_source_id)
                 ) THEN RAISE(ABORT,'AP posting requires matching approved payable effect; correction workflow required') END;
             END;
-

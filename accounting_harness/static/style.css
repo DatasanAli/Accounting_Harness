@@ -5,3 +5,6 @@
 .receipt-form input, .receipt-form textarea { width: 100%; border: 1px solid #ccd4df; border-radius: 8px; padding: 11px; font: inherit; color: inherit; background: #fff; }
 .receipt-form small { color: #637088; }
 .receipt-form button { justify-self: start; }
+
+.bank-csv-field { grid-column: 1 / -1; }
+#bank-csv { font-family: monospace; }

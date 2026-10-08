@@ -29,7 +29,7 @@ not authorize recognition or bypass a managed control account.
 1. [20a prepaid insurance consumption](STEP_20A_PLAN.md): original posted asset,
    explicit coverage policy and one supported period allocation; 1,200.00 annual
    principal produces 100.00 January consumption and 1,100.00 remaining.
-2. 20b accrued expense: a separately evidenced incurred, unbilled and unpaid
+2. [20b accrued expense](STEP_20B_PLAN.md): a separately evidenced incurred, unbilled and unpaid
    expense credits a fixed Accrued Expenses liability, not AP. Plan its exact
    fact/intent/account activation contract before implementation.
 3. 20c accrued revenue: separately evidenced completed, unbilled and uncollected

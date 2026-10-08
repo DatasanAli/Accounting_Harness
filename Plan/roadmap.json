@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "16",
-  "next_step": "17",
+  "current_step": "17",
+  "next_step": "18",
   "phases": [
     {
       "id": "01",
@@ -197,7 +197,9 @@
             {
               "id": "16c",
               "title": "Payable approval seal and migration hardening",
-              "status": "complete"
+              "status": "complete",
+              "commit": "0cc3e5f9fc4f66d0412d45d31f9559ba22e2cea6",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37809290761"
             }
           ]
         }
@@ -211,12 +213,12 @@
         {
           "id": "17",
           "title": "Bank statement CSV import",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "18",
           "title": "Matching and exceptions",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "19",

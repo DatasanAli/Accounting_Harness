@@ -58,3 +58,37 @@ registered evidence, account results and prior-source-use context. Neither
 labels nor category names are included in the prompt. Four clean cases are
 repeated to report nondeterminism. Any regression gets a new corpus version;
 these offline results do not establish live model accuracy.
+
+## Fictional bank statement
+
+[fictional-bank-january.csv](fictional-bank-january.csv) contains two original
+fictional bank movements: a 200.00 deposit and a -150.00 payment. Supply statement
+metadata separately: account `fictional-bank`, a statement ID, January 1–31 2026,
+USD, opening balance `1000.00` and closing balance `1050.00`. Importing this fixture
+creates bank records only; it does not create journals or alter the reference
+month's books.
+
+The exact ordered headers are:
+
+```csv
+bank_account_id,transaction_id,booking_date,amount,currency,reference,description
+```
+
+A positive amount increases bank cash; a minus decreases it. Amount strings have
+exactly two decimal places, without a plus sign, whitespace or exponent notation.
+Zero movement and negative zero are rejected. Opening/closing balances may be
+zero or negative. All row dates must lie within the supplied January statement
+range, and opening plus movements must equal closing exactly.
+
+Limits are 8,192 UTF-8 bytes of CSV, 100 movement rows, 512 characters per field,
+80 characters per identity, 22 characters per money string, and signed cent magnitude at most 2^63−1. Identities
+cannot contain control characters or surrounding whitespace. The whole HTTP JSON
+request remains limited to 16,384 bytes, including escaping and metadata; the
+browser checks the serialized request size too. Quoted commas/newlines in CSV
+fields use the standard CSV format. Reference and description may be empty.
+
+Retry the same statement ID with the same metadata and exact CSV bytes to receive
+its original import receipt. Reformatting quotes or line endings changes the
+statement's source digest and conflicts under that ID. An unchanged canonical
+bank transaction can appear in another overlapping statement; different bank
+transaction IDs remain distinct even when their amounts and descriptions match.

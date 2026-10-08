@@ -20,6 +20,7 @@ from accounting_harness.sources import SQLiteSourceRegistry
 from accounting_harness.payables import PayablesService, payables_report
 from accounting_harness.receivables import ReceivablesService, receivables_report
 from accounting_harness.advances import AdvancesService, advances_report
+from accounting_harness.bank import BankStatementService
 from accounting_harness.domain.money import Money
 from accounting_harness.operations import cash_expense_proposal, earned_cash_proposal
 
@@ -73,6 +74,18 @@ class Workspace:
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
                     yield registry, ledger, store, app, engine
+
+    def import_bank_statement(self, data):
+        with self.storage() as (_, ledger, _, _, _):
+            return BankStatementService(ledger).import_statement(data, actor_id='local-operator')
+
+    def list_bank_statements(self):
+        with self.storage() as (_, ledger, _, _, _):
+            return dict(statements=BankStatementService(ledger).list_statements())
+
+    def bank_statement_detail(self, bank_account_id, statement_id):
+        with self.storage() as (_, ledger, _, _, _):
+            return BankStatementService(ledger).detail(bank_account_id, statement_id)
 
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
@@ -315,6 +328,7 @@ class Workspace:
                         for payload, entry in zip(snapshot, report.snapshot.entries)]
             return dict(entity_id=self.catalog.entity_id, period='January 2026', currency='USD',
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
+                bank_statements=BankStatementService(ledger).list_statements(),
                 journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances,
                 trial_balance=dict(as_of=report.as_of.isoformat(), policy=report.policy,
                     snapshot_digest=digest([ledger._context, snapshot]),
@@ -324,6 +338,8 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'bank-statements':
+            return self.import_bank_statement(data)
         if action == 'sources':
             return self.register_source(data)
         if action == 'operation-sources':

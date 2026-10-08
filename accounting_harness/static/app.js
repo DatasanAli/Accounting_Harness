@@ -8,6 +8,7 @@ const views = {
   advances: ['Customer advances', 'Recorded customer prepayments and the service obligations still unearned.'],
   receivables: ['Customer invoices', 'Completed service invoices and the amount customers owe.'],
   payables: ['Vendor bills', 'Reviewed vendor expenses and the amount still payable.'],
+  bank: ['Bank statements', 'Immutable statement rows, exact balances and a separate import audit.'],
   runs: ['Agent runs', 'See what was requested, what happened, and where the agent stopped.'],
   providers: ['Providers', 'Choose how proposals are prepared. You control every request.']
 };
@@ -15,6 +16,8 @@ const sampleNames = {'rent-standard': 'January office rent', 'software-standard'
   'ambiguity-1': 'Ambiguous expense', 'missing-1': 'Missing receipt details', 'hostile-1': 'Document instruction test'};
 const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'awaiting_review']);
 let state = null;
+let bankDetail = null;
+let bankFileContent = null;
 let activeView = 'evidence';
 let selectedSource = '';
 let selectedProvider = 'offline';
@@ -189,7 +192,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderAdvances(); renderBank(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -678,6 +681,84 @@ function renderPayables() {
     node.append(card);
   }
 }
+
+function renderBank() {
+  $('import-bank').disabled = busy;
+  const node = $('bank-list'); node.replaceChildren();
+  const statements = state.bank_statements || [];
+  if (!statements.length) node.append(empty('No imported bank statements', 'Use the fictional example above or load a file in the documented format.'));
+  for (const statement of statements) {
+    const card = el('article', null, 'card draft-body');
+    card.append(el('h3', statement.statement_id), metadata([
+      ['Bank account', statement.bank_account_id], ['Mapped ledger account', '1000 · Cash'],
+      ['Statement period', statement.period_start + ' → ' + statement.period_end],
+      ['Opening · USD', statement.opening_balance], ['Movements · USD', statement.movement_total],
+      ['Closing · USD', statement.closing_balance], ['Imported rows', statement.row_count]]));
+    const inspect = button('Inspect rows & import audit', async () => {
+      try {
+        const query = new URLSearchParams({bank_account_id: statement.bank_account_id, statement_id: statement.statement_id});
+        bankDetail = await request('/api/bank-statements?' + query);
+        renderBankDetail(); $('bank-detail').scrollIntoView({block: 'start'});
+      } catch (error) { notify(error.message, 'error'); }
+    });
+    card.append(inspect); node.append(card);
+  }
+  renderBankDetail();
+}
+function renderBankDetail() {
+  const node = $('bank-detail'); node.replaceChildren();
+  if (!bankDetail) return;
+  const {statement, rows, audit} = bankDetail;
+  const card = el('section', null, 'card draft-body');
+  card.append(el('h3', 'Imported rows · ' + statement.statement_id),
+    el('p', 'Exact bank equation · ' + statement.opening_balance + ' + (' + statement.movement_total + ') = ' + statement.closing_balance + ' USD'),
+    table(['Transaction ID', 'Booking date', 'Amount · USD', 'Reference', 'Description'],
+      rows.map(row => [row.transaction_id, row.booking_date, row.amount, row.reference, row.description]),
+      'Original statement row order · bank data only'),
+    metadata([['Import actor', audit.actor_id], ['Recorded at', audit.recorded_at], ['Receipt ID', audit.receipt_id]]));
+  digest(card, 'Original CSV SHA-256', audit.source_digest);
+  digest(card, 'Canonical statement content SHA-256', audit.content_digest);
+  card.append(add(el('details'), el('summary', 'Exact import audit and transaction trace'), el('pre', bankDetail.trace_json)));
+  node.append(card);
+}
+$('bank-file').addEventListener('change', async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  bankFileContent = null;
+  $('bank-csv').value = '';
+  try {
+    if (file.size > 8192) throw new Error('CSV must be at most 8,192 UTF-8 bytes.');
+    const text = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(await file.arrayBuffer());
+    bankFileContent = text; // Retain CRLF bytes; textarea.value normalizes newlines.
+    $('bank-csv').value = text;
+    $('bank-import-result').textContent = 'File loaded. Inspect metadata and CSV before importing.';
+  } catch (error) {
+    $('bank-import-result').textContent = 'File was not loaded: ' + error.message;
+    notify('File was not loaded: ' + error.message, 'error');
+  }
+});
+$('bank-csv').addEventListener('input', () => { bankFileContent = null; });
+$('bank-import-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  if (bankFileContent !== null) payload.csv_content = bankFileContent;
+  const encoder = new TextEncoder();
+  if (encoder.encode(payload.csv_content).length > 8192 || encoder.encode(JSON.stringify(payload)).length > 16384) {
+    $('bank-import-result').textContent = 'Import rejected: CSV must fit 8,192 bytes and the complete JSON request 16,384 bytes.';
+    return;
+  }
+  busy = true; renderBank();
+  try {
+    bankDetail = await request('/api/bank-statements', payload);
+    await refresh();
+    $('bank-import-result').textContent = 'Imported or recovered ' + bankDetail.statement.row_count + ' rows. Receipt: ' + bankDetail.audit.receipt_id + '. Ledger unchanged.';
+    notify('Bank statement recorded. Repeating the same import returns its original audit receipt.');
+  } catch (error) {
+    $('bank-import-result').textContent = 'Import was not confirmed: ' + error.message + ' Retry with the same metadata and CSV to recover an uncertain result.';
+    notify(error.message, 'error');
+  } finally { busy = false; if (state) renderBank(); }
+});
 
 $('cash-operation').addEventListener('change', () => {
   $('expense-account-label').hidden = $('cash-operation').value !== 'cash_expense';

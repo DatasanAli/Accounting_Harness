@@ -20,6 +20,7 @@
       <button class="nav-item" data-view="receivables"><span aria-hidden="true">▣</span>Customer invoices</button>
       <button class="nav-item" data-view="advances"><span aria-hidden="true">▣</span>Customer advances</button>
       <button class="nav-item" data-view="payables"><span aria-hidden="true">▣</span>Vendor bills</button>
+      <button class="nav-item" data-view="bank"><span aria-hidden="true">▤</span>Bank statements</button>
       <button class="nav-item" data-view="runs"><span aria-hidden="true">↗</span>Agent runs</button>
       <button class="nav-item" data-view="providers"><span aria-hidden="true">⌘</span>Providers</button>
     </nav>
@@ -227,6 +228,38 @@
       <section id="view-advances" class="view" aria-labelledby="advances-heading" hidden><div class="section-heading"><h2 id="advances-heading">Customer advances</h2><span class="muted">January 31, 2026 · USD</span></div><div id="advances-content" class="stack"></div></section>
       <section id="view-receivables" class="view" aria-labelledby="receivables-heading" hidden><div class="section-heading"><h2 id="receivables-heading">Customer invoices, collections &amp; aging</h2><span class="muted">January 31, 2026 · USD</span></div><div id="receivables-content" class="stack"></div></section>
       <section id="view-payables" class="view" aria-labelledby="payables-heading" hidden><div class="section-heading"><h2 id="payables-heading">Vendor bills &amp; AP reconciliation</h2><span class="muted">January 31, 2026 · USD</span></div><div id="payables-content" class="stack"></div></section>
+      <section id="view-bank" class="view" aria-labelledby="bank-heading" hidden>
+        <div class="section-heading"><h2 id="bank-heading">Bank statements</h2><span class="muted">Fictional CSV · USD · January 2026</span></div>
+        <section class="card setup-card">
+          <h3>Import a fictional statement</h3>
+          <p>Import records bank rows only. Your ledger and evidence stay unchanged. Matching and book adjustments will be separate actions.</p>
+          <p>The first successful import selects one bank account and permanently maps it to Cash 1000 in this workspace. Positive amounts increase bank cash; negative amounts decrease it.</p>
+          <details><summary>CSV format and limits</summary>
+            <pre>bank_account_id,transaction_id,booking_date,amount,currency,reference,description</pre>
+            <p>Exact ordered headers; UTF-8; quoted commas and newlines supported. Use stable transaction IDs. Empty reference and description are allowed. Dates must fall inside the statement period in January 2026. Amounts use two decimal places, an optional minus, and no plus sign or zero movements.</p>
+            <p>Limits: 8,192 CSV bytes, 100 rows, 512 characters per cell, 80 per ID, 22 per amount; absolute cents at most 9,223,372,036,854,775,807. The entire JSON request must fit 16,384 bytes including escaping. An empty statement requires equal opening and closing balances.</p>
+            <p>Retry with the same metadata and original CSV bytes. Changed statement content, row order or file formatting under an existing statement ID conflicts. Unchanged transaction IDs may appear in overlapping statements.</p>
+          </details>
+          <form id="bank-import-form" class="receipt-form">
+            <label>Statement ID <input name="statement_id" required maxlength="80" value="fictional-january"></label>
+            <label>Bank account ID <input name="bank_account_id" required maxlength="80" value="fictional-bank"></label>
+            <label>Period start <input name="period_start" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-01"></label>
+            <label>Period end <input name="period_end" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-31"></label>
+            <label>Opening balance (USD) <input name="opening_balance" required maxlength="22" inputmode="decimal" pattern="-?[0-9]+\.[0-9]{2}" value="1000.00"></label>
+            <label>Closing balance (USD) <input name="closing_balance" required maxlength="22" inputmode="decimal" pattern="-?[0-9]+\.[0-9]{2}" value="1050.00"></label>
+            <label>Currency <select name="currency"><option value="USD">USD</option></select></label>
+            <label>Load fictional UTF-8 CSV file <input id="bank-file" type="file" accept=".csv,text/csv"></label>
+            <label class="bank-csv-field">CSV content <textarea id="bank-csv" name="csv_content" required rows="7" maxlength="8192" spellcheck="false">bank_account_id,transaction_id,booking_date,amount,currency,reference,description
+fictional-bank,deposit-1,2026-01-05,200.00,USD,receipt-1,Fictional deposit
+fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
+</textarea></label>
+            <button id="import-bank" class="button" type="submit">Import fictional statement</button>
+          </form>
+          <p id="bank-import-result" role="status" aria-live="polite">Opening + movements must equal closing exactly. No journal will be posted.</p>
+        </section>
+        <div id="bank-list" class="stack"></div>
+        <div id="bank-detail" class="stack"></div>
+      </section>
       <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><div id="run-list" class="stack"></div></section>
       <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>
       <footer>Accounting Harness <span>Evidence preserved. Decisions recorded. Books kept exact.</span></footer>

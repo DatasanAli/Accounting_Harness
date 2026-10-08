@@ -1,6 +1,6 @@
 # Phase 06: Bank reconciliation
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: Step 17 bank import is locally verified and independently reviewed; see [import verification](STEP_17_VERIFICATION.md). Upload/exact CI pending. Step 18 matching follows.
 
 **Depends on:** Steps 02–16.
 
