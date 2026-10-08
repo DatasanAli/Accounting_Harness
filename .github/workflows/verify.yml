@@ -43,3 +43,5 @@ jobs:
         run: python3 -m accounting_harness demo-web
       - name: Demonstrate additive evidence enrollment and preserved approvals
         run: python3 -m accounting_harness demo-enrollment
+      - name: Demonstrate reviewed cash recognition with paired evidence
+        run: python3 -m accounting_harness demo-cash

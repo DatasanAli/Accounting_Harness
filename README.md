@@ -4,7 +4,7 @@ An accounting agent harness for bookkeeping at a small service business, built o
 
 The intended workflow is: **evidence → proposed journal entry → validation → human approval → posting → reconciliation → reporting**. Accounting code owns calculations and ledger changes. The agent helps interpret evidence and propose work.
 
-**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Authenticated roles remain a future step.
+**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Step 13b adds typed cash/recognition facts and reviewed cash expense and earned-service templates. Authenticated roles remain a future step.
 
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
 
@@ -48,8 +48,7 @@ hardware/energy costs. Unknown completion after interruption requires review.
 
 The server binds only to loopback and checks Host, Origin and a browser CSRF
 token. It is a single-operator fictional prototype; the operator label is not
-multi-user authentication. Structured fictional receipt entry is available. File extraction, typed
-recognition evidence and wider workflows are subsequent roadmap deliveries. `--workspace PATH` selects another local directory;
+multi-user authentication. Structured fictional receipt entry and paired cash/recognition evidence are available. File extraction and wider workflows are subsequent roadmap deliveries. `--workspace PATH` selects another local directory;
 `--port PORT` changes the loopback port. Preserve ledger, sources and runs together.
 
 ## Run the demonstration
@@ -70,6 +69,7 @@ python3 -m accounting_harness demo-run
 python3 -m accounting_harness demo-provider
 python3 -m accounting_harness demo-web
 python3 -m accounting_harness demo-enrollment
+python3 -m accounting_harness demo-cash
 ```
 
 The account demo prints 13 fictional accounts, including credit-normal accumulated depreciation and debit-normal owner drawings. It demonstrates `0.10 + 0.20 = 0.30 USD (30 cents)` and rejects the unsupported precision in `1.005`.
@@ -99,7 +99,7 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 257 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all thirteen demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 268 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all fourteen demonstrations.
 
 Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting is implemented; authenticated approval is not. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
@@ -119,7 +119,7 @@ The delivery target is this repository on GitHub with its verification workflow 
 
 Next prompt:
 
-> Build Step 13a: Additive synthetic evidence enrollment and a receipt input form in the localhost workspace. Preserve immutable ledger context and old approval bindings. Keep live API/model connections deferred; verify, commit, push and check CI, then continue through the authorized roadmap.
+> Build Step 14a: Reviewed vendor bill recognition with separate incurrence evidence, an immutable payable subledger, and control-account reconciliation in the localhost UI. Follow Plan/05-service-bookkeeping/STEP_14A_PLAN.md. Keep live connections deferred; verify, commit, push and check exact CI, then continue through the authorized roadmap.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 
@@ -159,3 +159,15 @@ additively to schema v3; preserve all workspace files together before migration.
 If registration succeeds but enrollment fails, the receipt stays visible as
 pending and exact resubmission or startup repair completes it. New typed receipts
 are not supported by offline fixture playback. See the [Step 13a verification](Plan/05-service-bookkeeping/STEP_13A_VERIFICATION.md).
+
+`demo-cash` registers separate typed cash and recognition facts for rent 1200.00
+and earned service revenue 800.00, prepares drafts, and demonstrates simulated
+human approval. Its isolated zero-opening ledger ends with Cash credit 400.00,
+Rent debit 1200.00 and Revenue credit 800.00. The negative cash is intentional in
+this isolated example. In the UI use **Register cash and recognition facts**,
+then **Prepare a reviewed cash proposal**. Amount, accounts and date come from
+matching facts; approval remains a separate action. Owner contributions,
+transfers, advances and settlement cash cannot use these recognition templates.
+Event claims remain reserved after rejection; correcting an existing cash draft
+is not yet offered by the UI. Provider receipt proposals retain their existing
+policy and scope. See the [Step 13b contract](Plan/05-service-bookkeeping/STEP_13B_PLAN.md).

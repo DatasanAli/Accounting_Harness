@@ -30,14 +30,42 @@
       <div class="demo-banner"><span class="banner-icon" aria-hidden="true">i</span><div><strong>A safe place to work through the books.</strong><span>Registered fictional January receipts · Offline demo by default · Every posting requires your approval.</span></div><span class="tag">SYNTHETIC</span></div>
       <div id="message" class="message" role="status" aria-live="polite" hidden></div>
       <section class="metrics" aria-label="Workspace summary">
-        <div class="metric"><span>Registered receipts</span><strong id="metric-sources">—</strong><small>Evidence ready to inspect</small></div>
+        <div class="metric"><span>Registered evidence</span><strong id="metric-sources">—</strong><small>Evidence ready to inspect</small></div>
         <div class="metric"><span>Needs your review</span><strong id="metric-review">—</strong><small>Human decisions come next</small></div>
         <div class="metric"><span>Posted journals</span><strong id="metric-journals">—</strong><small>Approved, permanent entries</small></div>
         <div class="metric"><span>Trial balance</span><strong id="metric-balance" class="money">—</strong><small id="balance-caption">USD per debit / credit column</small></div>
       </section>
       <section id="view-evidence" class="view" aria-labelledby="evidence-heading">
-        <div class="section-heading"><h2 id="evidence-heading">Receipt workspace</h2><span class="muted">01 Evidence → 02 Proposal → 03 Human review</span></div>
-        <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered receipts"><div class="card-heading"><h3>Registered receipts</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">Inspect registered evidence and its enrollment state. New receipts use the form below.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
+        <div class="section-heading"><h2 id="evidence-heading">Evidence workspace</h2><span class="muted">01 Evidence → 02 Proposal → 03 Human review</span></div>
+        <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered evidence"><div class="card-heading"><h3>Registered evidence</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">Inspect registered evidence and its enrollment state. New receipts use the form below.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
+        <details class="card setup-card" id="cash-evidence-panel"><summary>Register cash and recognition facts</summary>
+          <p>Enter two fictional assertions for one economic event: money moved, and an expense was incurred or a service completed. Both must have the same amount, counterparty and January date. Cash alone does not establish revenue or expense.</p>
+          <form id="cash-evidence-form" class="receipt-form">
+            <label>Recognition <select name="operation" id="cash-operation"><option value="cash_expense">Incurred expense paid now</option><option value="earned_cash">Completed service paid now</option></select></label>
+            <label>Economic event ID <input name="event_id" required maxlength="1000" placeholder="fictional-rent-january"></label>
+            <small>Reuse this event identity for the same economic event. A new document ID does not make a new event.</small>
+            <label>Cash document ID <input name="cash_source_id" required maxlength="1000" placeholder="rent-cash"></label>
+            <label>Recognition document ID <input name="recognition_source_id" required maxlength="1000" placeholder="rent-incurred"></label>
+            <label>Cash and recognition date <input name="document_date" type="date" min="2026-01-01" max="2026-01-31" required></label>
+            <label>Amount of each fact · USD <input name="amount" inputmode="decimal" pattern="[0-9]+\.[0-9]{2}" required placeholder="1200.00"></label>
+            <label>Counterparty ID <input name="counterparty_id" required maxlength="1000" placeholder="fictional-landlord"></label>
+            <label>Counterparty name <input name="counterparty" required maxlength="1000" placeholder="Fictional landlord"></label>
+            <label id="expense-account-label">Incurred expense account <select name="expense_account"><option value="5000">5000 · Rent expense</option><option value="5100">5100 · Software expense</option></select></label>
+            <label>Cash movement description <textarea name="cash_description" required maxlength="1000" rows="2"></textarea></label>
+            <label>Incurring expense or completing service: factual description <textarea name="recognition_description" required maxlength="1000" rows="2"></textarea></label>
+            <button id="register-cash-evidence" class="button" type="submit">Register both fictional facts</button>
+            <p class="action-hint">Registers each document separately. If interrupted, resubmit unchanged IDs and content to finish. No proposal or journal is created.</p>
+          </form>
+        </details>
+        <details class="card setup-card" id="cash-proposal-panel"><summary>Prepare a reviewed cash proposal</summary>
+          <form id="cash-proposal-form" class="receipt-form">
+            <label>Operation <select name="operation" id="proposal-operation"><option value="cash_expense">Incurred cash expense</option><option value="earned_cash">Earned cash service revenue</option></select></label>
+            <label>Cash evidence <select name="cash_source_id" id="cash-source-select" required></select></label>
+            <label>Recognition evidence <select name="recognition_source_id" id="recognition-source-select" required></select></label>
+            <button id="prepare-cash" class="button" type="submit">Prepare cash draft</button>
+            <p class="action-hint">Accounts, amount and date come from the matched facts. Review and approve separately. Rejected evidence remains reserved; correcting an existing draft is not yet available in this UI.</p>
+          </form>
+        </details>
         <details class="card setup-card"><summary>Register a synthetic receipt</summary>
           <p>Use fictional January 2026 evidence only. Registration preserves the receipt for review; it does not create a proposal or journal.</p>
           <form id="receipt-form" class="receipt-form">

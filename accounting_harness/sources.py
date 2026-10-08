@@ -17,6 +17,11 @@ SCHEMA_VERSION = 1
 APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a ledger file.
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
+_TYPED_FIELDS = {
+    'cash_movement': {'event_id', 'counterparty_id', 'direction', 'purpose'},
+    'incurred_expense': {'event_id', 'counterparty_id', 'expense_account', 'incurred_date'},
+    'service_completion': {'event_id', 'counterparty_id', 'completion_date'},
+}
 
 
 def load_source_document(path: str | Path) -> dict:
@@ -38,18 +43,37 @@ def load_source_document(path: str | Path) -> dict:
 def _content(document: object, entity_id: str) -> tuple[str, str]:
     if not isinstance(document, dict):
         raise TypeError("source document must be a JSON object")
-    if document.keys() != _FIELDS:
-        raise ValueError("source document must contain exactly the required fields")
-    if type(document["schema_version"]) is not int or document["schema_version"] != 1:
+    version = document.get('schema_version')
+    if type(version) is not int or version not in (1, 2):
         raise ValueError("unsupported source document schema_version")
+    kind = document.get('kind')
+    if not isinstance(kind, str):
+        raise ValueError('source kind must be a string')
+    extra = _TYPED_FIELDS.get(kind) if version == 2 else set()
+    if extra is None or (version == 1 and kind != 'receipt'):
+        raise ValueError('unsupported source document kind')
+    if document.keys() != _FIELDS | extra:
+        raise ValueError("source document must contain exactly the required fields")
     if document["synthetic"] is not True:
         raise ValueError("only synthetic source documents are supported")
     for field in ("entity_id", "document_id", "kind", "document_date", "counterparty", "description"):
         _validate_text(document[field], field)
     if document["entity_id"] != entity_id:
         raise ValueError("source document belongs to a different entity")
-    if document["kind"] != "receipt":
-        raise ValueError("only receipt documents are supported")
+    for field in extra:
+        _validate_text(document[field], field)
+    if kind == 'cash_movement':
+        if document['direction'] not in ('in', 'out'):
+            raise ValueError('cash direction must be in or out')
+        if document['purpose'] not in ('earned_service', 'incurred_expense', 'owner_contribution',
+                                      'owner_draw', 'transfer', 'customer_advance', 'settlement', 'unclassified'):
+            raise ValueError('unsupported cash purpose')
+    if kind == 'incurred_expense':
+        if document['expense_account'] not in ('5000', '5100'):
+            raise ValueError('expense account must be 5000 or 5100')
+        accounting_date(document['incurred_date'])
+    if kind == 'service_completion':
+        accounting_date(document['completion_date'])
     accounting_date(document["document_date"])
     amount = Money.parse(document["amount"], document["currency"])
     if amount.cents == 0:

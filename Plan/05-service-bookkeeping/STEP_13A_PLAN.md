@@ -97,5 +97,5 @@ Demonstration: enroll a new 125.00 synthetic receipt after an existing post and 
 - [x] Add source list/register endpoints and structured fictional receipt form; no provider call on registration.
 - [x] Add `demo-enrollment` and CI/documentation commands.
 - [x] Run foundation, guarded suite, prior demonstrations, new demonstration and browser import.
-- [ ] Review diff, commit intended files, push and verify exact SHA/CI.
-- [ ] Record delivery and continue to Step 13b under the expanded user authorization.
+- [x] Review diff, commit intended files, push and verify exact SHA/CI.
+- [x] Record delivery and continue to Step 13b under the expanded user authorization.

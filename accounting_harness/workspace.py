@@ -17,6 +17,7 @@ from accounting_harness.provider import MODEL, OpenAIExpenseProvider
 from accounting_harness.review import SQLiteReviewStore, digest
 from accounting_harness.runs import RunLimits, SQLiteRunEngine
 from accounting_harness.sources import SQLiteSourceRegistry
+from accounting_harness.operations import cash_expense_proposal, earned_cash_proposal
 
 
 def fields(data, expected):
@@ -102,32 +103,82 @@ class Workspace:
                 raise ValueError('receipt date must be within January 2026')
             result = registry.register(dict(data, entity_id=self.catalog.entity_id, schema_version=1,
                                             synthetic=True, kind='receipt', currency='USD'), actor_id='local-operator')
-            registration = dict(document_id=result.record.document_id, repeated=result.repeated,
-                content_digest=result.record.content_digest, actor_id=result.record.actor_id,
-                recorded_at=result.record.recorded_at.isoformat())
-            try:
-                enrollment = ledger.enroll_source(registry, result.record.document_id, actor_id='local-operator')
-            except (ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
-                raise EnrollmentPending(registration) from error
-            receipt = asdict(enrollment)
-            receipt['recorded_at'] = enrollment.recorded_at.isoformat() if enrollment.recorded_at else None
-            return dict(state=enrollment.state, registration=registration, enrollment=receipt)
+            return self._enroll_registered(registry, ledger, result)
+
+    def register_operation_source(self, data):
+        fields(data, dict(document=dict))
+        document = data['document']
+        if document.get('schema_version') != 2:
+            raise ValueError('operation evidence requires schema v2')
+        for field in ('document_date', 'incurred_date', 'completion_date'):
+            if field in document and not '2026-01-01' <= accounting_date(document[field]).isoformat() <= '2026-01-31':
+                raise ValueError('operation evidence dates must be within January 2026')
+        with self.storage() as (registry, ledger, _, _, _):
+            result = registry.register(document, actor_id='local-operator')
+            return self._enroll_registered(registry, ledger, result)
+
+    @staticmethod
+    def _enroll_registered(registry, ledger, result):
+        registration = dict(document_id=result.record.document_id, repeated=result.repeated,
+            content_digest=result.record.content_digest, actor_id=result.record.actor_id,
+            recorded_at=result.record.recorded_at.isoformat())
+        try:
+            enrollment = ledger.enroll_source(registry, result.record.document_id, actor_id='local-operator')
+        except (ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
+            raise EnrollmentPending(registration) from error
+        receipt = asdict(enrollment)
+        receipt['recorded_at'] = enrollment.recorded_at.isoformat() if enrollment.recorded_at else None
+        return dict(state=enrollment.state, registration=registration, enrollment=receipt)
+
+    @staticmethod
+    def _draft_services(store, app, draft_id):
+        row = store.db.execute('''SELECT policy_version FROM draft_revisions
+            WHERE draft_id=? ORDER BY revision DESC LIMIT 1''', (draft_id,)).fetchone()
+        if row is None:
+            raise KeyError(draft_id)
+        if row[0] == 'review-v1':
+            return store, app
+        if row[0] != 'cash-v1':
+            raise ValueError('unknown stored draft policy')
+        cash = SQLiteReviewStore(store.ledger, store.registry, policy_version='cash-v1')
+        return cash, ReviewApplication(cash)
+
+    def prepare_cash(self, data):
+        fields(data, dict(operation=str, cash_source_id=str, recognition_source_id=str))
+        templates = {'cash_expense': cash_expense_proposal, 'earned_cash': earned_cash_proposal}
+        if data['operation'] not in templates:
+            raise ValueError('unsupported cash operation')
+        identity = digest([self.catalog.entity_id, 'cash-v1', data['operation'],
+                           data['cash_source_id'], data['recognition_source_id']])
+        with self.storage() as (registry, ledger, _, _, _):
+            proposal, evidence = templates[data['operation']](registry, entry_id='cash-' + identity,
+                cash_source_id=data['cash_source_id'], recognition_source_id=data['recognition_source_id'])
+            store = SQLiteReviewStore(ledger, registry, policy_version='cash-v1')
+            if store.validate(proposal, evidence):
+                raise ValueError('cash evidence must be valid and enrolled before preparation')
+            draft = store.save('cash-' + identity, proposal, evidence=evidence, expected_revision=0,
+                actor_id='cash-template', idempotency_key='cash-' + identity,
+                reason='Deterministic synthetic cash proposal; human review required', require_unused_evidence=True)
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
 
     def state(self):
         with self.storage() as (registry, ledger, store, app, engine):
             sources = self._source_list(registry, ledger)
             drafts = []
             for (draft_id,) in store.db.execute('SELECT DISTINCT draft_id FROM draft_revisions ORDER BY draft_id'):
-                revision = store.get(draft_id)
+                draft_store, draft_app = self._draft_services(store, app, draft_id)
+                revision = draft_store.get(draft_id)
                 item = dict(draft_id=draft_id, revision=revision.revision,
-                    content_digest=revision.content_digest, status=app.status(draft_id),
+                    policy_version=revision.policy_version,
+                    content_digest=revision.content_digest, status=draft_app.status(draft_id),
                     reviewable=revision.reviewable, proposal=json.loads(revision.proposal_json),
                     evidence=json.loads(revision.evidence_json), reason=revision.reason,
                     findings=[asdict(f) for f in revision.findings + revision.current_findings],
                     history=[dict(revision=r.revision, actor=r.actor_id, reason=r.reason,
-                                  recorded_at=r.recorded_at) for r in store.history(draft_id)])
+                                  recorded_at=r.recorded_at) for r in draft_store.history(draft_id)])
                 if item['status'] == 'posted':
-                    trace = app.trace(draft_id)
+                    trace = draft_app.trace(draft_id)
                     item['audit'] = dict(approval=asdict(trace['approval']),
                         journal_id=trace['receipt'].entry.id, recorded_at=trace['receipt'].recorded_at.isoformat())
                 drafts.append(item)
@@ -158,6 +209,10 @@ class Workspace:
     def action(self, action, data):
         if action == 'sources':
             return self.register_source(data)
+        if action == 'operation-sources':
+            return self.register_operation_source(data)
+        if action == 'cash-proposals':
+            return self.prepare_cash(data)
         schemas = {
             'run': dict(source_id=str, provider=str, run_id=str),
             'cancel': dict(run_id=str),
@@ -172,7 +227,9 @@ class Workspace:
             if not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', data['run_id']):
                 raise ValueError('invalid run ID')
             with self.storage() as (registry, ledger, _, _, _):
-                registry.get(data['source_id'])
+                source = registry.get(data['source_id'])
+                if json.loads(source.canonical_content)['schema_version'] != 1:
+                    raise ValueError('provider runs require original schema v1 receipt evidence')
                 if data['source_id'] not in ledger.known_source_ids():
                     raise ValueError('receipt enrollment pending; retry registration first')
             if data['provider'] == 'offline' and data['source_id'] not in self.sources:
@@ -196,6 +253,7 @@ class Workspace:
             if action == 'cancel':
                 result = engine.cancel(data['run_id'], actor_id='local-operator', reason='Cancelled in workspace')
                 return dict(state=result.state)
+            store, app = self._draft_services(store, app, data['draft_id'])
             if action == 'reject':
                 result = store.reject(data['draft_id'], expected_revision=data['revision'],
                     reason=data['reason'], actor_id='local-operator',
@@ -241,3 +299,60 @@ def demo_enrollment():
         print('Enrolled synthetic receipt 125.00 USD; reopen and retry preserve original enrollment actor/time.')
         print('Original trial balance and posting retry receipt unchanged; prior approval remains bound.')
         print('New evidence available for human review; zero additional journals and zero model calls.')
+
+
+def demo_cash():
+    from tempfile import TemporaryDirectory
+    with TemporaryDirectory(prefix='accounting-cash-') as directory:
+        workspace = Workspace(directory)
+        requests = []
+        for event, amount, expense in [('rent', '1200.00', True), ('service', '800.00', False)]:
+            common = dict(schema_version=2, synthetic=True, entity_id=workspace.catalog.entity_id,
+                currency='USD', document_date='2026-01-05', amount=amount, event_id=event,
+                counterparty='Fictional counterparty', counterparty_id=event + '-party',
+                description='Synthetic assertion: ' + event)
+            cash = dict(common, document_id=event + '-cash', kind='cash_movement',
+                        direction='out' if expense else 'in',
+                        purpose='incurred_expense' if expense else 'earned_service')
+            fact = dict(common, document_id=event + '-fact',
+                        kind='incurred_expense' if expense else 'service_completion')
+            fact.update(dict(incurred_date='2026-01-05', expense_account='5000') if expense else
+                        dict(completion_date='2026-01-05'))
+            for document in (cash, fact):
+                workspace.action('operation-sources', dict(document=document))
+            request = dict(operation='cash_expense' if expense else 'earned_cash',
+                           cash_source_id=cash['document_id'], recognition_source_id=fact['document_id'])
+            first = workspace.action('cash-proposals', request)
+            assert workspace.action('cash-proposals', request) == first
+            requests.append(request)
+        state = workspace.state()
+        assert len(state['drafts']) == 2 and state['journal_count'] == 0
+        print('Pending drafts: 2; posted journals: 0; policy cash-v1.')
+        confirmations = []
+        for draft in state['drafts']:
+            confirmation = dict(draft_id=draft['draft_id'], revision=draft['revision'],
+                                confirmed_digest=draft['content_digest'])
+            confirmations.append(confirmation)
+            workspace.action('approve-post', confirmation)  # Separate simulated human decision.
+        reopened = Workspace(directory)
+        for request, confirmation in zip(requests, confirmations):
+            reopened.action('cash-proposals', request)
+            reopened.action('approve-post', confirmation)
+        state = reopened.state()
+        rows = {r['account']: (r['debit'], r['credit']) for r in state['trial_balance']['rows']}
+        assert rows['1000'] == ('0.00', '400.00')
+        assert rows['5000'] == ('1200.00', '0.00')
+        assert rows['4000'] == ('0.00', '800.00')
+        assert state['trial_balance']['total_debits'] == state['trial_balance']['total_credits'] == '1200.00'
+        assert state['journal_count'] == 2
+        print('Cash credit 400.00; Rent debit 1200.00; Revenue credit 800.00 USD.')
+        print('Trial balance: 1200.00 / 1200.00 USD; 2 journals after reopen/retry.')
+        print('Zero opening cash makes this isolated demonstration negative by 400.00 USD.')
+        for draft in state['drafts']:
+            approval = draft['audit']['approval']
+            binding = json.loads(approval['binding_json'])
+            assert binding['policy_version'] == 'cash-v1' and len(binding['evidence']) == 2
+            print(f"Audit: revision {draft['revision']}; cash-v1; {approval['actor_id']}; effective {draft['proposal']['effective_date']}")
+            for source, evidence_digest in binding['evidence'].items():
+                print(f'  {source}: {evidence_digest}')
+        print('Separate simulated human approvals; zero model calls.')

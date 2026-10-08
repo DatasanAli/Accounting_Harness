@@ -231,6 +231,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-run", help="persist a bounded fake-provider run and resume its review handoff")
     commands.add_parser("demo-provider", help="evaluate synthetic provider responses and demonstrate separate approval")
     commands.add_parser("demo-enrollment", help="enroll synthetic evidence while preserving approvals and balances")
+    commands.add_parser("demo-cash", help="review rent and earned cash against paired synthetic facts")
     commands.add_parser("demo-web", help="exercise the persistent offline workspace and human posting")
     web = commands.add_parser("serve", help="open a persistent fictional accounting workspace on localhost")
     web.add_argument("--workspace", default=".local/workspace", help="local storage directory")
@@ -250,6 +251,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "demo-enrollment":
             from accounting_harness.workspace import demo_enrollment
             demo_enrollment()
+        elif args.command == "demo-cash":
+            from accounting_harness.workspace import demo_cash
+            demo_cash()
         elif args.command == "demo-web":
             from accounting_harness.web import demo_web
             demo_web()

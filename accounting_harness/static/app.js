@@ -186,7 +186,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderDrafts(); renderLedger(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -212,13 +212,18 @@ function renderSourceDetail() {
   const source = state.sources.find(item => item.source_id === selectedSource);
   if (!source) { node.append(empty('No receipts registered', 'This workspace needs its fictional evidence fixtures.')); return; }
   const document = source.document;
-  add(node, add(el('div', null, 'detail-heading'), add(el('div'), el('span', 'FICTIONAL RECEIPT', 'tag'),
+  add(node, add(el('div', null, 'detail-heading'), add(el('div'), el('span', 'FICTIONAL EVIDENCE', 'tag'),
     el('h3', sampleNames[source.sample_id] || source.source_id)), el('strong', money(document.amount), 'money')),
     metadata([['Counterparty', document.counterparty], ['Document date', document.document_date],
       ['Source identity', source.source_id], ['Currency', document.currency],
       ['Enrollment', human(source.state)], ['Registered by', source.registered_by]]),
     add(el('div', null, 'document-description'), el('h4', 'Source description'), el('p', document.description)));
   digest(node, 'Evidence SHA-256 · retained with the proposal', source.content_digest);
+  if (document.schema_version === 2) {
+    add(node, el('h4', 'Typed fictional facts'), el('pre', JSON.stringify(document, null, 2)),
+      el('p', 'Use Prepare a reviewed cash proposal below to pair cash and recognition evidence.', 'action-hint'));
+    return;
+  }
   const form = el('div', null, 'proposal-form');
   const label = el('label', 'Proposal provider', 'field-label'); label.htmlFor = 'provider-select';
   const select = el('select'); select.id = 'provider-select';
@@ -278,6 +283,75 @@ $('receipt-form').addEventListener('submit', async event => {
     notify(error.message + ' Keep the same document ID and content when retrying.', 'error');
   } finally { busy = false; $('register-receipt').disabled = false; if (state) render(); }
 });
+
+function renderCashChoices() {
+  for (const [id, kinds] of [['cash-source-select', ['cash_movement']],
+    ['recognition-source-select', ['incurred_expense', 'service_completion']]]) {
+    const select = $(id);
+    const prior = select.value;
+    select.replaceChildren(el('option', 'Choose registered evidence'));
+    select.firstChild.value = '';
+    state.sources.filter(source => kinds.includes(source.document.kind)).forEach(source => {
+      const option = el('option', source.source_id + ' · ' + money(source.document.amount));
+      option.value = source.source_id;
+      option.disabled = source.state === 'registered_pending_enrollment';
+      select.append(option);
+    });
+    select.value = prior;
+  }
+  $('prepare-cash').disabled = busy;
+  $('register-cash-evidence').disabled = busy;
+}
+$('cash-operation').addEventListener('change', () => {
+  $('expense-account-label').hidden = $('cash-operation').value !== 'cash_expense';
+});
+$('cash-evidence-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const input = Object.fromEntries(new FormData(event.currentTarget));
+  const expense = input.operation === 'cash_expense';
+  const common = {schema_version: 2, synthetic: true, entity_id: state.entity_id, currency: 'USD',
+    event_id: input.event_id, counterparty_id: input.counterparty_id, counterparty: input.counterparty,
+    document_date: input.document_date, amount: input.amount};
+  const cash = {...common, document_id: input.cash_source_id, kind: 'cash_movement',
+    description: input.cash_description, direction: expense ? 'out' : 'in',
+    purpose: expense ? 'incurred_expense' : 'earned_service'};
+  const recognition = {...common, document_id: input.recognition_source_id,
+    kind: expense ? 'incurred_expense' : 'service_completion', description: input.recognition_description};
+  if (expense) Object.assign(recognition, {expense_account: input.expense_account, incurred_date: input.document_date});
+  else recognition.completion_date = input.document_date;
+  if (cash.document_id === recognition.document_id) {
+    notify('Use distinct document IDs for the cash and recognition facts.', 'error'); return;
+  }
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/operation-sources', {document: cash});
+    await request('/api/operation-sources', {document: recognition});
+    selectedSource = cash.document_id; remember('source', selectedSource);
+    await refresh();
+    $('cash-source-select').value = cash.document_id;
+    $('recognition-source-select').value = recognition.document_id;
+    $('proposal-operation').value = input.operation;
+    $('cash-proposal-panel').open = true;
+    notify('Both fictional facts are registered. Prepare a draft below, then review the exact journal.');
+  } catch (error) {
+    await refresh();
+    notify(error.message + ' One document may already be registered. Resubmit the same IDs and unchanged facts to finish.', 'error');
+  } finally { busy = false; if (state) renderCashChoices(); }
+});
+$('cash-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/cash-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Cash proposal recorded. Inspect both factual documents and the journal before approving.');
+  } catch (error) {
+    await refresh(); notify(error.message + ' Retry the same pair to recover an existing proposal.', 'error');
+  } finally { busy = false; if (state) render(); }
+});
 async function runProposal(recover = false) {
   if (busy || (!recover && pendingRun)) return;
   if (!pendingRun) {
@@ -327,9 +401,14 @@ function renderDrafts() {
     add(card, add(el('div', null, 'card-heading'), el('h3', source ? sampleNames[source.sample_id] || source.source_id : draft.draft_id), status(draft.status)));
     const body = el('div', null, 'draft-body');
     add(body, metadata([['Draft identity', draft.draft_id], ['Revision', draft.revision],
+      ['Evidence policy', draft.policy_version],
       ['Effective date', draft.proposal.effective_date], ['Description', draft.proposal.description]]),
       el('p', draft.reason, 'draft-reason'), journalLines(draft.proposal.lines));
-    if (source) body.append(add(el('div', null, 'document-description'), el('h4', 'Receipt description'), el('p', source.document.description)));
+    for (const id of Object.keys(draft.evidence)) {
+      const fact = state.sources.find(item => item.source_id === id);
+      if (fact) body.append(add(el('div', null, 'document-description'), el('h4', 'Evidence · ' + id),
+        el('pre', JSON.stringify(fact.document, null, 2))));
+    }
     digest(body, 'Exact revision SHA-256 · your confirmation binds this digest', draft.content_digest);
     for (const [id, value] of Object.entries(draft.evidence)) digest(body, 'Evidence · ' + id, value);
     if (draft.findings.length) {
@@ -341,7 +420,7 @@ function renderDrafts() {
     if (decidable && draft.reviewable) {
       const checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.disabled = busy;
       const confirmation = add(el('label', null, 'confirm'), checkbox,
-        el('span', 'I have reviewed the accounts, amounts, effective date, receipt evidence, and this exact revision. I authorize posting to the fictional ledger.'));
+        el('span', 'I have reviewed the accounts, amounts, effective date, all evidence, and this exact revision. I authorize posting to the fictional ledger.'));
       const approve = button('Approve & post', () => {
         if (!checkbox.checked) return;
         draftAction('/api/approve-post', {draft_id: draft.draft_id, revision: draft.revision, confirmed_digest: draft.content_digest},

@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "12",
-  "next_step": "13",
+  "current_step": "13",
+  "next_step": "14",
   "phases": [
     {
       "id": "01",
@@ -115,24 +115,38 @@
         {
           "id": "13",
           "title": "Cash receipts and expenses",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "13a",
               "title": "Additive synthetic evidence enrollment",
-              "status": "verified_local"
+              "status": "complete",
+              "commit": "67ca31ca8afcd12d42810d8e3690830c96488fc7",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37788816873"
             },
             {
               "id": "13b",
               "title": "Reviewed cash receipts and expenses",
-              "status": "planned"
+              "status": "complete"
             }
           ]
         },
         {
           "id": "14",
           "title": "Vendor bills and partial settlement",
-          "status": "planned"
+          "status": "ready",
+          "substeps": [
+            {
+              "id": "14a",
+              "title": "Reviewed vendor bill recognition",
+              "status": "ready"
+            },
+            {
+              "id": "14b",
+              "title": "Recorded partial settlement",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "15",

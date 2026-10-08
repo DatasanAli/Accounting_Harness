@@ -73,20 +73,20 @@ for Step 14; do not implement bill behavior in this slice.
 
 **Acceptance checklist:**
 
-- [ ] Rent 1200.00 and earned cash 800.00 create pending drafts, explicit approval posts each once. Independent expected balances: Cash credit 400.00, Rent debit 1200.00, Revenue credit 800.00; trial balance debit/credit 1200.00. Negative Cash from this isolated zero-opening demonstration is allowed and disclosed.
-- [ ] Each audit trace includes both exact evidence digests, revision, policy, operator and effective date.
-- [ ] Owner contributions, transfers, advances, existing-AR settlement, raw v1 cash receipts and descriptive claims without completion/incurrence facts cannot use earned-cash/expense templates.
-- [ ] Different event, counterparty, amount, date, missing document, wrong currency/account and extra/unbound evidence fail without posting.
-- [ ] Provider receipt behavior is unchanged. An existing approved `review-v1` draft remains postable after a `cash-v1` draft is added.
-- [ ] Concurrent duplicate template attempts produce at most one draft; exact resubmission returns the original receipt; different source ID/same economic event cannot create duplicate cash posting.
-- [ ] HTML shows exact proposed journal and both factual documents before explicit confirmation; all server actions enforce the same checks as direct services.
+- [x] Rent 1200.00 and earned cash 800.00 create pending drafts, explicit approval posts each once. Independent expected balances: Cash credit 400.00, Rent debit 1200.00, Revenue credit 800.00; trial balance debit/credit 1200.00. Negative Cash from this isolated zero-opening demonstration is allowed and disclosed.
+- [x] Each audit trace includes both exact evidence digests, revision, policy, operator and effective date.
+- [x] Owner contributions, transfers, advances, existing-AR settlement, raw v1 cash receipts and descriptive claims without completion/incurrence facts cannot use earned-cash/expense templates.
+- [x] Different event, counterparty, amount, date, missing document, wrong currency/account and extra/unbound evidence fail without posting.
+- [x] Provider receipt behavior is unchanged. An existing approved `review-v1` draft remains postable after a `cash-v1` draft is added.
+- [x] Concurrent duplicate template attempts produce at most one draft; exact resubmission returns the original receipt; different source ID/same economic event cannot create duplicate cash posting.
+- [x] HTML shows exact proposed journal and both factual documents before explicit confirmation; all server actions enforce the same checks as direct services.
 
 
 ## Delivery checklist
 
-- [ ] Write failing source/template/review/HTTP tests with independent expected amounts and invalid fact cases.
-- [ ] Implement typed synthetic facts and explicit cash policy while preserving historical review-v1 behavior.
-- [ ] Add UI evidence/operation forms and per-draft policy routing with human-only approval/posting.
-- [ ] Add `demo-cash` and update CI/documentation.
-- [ ] Run foundation, guarded suite, all demos and browser flow.
-- [ ] Review, commit, push, verify exact SHA/CI, then continue Step 14a.
+- [x] Write failing source/template/review/HTTP tests with independent expected amounts and invalid fact cases.
+- [x] Implement typed synthetic facts and explicit cash policy while preserving historical review-v1 behavior.
+- [x] Add UI evidence/operation forms and per-draft policy routing with human-only approval/posting.
+- [x] Add `demo-cash` and update CI/documentation.
+- [x] Run foundation, guarded suite, all demos and browser flow.
+- [ ] Commit, push and verify exact SHA/CI after the clean task review, then continue Step 14a.

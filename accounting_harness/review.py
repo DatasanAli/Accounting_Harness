@@ -57,6 +57,19 @@ class SQLiteReviewStore:
         self.db = ledger._connection
         with ledger._transaction(write=True):
             self._initialize()
+            self._initialize_claims()
+
+    def _initialize_claims(self):
+        if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='operation_claims'").fetchone():
+            return
+        self.db.execute('''CREATE TABLE operation_claims (
+            entity_id TEXT NOT NULL, event_id TEXT NOT NULL, role TEXT NOT NULL,
+            draft_id TEXT NOT NULL, revision INTEGER NOT NULL,
+            PRIMARY KEY(entity_id, event_id, role),
+            FOREIGN KEY(draft_id, revision) REFERENCES draft_revisions(draft_id, revision)
+        ) STRICT, WITHOUT ROWID''')
+        protect_table(self.db, 'operation_claims',
+                      'entity_id=NEW.entity_id AND event_id=NEW.event_id AND role=NEW.role')
 
     def _initialize(self):
         if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='review_schema'").fetchone():
@@ -119,15 +132,26 @@ class SQLiteReviewStore:
             if anchor is not None and anchor != (source.content_digest, source.canonical_content):
                 findings.append(Finding('conflicting_evidence', source_id, 'evidence differs from enrollment anchor'))
             records.append(source)
-        if valid_sources and len(sources) != 1:
-            findings.append(Finding('unsupported_evidence', 'source_ids', 'receipt policy requires one source'))
+        if self.policy_version == 'review-v1':
+            if valid_sources and len(sources) != 1:
+                findings.append(Finding('unsupported_evidence', 'source_ids', 'receipt policy requires one source'))
+            for record in records:
+                document = json.loads(record.canonical_content)
+                if document.get('schema_version') != 1 or document.get('kind') != 'receipt':
+                    findings.append(Finding('unsupported_evidence', record.document_id,
+                                            'receipt policy requires a schema v1 receipt'))
+        elif self.policy_version == 'cash-v1':
+            from accounting_harness.operations import validate_cash_evidence
+            findings.extend(validate_cash_evidence(proposal, records))
+        else:
+            findings.append(Finding('unsupported_policy', 'policy_version', 'unknown review policy'))
         try:
             effective = accounting_date(proposal.get('effective_date'))
             if not self.ledger._empty.period_start <= effective <= self.ledger._empty.period_end:
                 findings.append(Finding('outside_period', 'effective_date', 'date is outside the ledger period'))
         except ValueError:
             pass  # The journal validator supplies the date finding.
-        if len(records) == 1 and result.total_debits is not None:
+        if self.policy_version == 'review-v1' and len(records) == 1 and result.total_debits is not None:
             if result.total_debits != Money.parse(json.loads(records[0].canonical_content)['amount']):
                 findings.append(Finding('evidence_amount', 'lines', 'debit total differs from receipt amount'))
         lines = proposal.get('lines')
@@ -191,6 +215,8 @@ class SQLiteReviewStore:
                 raise ValueError("posted drafts cannot be edited or rejected")
             if current != expected:
                 raise ValueError('stale draft revision')
+            if current and self._get(draft_id, current).policy_version != self.policy_version:
+                raise ValueError('draft policy differs from configured store')
             if operation == 'reject':
                 previous = self._get(draft_id, current)
                 if previous.state != 'pending':
@@ -206,6 +232,22 @@ class SQLiteReviewStore:
             self.db.execute('INSERT INTO review_events VALUES (?,?,?)', (draft_id, revision, operation))
             self.db.execute('INSERT INTO review_requests VALUES (?,?,?,?,?)',
                             (operation, key, request_digest, draft_id, revision))
+            if self.policy_version == 'cash-v1':
+                from accounting_harness.operations import economic_claims
+                records = []
+                for source_id in evidence:
+                    try:
+                        records.append(self.registry.get(source_id))
+                    except KeyError:
+                        pass  # Missing evidence already prevents approval.
+                for claim in economic_claims(records):
+                    prior_claim = self.db.execute('''SELECT draft_id FROM operation_claims
+                        WHERE entity_id=? AND event_id=? AND role=?''', claim).fetchone()
+                    if prior_claim and prior_claim[0] != draft_id:
+                        raise ValueError('duplicate economic event and role')
+                    if not prior_claim:
+                        self.db.execute('INSERT INTO operation_claims VALUES (?,?,?,?,?)',
+                                        (*claim, draft_id, revision))
             return self._get(draft_id, revision)
 
     def _get(self, draft_id, revision=None):
