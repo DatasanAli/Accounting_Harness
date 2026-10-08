@@ -18,6 +18,8 @@ const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'await
 let state = null;
 let bankDetail = null;
 let bankMatchView = null;
+let reconciliationView = null;
+let pendingReconciliation = null;
 let pendingBankFee = null;
 let pendingBankAction = null;
 let bankFileContent = null;
@@ -748,11 +750,114 @@ function renderBankDetail() {
   digest(card, 'Canonical statement content SHA-256', audit.content_digest);
   card.append(add(el('details'), el('summary', 'Exact import audit and transaction trace'), el('pre', bankDetail.trace_json)));
   node.append(card);
+  renderReconciliation(node);
   renderBankMatches(node);
 }
 async function loadBankMatches() {
   bankMatchView = null;
+  reconciliationView = null;
   bankMatchView = await request('/api/bank-matches?' + new URLSearchParams({bank_account_id: bankDetail.statement.bank_account_id}));
+  reconciliationView = await request('/api/bank-reconciliation?' + new URLSearchParams({bank_account_id: bankDetail.statement.bank_account_id, statement_id: bankDetail.statement.statement_id}));
+}
+async function reconciliationAction(action, payload) {
+  if (busy) return;
+  pendingReconciliation = {action, payload};
+  busy = true; renderBank();
+  try {
+    const receipt = await request('/api/' + action, payload);
+    pendingReconciliation = null;
+    notify((action === 'bank-reconcile' ? 'Reconciliation completed. ' : 'Timing review recorded. ') +
+      'Ledger unchanged. Reference: ' + (receipt.completion_id || receipt.event_id));
+    await refresh();
+  } catch (error) {
+    if (!error.uncertain) pendingReconciliation = null;
+    notify(error.message + ' Refresh and review the exact current report.', 'error');
+    await refresh();
+  } finally { busy = false; renderBank(); }
+}
+function renderReconciliation(node) {
+  if (!reconciliationView || reconciliationView.report.statement_id !== bankDetail.statement.statement_id) return;
+  const {report, completions} = reconciliationView;
+  const card = el('section', null, 'card draft-body');
+  card.append(el('h3', 'Bank-to-book reconciliation'), el('p',
+    'Review each existing cash movement at the statement cutoff, then confirm the exact report. Timing review creates no journal.'));
+  card.append(metadata([['Statement period', report.period_start + ' through ' + report.cutoff],
+    ['Bank account', report.bank_account_id], ['Ledger account', report.ledger_account + ' · ' + report.ledger_account_name],
+    ['Report policy', report.policy]]));
+  card.append(table(['Book bridge · USD', 'Amount'], [
+    ['Book before linked fee adjustments (derived)', report.original_book_balance],
+    ['Linked reviewed fee adjustments', report.book_adjustments_total],
+    ['Captured book Cash at cutoff', report.book_balance]], 'Captured book balance and reviewed adjustments'));
+  card.append(table(['Bank bridge · USD', 'Amount'], [
+    ['Statement closing', report.bank_closing], ['Add deposits in transit', report.deposits_in_transit],
+    ['Subtract outstanding payments', report.outstanding_payments], ['Adjusted bank', report.adjusted_bank_balance],
+    ['Unexplained difference · book minus adjusted bank', report.unexplained_difference]], 'Statement balance and timing differences'));
+  if (report.book_adjustments.length) card.append(table(['Adjustment journal', 'Bank transaction', 'Evidence', 'Amount · USD'],
+    report.book_adjustments.map(item => [item.journal_id, item.transaction_id, item.source_id, item.amount]), 'Reviewed book adjustments'));
+  if (report.matches.length) card.append(table(['Matched bank row', 'Book journal', 'Match confirmation', 'Amount · USD'],
+    report.matches.map(item => [item.transaction_id, item.book.journal_id, item.match.event_id, item.book.amount]), 'Cleared cash movements at cutoff'));
+  const base = () => ({bank_account_id: report.bank_account_id, statement_id: report.statement_id,
+    binding: report.digest, idempotency_key: crypto.randomUUID()});
+  const timingForm = (item, role, label) => {
+    const form = el('form', null, 'stack');
+    const reasonLabel = el('label', 'Review reason for ' + item.journal_id);
+    const reason = el('input'); reason.type = 'text'; reason.required = true; reason.maxLength = 1000;
+    reasonLabel.append(reason);
+    const submit = el('button', label, 'button secondary'); submit.type = 'submit'; submit.disabled = busy;
+    form.append(reasonLabel, submit);
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      if (!reason.value.trim()) return;
+      reconciliationAction('bank-timing', {...base(), journal_id: item.journal_id, role, reason: reason.value});
+    });
+    return form;
+  };
+  for (const item of report.timing_items) {
+    const block = el('section', null, 'card');
+    block.append(el('h4', (item.role === 'deposit_in_transit' ? 'Deposit in transit · ' : 'Outstanding payment · ') + item.amount + ' USD'),
+      metadata([['Book journal', item.journal_id], ['Effective date', item.effective_date], ['Evidence', item.source_ids.join(', ')],
+        ['Reviewed by', item.review.actor_id], ['Reason', item.review.reason], ['Review reference', item.review.event_id]]),
+      timingForm(item, 'withdraw', 'Withdraw timing classification'));
+    card.append(block);
+  }
+  if (report.eligible_timing.length) card.append(el('h4', 'Cash movements requiring timing review'));
+  for (const item of report.eligible_timing) {
+    const block = el('section', null, 'card');
+    block.append(metadata([['Book journal', item.journal_id], ['Effective date', item.effective_date],
+      ['Amount · USD', item.amount], ['Evidence', item.source_ids.join(', ')]]),
+      timingForm(item, item.role, item.role === 'deposit_in_transit' ? 'Confirm deposit in transit' : 'Confirm outstanding payment'));
+    card.append(block);
+  }
+  for (const item of report.timing_exceptions) {
+    card.append(el('p', 'Timing exception · ' + item.event.journal_id + ': ' + item.reason),
+      timingForm(item.event, 'withdraw', 'Withdraw invalid timing classification'));
+  }
+  for (const item of report.bank_exceptions) card.append(el('p', 'Bank exception · ' + item.transaction_id + ': ' + item.reason));
+  for (const item of report.book_exceptions.filter(item => item.reason)) card.append(el('p', 'Book exception · ' + item.journal_id + ': ' + item.reason));
+  digest(card, 'Exact report SHA-256', report.digest);
+  digest(card, 'Ledger snapshot SHA-256', report.ledger_snapshot_digest);
+  card.append(el('p', report.can_complete ? 'Both balances agree and all applicable movements are explained. Review and explicitly complete below.' :
+    'Completion blocked: resolve the unexplained difference and every bank, book or timing exception.'));
+  const label = el('label', null, 'check-label');
+  const confirmed = el('input'); confirmed.type = 'checkbox'; confirmed.disabled = busy || !report.can_complete;
+  label.append(confirmed, document.createTextNode(' I reviewed the exact report, references and timing classifications.'));
+  const complete = button('Complete this reconciliation', () => reconciliationAction('bank-reconcile', base()));
+  complete.disabled = true;
+  confirmed.addEventListener('change', () => { complete.disabled = busy || !report.can_complete || !confirmed.checked; });
+  card.append(label, complete);
+  if (pendingReconciliation) {
+    const retry = button('Retry original reconciliation action', () => reconciliationAction(pendingReconciliation.action, pendingReconciliation.payload));
+    retry.disabled = busy; card.append(retry);
+  }
+  for (const item of completions) {
+    const completion = item.completion;
+    card.append(add(el('details'), el('summary', 'Completed by ' + completion.actor_id + ' · ' + completion.recorded_at +
+      (item.current_state_drift ? ' · Current state has changed; historical completion preserved' : ' · Current state agrees')),
+      el('pre', JSON.stringify(completion, null, 2))));
+  }
+  card.append(add(el('details'), el('summary', 'Captured statement, ledger, matching, timing and report evidence'),
+    el('pre', JSON.stringify(reconciliationView, null, 2))));
+  node.append(card);
 }
 async function bankFeeAction(payload) {
   if (busy) return;

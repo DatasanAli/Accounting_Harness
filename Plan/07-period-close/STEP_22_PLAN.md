@@ -49,8 +49,12 @@ Bind ledger inputs and relevant readiness state into the confirmation digest.
 Activated subsidiary controls must reconcile. If a bank statement covering the
 configured period exists, require the delivered recorded reconciliation to be
 complete/current; show unresolved or stale reconciliation as a blocking finding.
-Do not fabricate completion or a balancing plug. Do not require a bank statement
-for an otherwise supported synthetic ledger with no imported bank data.
+Do not fabricate completion or a balancing plug. If several statements cover the
+same account/period, require explicit selection of the statement/completion in
+the close preview; never silently choose the latest imported balance. Bind that
+selection and its current-state digest to confirmation. Show overlapping imports
+as context. Do not require a bank statement for an otherwise supported synthetic
+ledger with no imported bank data.
 
 The human previews exactly what will close and confirms the digest through a
 separate action. Use the existing approval boundary where it fits; an explicit

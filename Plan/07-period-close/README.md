@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: planned; Step 20a prepaid consumption is next after exact Step 19c delivery. No behavior in this phase is implemented yet.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 

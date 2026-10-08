@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "18",
-  "next_step": "19",
+  "current_step": "19",
+  "next_step": "20",
   "phases": [
     {
       "id": "01",
@@ -227,7 +227,7 @@
         {
           "id": "19",
           "title": "Reconciliation and reviewed adjustments",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "19a",
@@ -240,12 +240,14 @@
               "id": "19b",
               "title": "Reviewed bank-fee adjustment",
               "status": "complete",
-              "delivery_gate": "Local checks/browser/independent review passed; exact upload/CI pending."
+              "commit": "757e6fda735da408c4717e7579d0351847a29cda",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37817880835"
             },
             {
               "id": "19c",
               "title": "Captured reconciliation and completion",
-              "status": "ready"
+              "status": "complete",
+              "delivery_gate": "Local checks/browser/independent review passed; exact upload/CI pending."
             }
           ]
         }
@@ -259,7 +261,24 @@
         {
           "id": "20",
           "title": "Month-end adjustment proposals",
-          "status": "planned"
+          "status": "ready",
+          "substeps": [
+            {
+              "id": "20a",
+              "title": "Supported prepaid insurance consumption",
+              "status": "ready"
+            },
+            {
+              "id": "20b",
+              "title": "Evidenced unbilled expense accrual",
+              "status": "planned"
+            },
+            {
+              "id": "20c",
+              "title": "Evidenced unbilled service revenue",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "21",

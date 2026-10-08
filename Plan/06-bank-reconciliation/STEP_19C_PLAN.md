@@ -73,16 +73,16 @@ without inventing an opening balance or suppressing a cash exception.
 **Files:** Bank reconciliation module/service, workspace/HTTP/CLI/static and focused
 snapshot/concurrency/report tests. Parent owns docs/CI/browser/delivery.
 
-- [ ] RED: synthetic opening bank/book950, book deposit200 and payment150 gives
+- [x] RED: synthetic opening bank/book950, book deposit200 and payment150 gives
   book1000; imported bank fee10 gives bank940. Reviewed fee produces book990;
   bank940 + deposit200 - outstanding150 =990. Only fee adds a journal.
-- [ ] Show every source/match/adjustment/timing reference and exact report digest.
+- [x] Show every source/match/adjustment/timing reference and exact report digest.
   Explicit completion succeeds only after fee posting/matching and timing review.
-- [ ] Refuse unexplained difference, zero difference with unmatched/ambiguous rows,
+- [x] Refuse unexplained difference, zero difference with unmatched/ambiguous rows,
   duplicate/wrong-sign/future/cleared timing items, stale state and arbitrary plugs.
-- [ ] Cover cutoff with later clearing, frozen prior report, later ledger/match drift,
+- [x] Cover cutoff with later clearing, frozen prior report, later ledger/match drift,
   concurrent exact completion retry, changed payload, immutable rows and write faults.
-- [ ] Add clear bank-to-book UI with separate timing review and completion action;
+- [x] Add clear bank-to-book UI with separate timing review and completion action;
   `demo-reconciliation` proves both990 balances and only10 fee posting.
-- [ ] Verify focused/full checks/all demos/browser, independent review, commit/push
+- [x] Verify focused/full checks/all demos/browser, independent review, commit/push
   and exact-SHA CI before period-end adjustment work.

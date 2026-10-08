@@ -20,6 +20,7 @@ from accounting_harness.sources import SQLiteSourceRegistry
 from accounting_harness.payables import PayablesService, payables_report
 from accounting_harness.receivables import ReceivablesService, receivables_report
 from accounting_harness.advances import AdvancesService, advances_report
+from accounting_harness.reconciliation import ReconciliationService
 from accounting_harness.bank import BankStatementService
 from accounting_harness.bank_fees import BankFeeService, bank_evidence, fee_operation, require_available
 from accounting_harness.domain.money import Money
@@ -96,6 +97,10 @@ class Workspace:
     def bank_matches(self, bank_account_id):
         with self.storage() as (_, ledger, _, _, _):
             return BankStatementService(ledger).matching(bank_account_id)
+
+    def bank_reconciliation(self, bank_account_id, statement_id):
+        with self.storage() as (_, ledger, _, _, _):
+            return ReconciliationService(ledger).view(bank_account_id, statement_id)
 
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
@@ -376,6 +381,9 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action in ('bank-timing', 'bank-reconcile'):
+            with self.storage() as (_, ledger, _, _, _):
+                return ReconciliationService(ledger).action(action.removeprefix('bank-'), data, actor_id='local-operator')
         if action == 'bank-fee-proposals':
             return self.prepare_bank_fee(data)
         if action == 'bank-fee-account':

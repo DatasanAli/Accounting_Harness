@@ -55,7 +55,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ASSETS:
             name, kind = ASSETS[self.path]
             return self.respond(200, (STATIC / name).read_bytes(), kind)
-        if urlsplit(self.path).path in ('/api/bank-statements', '/api/bank-matches'):
+        if urlsplit(self.path).path in ('/api/bank-statements', '/api/bank-matches', '/api/bank-reconciliation'):
             try:
                 query = urlsplit(self.path).query
                 if urlsplit(self.path).path == '/api/bank-matches':
@@ -63,12 +63,14 @@ class Handler(BaseHTTPRequestHandler):
                     if set(values) != {'bank_account_id'} or len(values['bank_account_id']) != 1:
                         raise ValueError('matching view requires bank_account_id exactly once')
                     return self.respond(200, self.server.workspace.bank_matches(values['bank_account_id'][0]))
-                if not query:
+                reconciliation = urlsplit(self.path).path == '/api/bank-reconciliation'
+                if not query and not reconciliation:
                     return self.respond(200, self.server.workspace.list_bank_statements())
                 values = parse_qs(query, strict_parsing=True, keep_blank_values=True, max_num_fields=2)
                 if set(values) != {'bank_account_id', 'statement_id'} or any(len(v) != 1 for v in values.values()):
                     raise ValueError('bank detail requires bank_account_id and statement_id exactly once')
-                return self.respond(200, self.server.workspace.bank_statement_detail(
+                detail = self.server.workspace.bank_reconciliation if reconciliation else self.server.workspace.bank_statement_detail
+                return self.respond(200, detail(
                     values['bank_account_id'][0], values['statement_id'][0]))
             except KeyError:
                 return self.respond(404, dict(error='bank statement or account not found'))
@@ -105,7 +107,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
-        if self.path not in ('/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
+        if self.path not in ('/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
                              '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals', '/api/invoice-proposals', '/api/advance-proposals', '/api/advance-earning-proposals', '/api/invoice-collection-proposals', '/api/bill-payment-proposals'):
             return self.respond(404, dict(error='not found'))
         try:

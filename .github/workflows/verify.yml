@@ -65,3 +65,5 @@ jobs:
         run: python3 -m accounting_harness demo-bank-fee-account
       - name: Demonstrate reviewed bank fee and separate matching
         run: python3 -m accounting_harness demo-bank-fee
+      - name: Demonstrate captured bank reconciliation and completion
+        run: python3 -m accounting_harness demo-reconciliation

@@ -2,7 +2,7 @@
 
 Updated: 2026-10-08.
 
-**Completed work: Steps 01–11. Step 12 adapters/offline evaluation are implemented; live provider connection is explicitly deferred. Step 12a localhost workspace is delivered with verified GitHub CI. Step 13a evidence enrollment is delivered with verified GitHub CI. Step 13b cash templates are delivered with verified GitHub CI. Step 14a vendor bills are delivered with verified GitHub CI. Step 14b partial settlement is delivered with verified GitHub CI. Step 15a invoice recognition is delivered with verified GitHub CI. Step 15b collection and aging is delivered with verified GitHub CI. Step 16a customer advances are delivered with verified GitHub CI. Step 16b supported earning is delivered with verified GitHub CI. Step 16c payable seal hardening is delivered with verified GitHub CI. Step 17 bank import is delivered with verified GitHub CI. Step 18 matching is delivered with verified GitHub CI. Step 19a account activation is delivered with verified GitHub CI. Step 19b fee posting passes local/browser checks and independent review; exact delivery is pending.**
+**Completed work: Steps 01–11. Step 12 adapters/offline evaluation are implemented; live provider connection is explicitly deferred. Step 12a localhost workspace is delivered with verified GitHub CI. Step 13a evidence enrollment is delivered with verified GitHub CI. Step 13b cash templates are delivered with verified GitHub CI. Step 14a vendor bills are delivered with verified GitHub CI. Step 14b partial settlement is delivered with verified GitHub CI. Step 15a invoice recognition is delivered with verified GitHub CI. Step 15b collection and aging is delivered with verified GitHub CI. Step 16a customer advances are delivered with verified GitHub CI. Step 16b supported earning is delivered with verified GitHub CI. Step 16c payable seal hardening is delivered with verified GitHub CI. Step 17 bank import is delivered with verified GitHub CI. Step 18 matching is delivered with verified GitHub CI. Step 19a account activation is delivered with verified GitHub CI. Step 19b fee posting is delivered with verified GitHub CI. Step 19c reconciliation passes local/browser checks and independent review; exact delivery is pending.**
 
 The user requested the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independent numbered deliveries in this request;
@@ -19,7 +19,7 @@ See [the working plan](LOCALHOST_APP_PLAN.md).
 | Fictional reference month | Created with independent expected results |
 | Foundation verification | See the observed results in the verification record |
 | Money and chart of accounts | Implemented: exact USD cents, immutable accounts/catalog, validated JSON loader |
-| Application verification | 470 tests passed, including reviewed bank-fee identity/approval/atomicity, account preservation and prior accounting behavior |
+| Application verification | 485 tests passed, including captured reconciliation/cutoff/completion/drift, reviewed fees and prior accounting behavior |
 | Demonstration | 13 accounts; 0.10 + 0.20 = 0.30 USD; excess precision rejected |
 | Journal validation | Implemented: pure validation, field/line findings, exact totals, source/account/date checks |
 | Journal demonstration | Accepts 1000.00 / 1000.00; rejects 1000.00 / 999.00 with a 1.00 difference |
@@ -41,7 +41,7 @@ See [the working plan](LOCALHOST_APP_PLAN.md).
 | Provider proposal evaluation | 20/20 synthetic-response cases; 8/8 exact proposals, 12/12 review handoffs; not model accuracy |
 | Authenticated roles and integrations | Not implemented |
 | Delivery target | GitHub repository and CI; persistent localhost UI and CLI, no hosted deployment |
-| Next step | Step 19c captured reconciliation, after exact Step 19b delivery |
+| Next step | Step 20a prepaid consumption, after exact Step 19c delivery |
 
 Read the [Step 01 verification record](01-foundation/VERIFICATION.md), [Step 02 verification record](02-ledger-core/STEP_02_VERIFICATION.md), [Step 03 verification record](02-ledger-core/STEP_03_VERIFICATION.md), [Step 04 verification record](02-ledger-core/STEP_04_VERIFICATION.md), [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md), [Step 06 verification record](02-ledger-core/STEP_06_VERIFICATION.md), and [Step 07 verification record](03-evidence-and-review/STEP_07_VERIFICATION.md) for observed checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) provide delivery evidence for each commit. The completion response must identify the exact commit and CI run.
 
@@ -111,4 +111,6 @@ Step 18: [contract](06-bank-reconciliation/STEP_18_PLAN.md) and [verification](0
 
 Step 19a: [contract](06-bank-reconciliation/STEP_19A_PLAN.md) and [verification](06-bank-reconciliation/STEP_19A_VERIFICATION.md). 454 tests, 23 demos and browser activation/refresh/restart passed. Independent review approved with one minor validation consistency finding. Delivered as [361459d](https://github.com/DatasanAli/Accounting_Harness/commit/361459d215050cc4bc05ebcb98180a83360d6258); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37815799255). Remote main matched the local commit. Next: [Step 19b reviewed fee](06-bank-reconciliation/STEP_19B_PLAN.md).
 
-Step 19b: [contract](06-bank-reconciliation/STEP_19B_PLAN.md) and [verification](06-bank-reconciliation/STEP_19B_VERIFICATION.md). 470 tests, 24 demos and browser prepare/review/post/match/restart passed. Independent review approved with no new findings. Exact commit/CI pending. Next: [captured reconciliation](06-bank-reconciliation/STEP_19C_PLAN.md).
+Step 19b: [contract](06-bank-reconciliation/STEP_19B_PLAN.md) and [verification](06-bank-reconciliation/STEP_19B_VERIFICATION.md). 470 tests, 24 demos and browser prepare/review/post/match/restart passed. Independent review approved with no new findings. Delivered as [757e6fd](https://github.com/DatasanAli/Accounting_Harness/commit/757e6fda735da408c4717e7579d0351847a29cda); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37817880835). Remote main matched the local commit. Next: [captured reconciliation](06-bank-reconciliation/STEP_19C_PLAN.md).
+
+Step 19c: [contract](06-bank-reconciliation/STEP_19C_PLAN.md) and [verification](06-bank-reconciliation/STEP_19C_VERIFICATION.md). 485 tests, 25 demos and browser timing/completion/drift/re-completion/restart passed; independent review approved with no findings. Exact commit/CI pending. Next: [Step 20a prepaid consumption](07-period-close/STEP_20A_PLAN.md).

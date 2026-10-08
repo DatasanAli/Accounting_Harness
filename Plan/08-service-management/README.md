@@ -58,6 +58,8 @@ Copyable prompt:
 
 ### Step 27: Flexible budgets and variance explanations
 
+See the [captured flexible-variance plan](STEP_27_PLAN.md).
+
 - **Build:** Flex variable costs to actual activity and compare actuals to static/flexible budgets.
 - **Test:** Revenue $1,100.00 vs $1,000.00 budget is $100.00 favorable; expense $600.00 vs $500.00 is $100.00 unfavorable; zero-base percent returns unavailable; volume and rate effects reconcile.
 - **Verify manually:** Produce one variance report with cited inputs and clearly labeled explanations.
@@ -68,6 +70,8 @@ Copyable prompt:
 > Build Step 27: Flexible budgets and variance explanations. Follow Plan/08-service-management/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 28: Contribution and operating indicators
+
+See the [contribution and indicator plan](STEP_28_PLAN.md).
 
 - **Build:** Add service contribution/break-even, liquidity and a small owner-selected KPI report.
 - **Test:** Price $100.00 less variable cost $40.00 gives $60.00 contribution; $1,200.00 fixed costs break even at 20 units; zero/negative contribution has no finite positive break-even; ratios guard zero denominator.

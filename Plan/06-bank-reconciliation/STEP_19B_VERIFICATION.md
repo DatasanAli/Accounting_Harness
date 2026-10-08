@@ -47,7 +47,7 @@ Review schema 7→8 plus fee-schema initialization is atomic; the ledger remains
 schema 4 and old contexts/approval/retry/report bytes remain unchanged.
 
 Independent review approved spec compliance and quality with no new findings.
-Exact commit/remote CI checks are pending; no delivery result is inferred locally.
+Delivered as [757e6fd](https://github.com/DatasanAli/Accounting_Harness/commit/757e6fda735da408c4717e7579d0351847a29cda); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37817880835). Remote main matched the local commit.
 
 ## Limits and rollback
 
