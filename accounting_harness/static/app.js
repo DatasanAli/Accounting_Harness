@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  indicators: ['Contribution & indicators', 'Version single-service assumptions beside captured financial and operational inputs.'],
   budgets: ['Budgets', 'Version explicit operating assumptions and cash dates without changing recorded actuals.'],
   projects: ['Projects', 'Attribute recorded revenue and expense to projects with an exact bridge to the books.'],
   close: ['Period close', 'Review the complete January books, then explicitly close temporary balances and lock posting dates.'],
@@ -2182,6 +2183,125 @@ function renderBudgetReview() {
   const edit = button('Edit budget review',() => { pendingBudget = null; setBudgetBusy(false); renderBudgetReview(); }); edit.disabled = budgetBusy || budgetUncertain;
   node.append(add(el('div',null,'actions'),save,edit));
 }
+
+let indicatorInputs = null;
+let indicatorBusy = false;
+let indicatorPending = null;
+let indicatorUncertain = false;
+function setIndicatorBusy(value) {
+  indicatorBusy = value;
+  for (const selector of ['#indicator-form input','#indicator-form textarea','#indicator-form button','#indicator-inputs-form input','#indicator-inputs-form button']) {
+    document.querySelectorAll(selector).forEach(node => { node.disabled = value || Boolean(indicatorPending); });
+  }
+  $('review-indicators').disabled = value || Boolean(indicatorPending) || !indicatorInputs;
+}
+$('indicator-inputs-form').addEventListener('submit',async event => {
+  event.preventDefault(); if (indicatorBusy || indicatorPending) return; setIndicatorBusy(true);
+  try {
+    indicatorInputs = await request('/api/indicator-inputs?month=' + encodeURIComponent($('indicator-month').value));
+    renderIndicatorVersions(); notify('Saved scenarios loaded. Enter explicit assumptions or select a prior version.');
+  } catch (error) { notify(error.message,'error'); }
+  finally { setIndicatorBusy(false); }
+});
+function renderIndicatorVersions() {
+  const node = $('indicator-versions'); node.replaceChildren();
+  for (const version of indicatorInputs.versions) {
+    const row = add(el('div'),el('p',version.name + ' · ' + version.scenario_id + ' · version ' + version.version));
+    const load = async edit => {
+      if (indicatorBusy || indicatorPending) return; setIndicatorBusy(true);
+      try {
+        const result = await request('/api/indicators?version_id=' + encodeURIComponent(version.version_id)); renderIndicators(result);
+        if (edit) {
+          for (const field of ['scenario_id','name','price','variable_cost','fixed_cost','minimum_units','maximum_units','quantity','explanation']) {
+            $('indicator-form').elements.namedItem(field).value = result[field] ?? '';
+          }
+          for (const input of $('indicator-form').querySelectorAll('[name="selected_indicators"]')) input.checked = result.selected_indicators.includes(input.value);
+          $('indicator-prior').value = result.version_id; $('indicator-form').elements.namedItem('reason').value = '';
+          notify('Prior version selected. Edit assumptions or indicators and give a reason for the new version.');
+        }
+      } catch (error) { notify(error.message,'error'); }
+      finally { setIndicatorBusy(false); }
+    };
+    row.append(button('View saved indicators',() => load(false)),button('Use as prior indicator version',() => load(true))); node.append(row);
+  }
+}
+$('indicator-form').addEventListener('submit',event => {
+  event.preventDefault(); if (indicatorBusy || indicatorPending || !indicatorInputs) return;
+  const form = new FormData(event.target), values = Object.fromEntries(form);
+  const quantities = {};
+  for (const field of ['minimum_units','maximum_units','quantity']) {
+    quantities[field] = field === 'quantity' && values[field] === '' ? null : Number(values[field]);
+    if (quantities[field] !== null && (!Number.isSafeInteger(quantities[field]) || quantities[field] < 0)) {
+      notify('Service quantities must be nonnegative safe whole numbers.','error'); return;
+    }
+  }
+  if (quantities.minimum_units > quantities.maximum_units) { notify('Minimum units cannot exceed maximum units.','error'); return; }
+  indicatorPending = {entity_id:indicatorInputs.entity_id,currency:'USD',month:indicatorInputs.month,
+    scenario_id:values.scenario_id,name:values.name,price:values.price,variable_cost:values.variable_cost,fixed_cost:values.fixed_cost,
+    ...quantities,selected_indicators:form.getAll('selected_indicators'),prior_version_id:values.prior_version_id || null,
+    reason:values.reason,explanation:values.explanation,idempotency_key:crypto.randomUUID()};
+  indicatorUncertain = false; setIndicatorBusy(false); renderIndicatorReview();
+});
+function renderIndicatorReview() {
+  const node = $('indicator-review'); node.replaceChildren(); if (!indicatorPending) return;
+  node.append(el('h4','Confirm a new immutable service scenario'),
+    el('p','Saving captures the current recorded financial statements and active time for this month. All prices, costs, ranges and what-if units below are your assumptions.'),
+    metadata([['Service',indicatorPending.name],['Price · USD/unit',indicatorPending.price],['Variable cost · USD/unit',indicatorPending.variable_cost],
+      ['Fixed cost · USD',indicatorPending.fixed_cost],['Relevant range',indicatorPending.minimum_units + '–' + indicatorPending.maximum_units + ' whole units'],
+      ['What-if units',indicatorPending.quantity ?? 'None'],['Reason',indicatorPending.reason]]),
+    jsonDetails('Exact assumptions and indicator selection to save',indicatorPending));
+  const save = button(indicatorUncertain ? 'Retry same indicator confirmation' : 'Confirm and save indicator scenario',async () => {
+    if (indicatorBusy) return; setIndicatorBusy(true); renderIndicatorReview();
+    try {
+      const result = await request($('indicator-form').getAttribute('action'),indicatorPending);
+      indicatorPending = null; indicatorUncertain = false; renderIndicators(result);
+      $('indicator-result').textContent = 'Saved ' + result.version_id + ' · version ' + result.version + '. Reload scenarios to view history or select a prior version.';
+      indicatorInputs = null; $('indicator-versions').replaceChildren(); notify('Scenario and captured indicators saved. Recorded accounting is unchanged.');
+    } catch (error) { indicatorUncertain = error.uncertain; notify(error.message + (indicatorUncertain ? ' Retry this exact confirmation to recover the saved version.' : ' Edit the assumptions or select the current prior version.'),'error'); }
+    finally { setIndicatorBusy(false); renderIndicatorReview(); }
+  }); save.disabled = indicatorBusy;
+  const edit = button('Edit indicator review',() => { indicatorPending = null; setIndicatorBusy(false); renderIndicatorReview(); }); edit.disabled = indicatorBusy || indicatorUncertain;
+  node.append(add(el('div',null,'actions'),save,edit));
+}
+function renderIndicators(result) {
+  const report = result.report, model = report.contribution, threshold = model.break_even;
+  const node = $('indicator-report'); node.replaceChildren();
+  const range = value => value === null ? 'Not applicable' : value ? 'Within supported range' : 'Outside supported range';
+  const display = value => value.display === null ? 'Unavailable · ' + value.reason : value.display;
+  const card = add(el('article',null,'card'),el('h3',report.name + ' · version ' + report.version),el('p',report.scope,'callout'),
+    metadata([['Entity',report.entity_id],['Period',report.period_start + ' to ' + report.period_end],['Recorded by',report.actor_id],['Captured at',report.recorded_at],
+      ['Reason',report.reason],['Assumption explanation',report.explanation || 'None']]),
+    el('h4','Single-service assumptions and model'),el('p',model.range_policy),
+    metadata([['Price per service unit · USD',model.price],['Variable cost per unit · USD',model.variable_cost],['Fixed costs · USD',model.fixed_cost],
+      ['Relevant range · whole units',model.minimum_units + '–' + model.maximum_units],['Contribution per unit · USD',model.contribution_amount],
+      ['Contribution margin',display(model.margin)],['Exact contribution margin',model.margin.numerator + ' / ' + model.margin.denominator],
+      ['Continuous break-even · exact units',threshold.whole_units === null ? 'Unavailable · ' + threshold.reason : threshold.numerator + ' / ' + threshold.denominator],
+      ['Whole-unit break-even',threshold.whole_units === null ? 'Unavailable · ' + threshold.reason : threshold.whole_units + ' whole units'],
+      ['Break-even range check',range(threshold.within_range)],['What-if units',model.quantity ?? 'None'],
+      ['What-if range check',range(model.quantity_within_range)],['What-if model profit · USD',model.profit_amount ?? 'No quantity selected']]),
+    el('p','Continuous threshold = fixed-cost cents / contribution cents; whole units use the integer ceiling when contribution is positive. Outside-range calculations are illustrative and unsupported by these assumptions.'),
+    el('h4','Selected captured indicators'),el('p',report.rounding_policy),
+    table(['Indicator','Display','Unit','Numerator','Denominator','Captured dates'],report.indicators.map(r =>
+      [r.name,display(r),r.unit,r.numerator,r.denominator,r.period_start + ' to ' + r.period_end])));
+  for (const row of report.indicators) {
+    if (row.note) card.append(el('p',row.name + ': ' + row.note));
+    card.append(jsonDetails(row.name + ' · captured account, journal, source and time references',row.sources));
+  }
+  for (const finding of report.findings) card.append(el('p',finding,'callout'));
+  card.append(el('h4','Explicit liquidity classification'),
+    table(['Account','Treatment','Signed balance · USD'],report.liquidity_accounts.map(r => [r.account + ' · ' + r.name,r.treatment,r.amount])),
+    el('p','Quick assets exclude prepaid insurance. Equipment and accumulated depreciation are noncurrent. Opposite balances remain signed. Nonpositive liabilities or unknown current status make liquidity ratios unavailable.'),
+    jsonDetails('Versioned liquidity account policy',report.liquidity_policy),jsonDetails('Excluded closing journal IDs',report.excluded_closing_journal_ids));
+  digest(card,'Scenario version',report.version_id); digest(card,'Captured input SHA-256',report.snapshot_digest);
+  digest(card,'Indicator report SHA-256',report.report_digest); digest(card,'Calculation policy SHA-256',report.policy_digest);
+  card.append(jsonDetails('Complete saved scenario and reproducible capture',result));
+  card.append(button('Download displayed indicator JSON',() => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(result,null,2) + '\n'],{type:'application/json'}));
+    const link = el('a'); link.href = url; link.download = 'indicators-' + report.month + '-v' + report.version + '.json'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url),1000);
+  })); node.append(card);
+}
+// End indicator renderer
 
 let varianceBusy = false;
 $('variance-form').addEventListener('submit', async event => {

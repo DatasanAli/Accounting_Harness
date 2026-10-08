@@ -81,12 +81,14 @@ class Workspace:
                 from accounting_harness.project_time import ProjectTimeService
                 from accounting_harness.project_cost import ProjectCostService
                 from accounting_harness.budget import BudgetService
+                from accounting_harness.indicators import IndicatorService
                 with ledger._transaction(write=True):
                     RevenueAccrualService(ledger, registry)
                     ProjectDimensionsService(ledger)
                     ProjectTimeService(ledger)
                     ProjectCostService(ledger)
                     BudgetService(ledger)
+                    IndicatorService(ledger)
                 store = SQLiteReviewStore(ledger, registry)
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
@@ -157,6 +159,16 @@ class Workspace:
         from accounting_harness.project_cost import ProjectCostService
         with self.storage() as (_, ledger, _, _, _):
             return ProjectCostService(ledger).get(version_id)
+
+    def indicator_inputs(self, month):
+        from accounting_harness.indicators import IndicatorService
+        with self.storage() as (_,ledger,_,_,_):
+            return IndicatorService(ledger).inputs(month)
+
+    def indicators(self, version_id):
+        from accounting_harness.indicators import IndicatorService
+        with self.storage() as (_,ledger,_,_,_):
+            return IndicatorService(ledger).get(version_id)
 
     def variance(self, version_id):
         from accounting_harness.variance import capture_variance, variance_report
@@ -494,6 +506,10 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'indicators':
+            from accounting_harness.indicators import IndicatorService
+            with self.storage() as (_,ledger,_,_,_):
+                return IndicatorService(ledger).save(data, actor_id='local-operator')
         if action == 'budget':
             from accounting_harness.budget import BudgetService
             with self.storage() as (_, ledger, _, _, _):

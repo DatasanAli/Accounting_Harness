@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "27",
-  "next_step": "28",
+  "current_step": "28",
+  "next_step": "29",
   "phases": [
     {
       "id": "01",
@@ -374,12 +374,14 @@
         {
           "id": "27",
           "title": "Flexible budgets and variance explanations",
-          "status": "complete"
+          "status": "complete",
+          "commit": "b5b6b02c15290b7e446a4a34a5eb881c39451c5b",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37848793541"
         },
         {
           "id": "28",
           "title": "Contribution and operating indicators",
-          "status": "ready"
+          "status": "complete"
         }
       ]
     },
@@ -391,12 +393,12 @@
         {
           "id": "29",
           "title": "Authenticated operator and entity access",
-          "status": "planned",
+          "status": "ready",
           "substeps": [
             {
               "id": "29a",
               "title": "Local identities, sessions and entity grants",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "29b",

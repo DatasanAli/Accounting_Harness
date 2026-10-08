@@ -95,3 +95,5 @@ jobs:
         run: python3 -m accounting_harness demo-budget
       - name: Demonstrate captured static and flexible budget variance
         run: python3 -m accounting_harness demo-variance
+      - name: Demonstrate contribution thresholds and captured indicators
+        run: python3 -m accounting_harness demo-indicators

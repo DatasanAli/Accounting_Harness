@@ -2,9 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–27 (27 upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–28 (28 upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Next:** [Step 28 contribution and indicators](08-service-management/STEP_28_PLAN.md).
+**Next:** [Step 29a identities and grants](09-integrations-and-pilot/STEP_29A_PLAN.md).
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -23,15 +23,15 @@ supported prepaid consumption and evidenced unbilled expense/revenue accruals.
 Every posted operation retains its source, effective date and actor; managed
 controls enforce their approved effects.
 
-Latest local Step 27 checks: **719 tests and 38 demonstrations passed**.
-Native static/flexible/actual comparison shows 100.00 favorable revenue, 100.00
-unfavorable expenses and zero net-income variance. Activity plus remaining amounts
-reconcile, with source/time/rate references and explicit limits on causal claims.
-The native downloaded capture reproduces offline and after a new budget version;
-mobile, Refresh and final-code desktop/restart preserve all original inputs.
-Independent review approved with no findings. Commit/push/exact CI are pending. Commands and coverage are
-in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); observations are in
-[Step 27 verification](08-service-management/STEP_27_VERIFICATION.md).
+Latest local Step 28 checks: **741 tests and 39 demonstrations passed**.
+Native versions show 60.00 contribution, 20 whole-unit break-even, exact captured
+ratios, selected indicators and explicit nonpositive-contribution unavailability.
+The native JSON reproduces offline; final-fix restart preserves every version and
+all prior actuals, time, scenarios and report bytes. Independent review found a
+shared nested policy alias; the detached-output fix and regression are approved.
+One month-control Minor is assigned to 31c. Commit/push/exact CI are pending.
+Commands are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); observations are in
+[Step 28 verification](08-service-management/STEP_28_VERIFICATION.md).
 A foundation check is not application proof.
 
 The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
@@ -43,7 +43,7 @@ agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
-Project attribution, auditable service time, versioned project costing, operating/cash budgets and captured variances are implemented. Authenticated roles, contribution/indicator reporting, integration contracts,
+Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. Authenticated roles, integration contracts,
 and verified recovery are still planned. The existing local operator is not an
 authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
@@ -83,7 +83,9 @@ retained in the verification record and Git history.
 | 24b | [Auditable project time](08-service-management/STEP_24B_VERIFICATION.md) | [d745540](https://github.com/DatasanAli/Accounting_Harness/commit/d74554063e385b57b66d69301e7fa7cac1d93d73) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37843247067) |
 | 25 | [Versioned project costing](08-service-management/STEP_25_VERIFICATION.md) | [c95bf45](https://github.com/DatasanAli/Accounting_Harness/commit/c95bf4599fd4fa63bddd8ae72cfb8e37f500d0ad) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37845470497) |
 | 26 | [Operating and cash budgets](08-service-management/STEP_26_VERIFICATION.md) | [4affff5](https://github.com/DatasanAli/Accounting_Harness/commit/4affff50b34a527152e121fdd66a12f152312d32) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37847329847) |
-| 27 | [Captured flexible-budget variance](08-service-management/STEP_27_VERIFICATION.md) | Local checks/review passed | Upload pending |
+| 27 | [Captured flexible-budget variance](08-service-management/STEP_27_VERIFICATION.md) | [b5b6b02](https://github.com/DatasanAli/Accounting_Harness/commit/b5b6b02c15290b7e446a4a34a5eb881c39451c5b) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37848793541) |
+
+| 28 | [Contribution and captured indicators](08-service-management/STEP_28_VERIFICATION.md) | Local checks/review passed | Upload pending |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)
@@ -105,10 +107,12 @@ purchase by its Jan1 coverage start. Step20d explicitly uses a new synthetic Jan
 purchase variant, preserving original fixture/history bytes and identical
 January 31 totals; early cutoff results are intentionally different.
 
-Three Minor issues are queued for final whole-work review: receipt list/tuple
+Four Minor issues are queued for final whole-work review: receipt list/tuple
 validation consistency (saved proposals normalize before posting), shared
 revenue-validation errors using an expense label, and an in-flight project capture
-replacing attribution preview context (server binding remains protected). Prior payable seal and
+replacing attribution preview context (server binding remains protected), and
+indicator month controls retaining cached inputs after an edit or failed reload.
+The two UI findings are assigned to Step 31c. Prior payable seal and
 migration findings were resolved in16c. A copied-workspace run-path limitation was
 reproduced in19a and has an explicit verified-relocation plan in
 [33a](09-integrations-and-pilot/STEP_33A_PLAN.md); file copying alone is not recovery.

@@ -43,11 +43,12 @@ python3 -m accounting_harness demo-project-time
 python3 -m accounting_harness demo-project-cost
 python3 -m accounting_harness demo-budget
 python3 -m accounting_harness demo-variance
+python3 -m accounting_harness demo-indicators
 ```
 
 The foundation check validates documentation links, the ordered roadmap, and the arithmetic/structure of [the original reference month](../data/fixtures/service-business-month.json). It checks expected account balances, statement totals, cash movements, and closing results. These are fixture checks, separate from the application's tests.
 
-Steps 02–27 have 719 application tests using Python's standard library. The suite exercises exact arithmetic, strict parsing/direct construction, full catalog contents, invalid metadata, immutable snapshots, entity-local lookups, inactive accounts, JSON validation, CLI output, and test-runner failure handling. The runner must fail on unexpected zero-test discovery and on a failing test; both behaviors have subprocess tests. Journal coverage includes balanced and compound entries, signed imbalance, exact large amounts, invalid line shapes and fields, source/account/date/currency checks, complete findings without partial totals, repeatability, and unchanged inputs. A balanced but misclassified contribution documents the semantic limit. Ledger tests compare every ordinary reference account against independently defined expected balances, check inclusive cutoffs, immutable historical snapshots, duplicate/invalid entry refusal without mutation, large integer cents, zero/credit asset balances, and explicit report scope. Persistence tests cover restart with every reference balance, canonical retries/conflicts, concurrent connections, lock exhaustion, injected rollback, integer storage limits, incompatible context/schema refusal and direct SQL immutability/constraints. See the [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md) for precise SQL versus application enforcement boundaries. Reversal tests cover exact cancellation, immutable originals and snapshots, inclusive date cutoffs, scoped retries, one reversal under concurrent requests, invalid context, SQL link constraints, injected rollback and migration from a synthetic Step 05 database. See the [Step 06 verification record](02-ledger-core/STEP_06_VERIFICATION.md). Source registration tests cover strict fictional receipt metadata, canonical digests, stable entity/document identity, unchanged audit receipts across retries/reopen, content conflicts, equal-content separate identities, concurrent imports, bounded lock failures, atomic initialization and event-write rollback, SQL immutability, schema/application rejection, and preservation of existing ledger snapshots and retry results. See the [Step 07 verification record](03-evidence-and-review/STEP_07_VERIFICATION.md). CI runs the same commands above. No external packages or model calls are needed.
+Steps 02–28 have 741 application tests using Python's standard library. The suite exercises exact arithmetic, strict parsing/direct construction, full catalog contents, invalid metadata, immutable snapshots, entity-local lookups, inactive accounts, JSON validation, CLI output, and test-runner failure handling. The runner must fail on unexpected zero-test discovery and on a failing test; both behaviors have subprocess tests. Journal coverage includes balanced and compound entries, signed imbalance, exact large amounts, invalid line shapes and fields, source/account/date/currency checks, complete findings without partial totals, repeatability, and unchanged inputs. A balanced but misclassified contribution documents the semantic limit. Ledger tests compare every ordinary reference account against independently defined expected balances, check inclusive cutoffs, immutable historical snapshots, duplicate/invalid entry refusal without mutation, large integer cents, zero/credit asset balances, and explicit report scope. Persistence tests cover restart with every reference balance, canonical retries/conflicts, concurrent connections, lock exhaustion, injected rollback, integer storage limits, incompatible context/schema refusal and direct SQL immutability/constraints. See the [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md) for precise SQL versus application enforcement boundaries. Reversal tests cover exact cancellation, immutable originals and snapshots, inclusive date cutoffs, scoped retries, one reversal under concurrent requests, invalid context, SQL link constraints, injected rollback and migration from a synthetic Step 05 database. See the [Step 06 verification record](02-ledger-core/STEP_06_VERIFICATION.md). Source registration tests cover strict fictional receipt metadata, canonical digests, stable entity/document identity, unchanged audit receipts across retries/reopen, content conflicts, equal-content separate identities, concurrent imports, bounded lock failures, atomic initialization and event-write rollback, SQL immutability, schema/application rejection, and preservation of existing ledger snapshots and retry results. See the [Step 07 verification record](03-evidence-and-review/STEP_07_VERIFICATION.md). CI runs the same commands above. No external packages or model calls are needed.
 
 ## Test the outcome and the failure boundary
 
@@ -151,12 +152,12 @@ original-name capture and exact HTTP/browser values. See [advance verification](
 
 Step 16b adds separately supported earning, shared service claims across policies,
 competing approvals/remaining checks, current approval at final sealing, atomic
-review/advance migrations, schema1 legacy report compatibility, frozen schema2
+review/advance migrations, schema 1 legacy report compatibility, frozen schema2
 captures, write faults, concurrent retries, and exact large amounts. Its HTTP test
 executes the route extracted from the shipped earning form. See [earning verification](05-service-bookkeeping/STEP_16B_VERIFICATION.md).
 
 Step 16c adds real-guard payable supersession/over-allocation regressions, explicit
-schema1/2-to-3 migration, historical row/report/retry preservation, old-connection
+schema 1/2-to-3 migration, historical row/report/retry preservation, old-connection
 enforcement and rollback of shared review plus payable initialization. See
 [payable seal verification](05-service-bookkeeping/STEP_16C_VERIFICATION.md).
 
@@ -273,3 +274,11 @@ actuals, large exact strings, strict captured-input validation, concurrent captu
 closing exclusion and frozen offline reproduction. The shipped renderer executes
 under Node to check exact values and unavailable percentages. See
 [Step 27 verification](08-service-management/STEP_27_VERIFICATION.md).
+
+Step 28 adds 22 indicator tests for exact contribution/ceiling/range and signed
+rounding, zero/nonpositive economics, unavailable denominators/classifications,
+immutable versions and policy outputs, historical retry/concurrent successors,
+captured financial/time consistency, migrations/rollback and frozen reproduction.
+The shipped renderer checks unavailable thresholds and exact large values under
+Node. Native scenario selection/download and final-fix restart evidence is in
+[Step 28 verification](08-service-management/STEP_28_VERIFICATION.md).

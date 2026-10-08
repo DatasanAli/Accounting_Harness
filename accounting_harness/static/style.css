@@ -13,3 +13,7 @@
 .project-allocation-row { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
 #view-projects .stack, #view-projects .card { min-width: 0; }
 #view-projects .card { margin-bottom: 20px; }
+
+#indicator-form fieldset { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+#indicator-form fieldset label { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+#indicator-form input[type="checkbox"] { width: auto; margin: 0; }

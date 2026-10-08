@@ -1,6 +1,6 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: Step 29a is next after Step 28 exact delivery verification. No behavior in this phase is implemented yet; identities and grants precede authenticated application/UI delivery.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 

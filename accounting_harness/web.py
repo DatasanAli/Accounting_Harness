@@ -77,20 +77,21 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(409, dict(error=str(error)))
             except (sqlite3.Error, PersistenceBusy):
                 return self.respond(503, dict(error='workspace busy or unavailable; retry export'))
-        if urlsplit(self.path).path in ('/api/budget', '/api/budget-inputs', '/api/variance'):
+        if urlsplit(self.path).path in ('/api/budget', '/api/budget-inputs', '/api/variance', '/api/indicators', '/api/indicator-inputs'):
             try:
-                is_inputs = urlsplit(self.path).path == '/api/budget-inputs'
-                field = 'month' if is_inputs else 'version_id'
+                path = urlsplit(self.path).path
+                field = 'month' if path.endswith('-inputs') else 'version_id'
                 values = parse_qs(urlsplit(self.path).query, strict_parsing=True, keep_blank_values=True, max_num_fields=1)
                 if set(values) != {field} or len(values[field]) != 1:
-                    raise ValueError('budget requires ' + field + ' exactly once')
-                method = (self.server.workspace.budget_inputs if is_inputs else self.server.workspace.variance
-                          if urlsplit(self.path).path == '/api/variance' else self.server.workspace.budget)
+                    raise ValueError('management report requires ' + field + ' exactly once')
+                method = {'/api/budget': self.server.workspace.budget, '/api/budget-inputs': self.server.workspace.budget_inputs,
+                          '/api/variance': self.server.workspace.variance, '/api/indicators': self.server.workspace.indicators,
+                          '/api/indicator-inputs': self.server.workspace.indicator_inputs}[path]
                 return self.respond(200, method(values[field][0]))
             except (ValueError, TypeError) as error:
                 return self.respond(409, dict(error=str(error)))
             except (sqlite3.Error, PersistenceBusy):
-                return self.respond(503, dict(error='workspace busy or unavailable; retry budget read'))
+                return self.respond(503, dict(error='workspace busy or unavailable; retry management read'))
         if urlsplit(self.path).path == '/api/project-cost':
             try:
                 values = parse_qs(urlsplit(self.path).query, strict_parsing=True, keep_blank_values=True, max_num_fields=1)
@@ -169,7 +170,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
-        if self.path not in ('/api/budget', '/api/project-cost', '/api/project-time', '/api/project-time-void', '/api/projects', '/api/project-assignments', '/api/close-preview', '/api/close-confirm', '/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
+        if self.path not in ('/api/indicators', '/api/budget', '/api/project-cost', '/api/project-time', '/api/project-time-void', '/api/projects', '/api/project-assignments', '/api/close-preview', '/api/close-confirm', '/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
                              '/api/revenue-accrual-proposals', '/api/expense-accrual-proposals', '/api/prepaid-proposals', '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals', '/api/invoice-proposals', '/api/advance-proposals', '/api/advance-earning-proposals', '/api/invoice-collection-proposals', '/api/bill-payment-proposals'):
             return self.respond(404, dict(error='not found'))
         try:

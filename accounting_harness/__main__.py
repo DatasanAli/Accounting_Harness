@@ -219,6 +219,7 @@ def demo_source() -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("demo-indicators", help="capture service contribution, break-even and descriptive indicators")
     commands.add_parser("demo-variance", help="compare captured actuals with static and flexible operating budgets")
     commands.add_parser("demo-budget", help="save operating and dated cash assumptions without changing actuals")
     commands.add_parser("demo-project-cost", help="capture exact service project cost and modeled margin without changing actuals")
@@ -274,6 +275,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "serve":
             from accounting_harness.web import serve
             serve(args)
+        elif args.command == "demo-indicators":
+            from accounting_harness.indicators import demo_indicators
+            demo_indicators()
         elif args.command == "demo-variance":
             from accounting_harness.variance import demo_variance
             demo_variance()

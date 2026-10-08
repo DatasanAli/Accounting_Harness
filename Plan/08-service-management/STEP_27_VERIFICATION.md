@@ -57,7 +57,7 @@ the previously downloaded JSON, as stated in the UI.
 - Guarded full suite: 719 tests passed in 51.722s; discovery guard retained.
 - All 38 demonstrations, foundation, JavaScript syntax and diff checks passed.
 - Independent review approved spec and quality with no findings.
-- Commit/push/remote/exact CI checks are pending.
+- Delivered commit [b5b6b02](https://github.com/DatasanAli/Accounting_Harness/commit/b5b6b02c15290b7e446a4a34a5eb881c39451c5b) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37848793541) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py
