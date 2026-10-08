@@ -21,6 +21,7 @@ from accounting_harness.payables import PayablesService, payables_report
 from accounting_harness.receivables import ReceivablesService, receivables_report
 from accounting_harness.advances import AdvancesService, advances_report
 from accounting_harness.bank import BankStatementService
+from accounting_harness.bank_fees import BankFeeService, bank_evidence, fee_operation, require_available
 from accounting_harness.domain.money import Money
 from accounting_harness.operations import cash_expense_proposal, earned_cash_proposal
 
@@ -162,6 +163,9 @@ class Workspace:
             WHERE draft_id=? ORDER BY revision DESC LIMIT 1''', (draft_id,)).fetchone()
         if row is None:
             raise KeyError(draft_id)
+        if row[0] == 'bank-fee-v1':
+            fees = BankFeeService(store.ledger, store.registry)
+            return fees.store, fees.app
         if row[0] == 'review-v1':
             return store, app
         if row[0] == 'advance-v1':
@@ -189,6 +193,26 @@ class Workspace:
             raise ValueError('unknown stored draft policy')
         cash = SQLiteReviewStore(store.ledger, store.registry, policy_version='cash-v1')
         return cash, ReviewApplication(cash)
+
+    def prepare_bank_fee(self, data):
+        fields(data, dict(bank_account_id=str, transaction_id=str, classification=str, reason=str, expected_revision=int))
+        with self.storage() as (registry, ledger, _, _, _):
+            service = BankFeeService(ledger, registry)
+            document = bank_evidence(ledger, data['bank_account_id'], data['transaction_id'])
+            fee_operation(document, data['classification'], data['reason'])
+            key = 'web-bank-fee:' + digest(data)
+            # Exact saved retries precede fresh matched/candidate checks, including after posting.
+            retry = service.db.execute("SELECT 1 FROM review_requests WHERE operation='save' AND key=?", (key,)).fetchone()
+            if not retry:
+                if ledger.bank_fee_account_activation() is None:
+                    raise ValueError('activate Bank Fees Expense first')
+                require_available(ledger, document)
+            result = registry.register(document, actor_id='local-operator')
+            self._enroll_registered(registry, ledger, result)
+            draft = service.propose(document, classification=data['classification'], reason=data['reason'],
+                expected_revision=data['expected_revision'], actor_id='local-operator', idempotency_key=key)
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
 
     def prepare_cash(self, data):
         fields(data, dict(operation=str, cash_source_id=str, recognition_source_id=str))
@@ -352,6 +376,8 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'bank-fee-proposals':
+            return self.prepare_bank_fee(data)
         if action == 'bank-fee-account':
             if data != {}:
                 raise ValueError('fixed bank-fee account setup accepts no fields')

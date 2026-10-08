@@ -84,7 +84,7 @@ def economic_claims(records):
     Claims conservatively retain evidence use even after rejection. A new source
     identity cannot recognize the same expense or service event a second time.
     """
-    roles = {'cash_movement': 'cash_movement', 'incurred_expense': 'expense_recognition',
+    roles = {'bank_fee': 'cash_movement', 'cash_movement': 'cash_movement', 'incurred_expense': 'expense_recognition',
              'service_completion': 'service_revenue_recognition',
              'advance_completion': 'service_revenue_recognition'}
     claims = []

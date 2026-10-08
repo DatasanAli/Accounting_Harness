@@ -44,7 +44,7 @@ Independent review approved spec compliance and quality with one minor consisten
 finding: direct Python validation accepts tuple-shaped lines while the new receipt
 account restriction checks lists. Saving normalizes tuples and posting stays
 protected. Track that validation consistency fix for the final whole-work review.
-Commit/upload and exact-SHA CI are pending; no GitHub success is inferred locally.
+Delivered as [361459d](https://github.com/DatasanAli/Accounting_Harness/commit/361459d215050cc4bc05ebcb98180a83360d6258); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37815799255). Remote main matched the local commit.
 
 ## Scope and recovery
 

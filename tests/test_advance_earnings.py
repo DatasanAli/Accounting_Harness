@@ -330,7 +330,7 @@ class AdvanceEarningTests(unittest.TestCase):
         finally:db.set_authorizer(None)
         self.assertEqual(db.execute('SELECT type,name,sql FROM sqlite_master ORDER BY type,name').fetchall(),schema)
         migrated=self.service()
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(7,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(8,)])
         self.assertEqual(db.execute('SELECT version FROM advances_schema').fetchall(),[(2,)])
         self.assertEqual({t:db.execute(f'SELECT * FROM {t}').fetchall() for t in tables},before)
         self.assertEqual(self.registry.list_documents(),sources)

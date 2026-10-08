@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'bank_fee': {'event_id', 'bank_account_id', 'transaction_id', 'bank_content_digest', 'bank_reference', 'bank_description', 'signed_amount'},
     'advance_completion': {'event_id', 'counterparty_id', 'contract_id', 'completion_date'},
     'customer_prepayment': {'event_id', 'counterparty_id', 'contract_id'},
     'customer_invoice': {'event_id', 'counterparty_id', 'invoice_number', 'due_date'},
@@ -65,7 +66,17 @@ def _content(document: object, entity_id: str) -> tuple[str, str]:
     if document["entity_id"] != entity_id:
         raise ValueError("source document belongs to a different entity")
     for field in extra:
-        _validate_text(document[field], field)
+        if kind == 'bank_fee' and field in ('bank_reference', 'bank_description'):
+            if not isinstance(document[field], str) or len(document[field]) > 1000 or '\x00' in document[field]:
+                raise ValueError('invalid original bank text')
+        else:
+            _validate_text(document[field], field)
+    if kind == 'bank_fee':
+        from accounting_harness.bank import signed_cents
+        if signed_cents(document['signed_amount'], movement=True) != -Money.parse(document['amount']).cents:
+            raise ValueError('bank fee evidence must retain the whole negative movement')
+        if len(document['bank_content_digest']) != 64 or any(c not in '0123456789abcdef' for c in document['bank_content_digest']):
+            raise ValueError('invalid bank content digest')
     if kind == 'cash_movement':
         if document['direction'] not in ('in', 'out'):
             raise ValueError('cash direction must be in or out')

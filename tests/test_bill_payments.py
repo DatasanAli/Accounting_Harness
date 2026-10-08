@@ -375,7 +375,7 @@ class PaymentMigrationTests(unittest.TestCase):
         self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(2,)])
         self.assertEqual(db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0],old_seal)
         SQLiteReviewStore(self.ledger,self.registry)
-        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(7,)])
+        self.assertEqual(db.execute('SELECT version FROM review_schema').fetchall(),[(8,)])
         db.set_authorizer(deny_update('payables_schema'))
         try:
             with self.assertRaises(sqlite3.DatabaseError): PayablesService(self.ledger,self.registry)

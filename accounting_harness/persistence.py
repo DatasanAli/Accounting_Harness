@@ -397,6 +397,12 @@ class SQLiteLedger:
         digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
         if canonical != source.canonical_content or digest != source.content_digest:
             raise ValueError('registered source content/digest differs')
+        if document['kind'] == 'bank_fee':
+            from accounting_harness.bank_fees import bank_evidence
+            if document != bank_evidence(self, document['bank_account_id'], document['transaction_id']):
+                raise ValueError('bank fee evidence differs from import')
+            if not self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='bank_fee_schema'").fetchone():
+                raise ValueError('initialize bank fee service before enrollment')
         with self._transaction(write=True):
             prior = self._connection.execute('SELECT * FROM source_enrollments WHERE source_id=?',
                                              (document_id,)).fetchone()
@@ -490,6 +496,9 @@ class SQLiteLedger:
                 "SELECT 1 FROM reversals WHERE original_id=?", (original_id,),
             ).fetchone():
                 raise ValueError("original journal is already reversed")
+            if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='bank_fee_effects'").fetchone():
+                if self._connection.execute('SELECT 1 FROM bank_fee_effects WHERE journal_id=?', (original_id,)).fetchone():
+                    raise ValueError('operational_reversal_not_supported: bank fees require linked consumption and matching correction')
             if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='customer_invoice_collections'").fetchone():
                 if self._connection.execute('SELECT 1 FROM customer_invoice_collections WHERE journal_id=?', (original_id,)).fetchone():
                     raise ValueError('operational_reversal_not_supported: managed collections require a linked correction workflow')

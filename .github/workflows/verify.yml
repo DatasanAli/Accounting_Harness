@@ -63,3 +63,5 @@ jobs:
         run: python3 -m accounting_harness demo-bank-match
       - name: Demonstrate audited bank-fee account activation
         run: python3 -m accounting_harness demo-bank-fee-account
+      - name: Demonstrate reviewed bank fee and separate matching
+        run: python3 -m accounting_harness demo-bank-fee

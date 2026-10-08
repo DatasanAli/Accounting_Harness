@@ -233,17 +233,19 @@
               "id": "19a",
               "title": "Audited fixed bank-fee account enrollment",
               "status": "complete",
-              "delivery_gate": "Local checks/browser/independent review passed (one minor validation consistency finding); exact upload/CI pending."
+              "commit": "361459d215050cc4bc05ebcb98180a83360d6258",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37815799255"
             },
             {
               "id": "19b",
               "title": "Reviewed bank-fee adjustment",
-              "status": "ready"
+              "status": "complete",
+              "delivery_gate": "Local checks/browser/independent review passed; exact upload/CI pending."
             },
             {
               "id": "19c",
               "title": "Captured reconciliation and completion",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         }
@@ -296,7 +298,19 @@
         {
           "id": "24",
           "title": "Project and cost dimensions",
-          "status": "planned"
+          "status": "planned",
+          "substeps": [
+            {
+              "id": "24a",
+              "title": "Project attribution of recorded actuals",
+              "status": "planned"
+            },
+            {
+              "id": "24b",
+              "title": "Auditable project time facts",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "25",

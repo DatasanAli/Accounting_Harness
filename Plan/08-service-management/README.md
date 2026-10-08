@@ -18,6 +18,9 @@ Build only one numbered step per request. Split a row further if it cannot be de
 
 ### Step 24: Project and cost dimensions
 
+Follow the [dimensions/time contract](STEP_24_PLAN.md), with separately verified
+24a actuals attribution and 24b time-fact deliveries.
+
 - **Build:** Attach validated project/customer/cost-category dimensions and classify fixed, variable, direct and indirect costs.
 - **Test:** Dimension totals plus explicitly unallocated amounts equal source actuals; missing classifications remain visible; duplicate time records are detected.
 - **Verify manually:** Break a fictional expense total across two projects and show the reconciliation.
@@ -29,6 +32,8 @@ Copyable prompt:
 
 ### Step 25: Service project costing
 
+See the [captured costing scenario plan](STEP_25_PLAN.md).
+
 - **Build:** Compute direct cost and a documented overhead allocation for one project.
 - **Test:** 10 hours at $40.00 plus $100.00 direct costs plus $20.00 overhead per hour equals $700.00; $1,000.00 revenue gives $300.00 project margin; no double-counted ledger expense.
 - **Verify manually:** Show a project cost sheet with hours, rates, allocation and revenue references.
@@ -39,6 +44,8 @@ Copyable prompt:
 > Build Step 25: Service project costing. Follow Plan/08-service-management/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 26: Versioned operating and cash budgets
+
+See the [operating and cash-scenario plan](STEP_26_PLAN.md).
 
 - **Build:** Create a one-month revenue/expense budget and a cash plan with collection/payment timing.
 - **Test:** Opening $1,000.00 plus collections $1,500.00 less payments $1,200.00 equals ending $1,300.00; deferred collections do not become current cash.

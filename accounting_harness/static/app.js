@@ -18,6 +18,7 @@ const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'await
 let state = null;
 let bankDetail = null;
 let bankMatchView = null;
+let pendingBankFee = null;
 let pendingBankAction = null;
 let bankFileContent = null;
 let activeView = 'evidence';
@@ -753,6 +754,21 @@ async function loadBankMatches() {
   bankMatchView = null;
   bankMatchView = await request('/api/bank-matches?' + new URLSearchParams({bank_account_id: bankDetail.statement.bank_account_id}));
 }
+async function bankFeeAction(payload) {
+  if (busy) return;
+  pendingBankFee = payload;
+  busy = true; render();
+  try {
+    await request('/api/bank-fee-proposals', payload);
+    pendingBankFee = null;
+    await refresh();
+    showView('review', true);
+    notify('Bank-fee proposal prepared. Review the imported evidence, your reason and the exact journal before approving.');
+  } catch (error) {
+    if (!error.uncertain) pendingBankFee = null;
+    notify('Fee proposal was not confirmed: ' + error.message + ' Retry the original request to recover an uncertain result.', 'error');
+  } finally { busy = false; render(); }
+}
 async function bankMatchAction(action, payload) {
   if (busy) return;
   pendingBankAction = {action, payload};
@@ -821,6 +837,38 @@ function renderBankMatches(node) {
         confirm.disabled = busy || !!pendingBankAction;
         card.append(confirm);
       }
+    }
+    const fee = state.drafts.find(draft => draft.policy_version === 'bank-fee-v1' &&
+      draft.operation_intent.bank_account_id === bankMatchView.bank_account_id && draft.operation_intent.transaction_id === row.transaction_id);
+    if (fee?.status === 'posted') card.append(el('p', row.active_match ?
+      'Reviewed bank fee posted and explicitly matched.' : 'Reviewed bank fee posted; matching is still separate. Confirm the journal pair above. Reposting is unnecessary.'));
+    else if (fee && fee.status !== 'rejected') card.append(button('Review bank-fee proposal →', () => showView('review', true), 'button secondary'));
+    else if (!row.active_match && !row.candidates.length && row.amount.startsWith('-')) {
+      if (!state.bank_fee_account_activation) card.append(el('p', 'Activate Bank Fees Expense above before proposing a fee.'));
+      else {
+        const form = el('form');
+        const classificationLabel = el('label', 'Operator classification');
+        const classification = el('select'); classification.required = true;
+        for (const [value, text] of [['', 'Choose treatment…'], ['bank_fee', 'Bank fee · whole imported transaction']]) {
+          const option = el('option', text); option.value = value; classification.append(option);
+        }
+        classificationLabel.append(classification);
+        const reasonLabel = el('label', 'Why is this transaction a bank fee?');
+        const reason = el('input'); reason.required = true; reason.maxLength = 1000; reasonLabel.append(reason);
+        const submit = el('button', fee ? 'Revise bank-fee proposal' : 'Prepare bank-fee proposal', 'button secondary');
+        submit.type = 'submit'; submit.disabled = busy || !!pendingBankFee;
+        form.append(el('p', 'Bank text is evidence. Your classification proposes the entire fee; separate human review authorizes posting.'), classificationLabel, reasonLabel, submit);
+        form.addEventListener('submit', event => {
+          event.preventDefault();
+          bankFeeAction({bank_account_id: bankMatchView.bank_account_id, transaction_id: row.transaction_id,
+            classification: classification.value, reason: reason.value.trim(), expected_revision: fee?.revision || 0});
+        });
+        card.append(form);
+      }
+    }
+    if (pendingBankFee?.transaction_id === row.transaction_id) {
+      const retry = button('Retry original fee proposal', () => bankFeeAction(pendingBankFee), 'button secondary');
+      retry.disabled = busy; card.append(retry);
     }
     digest(card, 'Immutable bank content SHA-256', row.bank_digest);
     section.append(card);

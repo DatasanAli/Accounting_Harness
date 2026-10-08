@@ -238,6 +238,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-invoice", help="review a completed-service invoice and reconcile AR")
     commands.add_parser("demo-bill", help="review a separately evidenced vendor bill and reconcile AP")
     commands.add_parser("demo-cash", help="review rent and earned cash against paired synthetic facts")
+    commands.add_parser("demo-bank-fee", help="review a whole imported fee and post exactly once before separate matching")
     commands.add_parser("demo-bank-fee-account", help="activate the fixed audited expense account without posting")
     commands.add_parser("demo-bank-match", help="confirm a unique bank match and retain ambiguous exceptions")
     commands.add_parser("demo-bank-import", help="import a fictional bank statement with exact retry and unchanged books")
@@ -281,6 +282,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "demo-cash":
             from accounting_harness.workspace import demo_cash
             demo_cash()
+        elif args.command == "demo-bank-fee":
+            from accounting_harness.bank_fees import demo_bank_fee
+            demo_bank_fee()
         elif args.command == "demo-bank-fee-account":
             from accounting_harness.workspace import demo_bank_fee_account
             demo_bank_fee_account()

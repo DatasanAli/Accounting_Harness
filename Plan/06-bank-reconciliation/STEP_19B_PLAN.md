@@ -77,15 +77,15 @@ silently invented. The UI shows posted-but-unmatched state and exact retry recov
 **Files:** Concrete bank/fee service, evidence/review/approval/persistence integration,
 workspace/HTTP/CLI/static and focused tests. Parent owns docs/CI/browser/delivery.
 
-- [ ] RED: book1000 plus reviewed fee10 gives Cash990/Bank Fees Expense10, one
+- [x] RED: book1000 plus reviewed fee10 gives Cash990/Bank Fees Expense10, one
   additional journal; no change before human confirmation.
-- [ ] Reject forged/missing import, wrong account/currency/sign/date, changed digest,
+- [x] Reject forged/missing import, wrong account/currency/sign/date, changed digest,
   unsupported allocation, matched/candidate-existing row and stale approval.
-- [ ] Prove bank-row identity across overlapping statements, shared cash claim,
+- [x] Prove bank-row identity across overlapping statements, shared cash claim,
   exact concurrent retry, new same-draft approval after correction and no duplicates.
-- [ ] Cover versioned migration/legacy bytes, effect/journal/review/retry rollback,
+- [x] Cover versioned migration/legacy bytes, effect/journal/review/retry rollback,
   final-seal supersession, immutable/orphan effects and unsupported reversal.
-- [ ] Add explicit fee proposal/review, evidence trace and post-to-match handoff;
+- [x] Add explicit fee proposal/review, evidence trace and post-to-match handoff;
   `demo-bank-fee` shows1000→990 with expense10 and no timing-difference entries.
-- [ ] Verify focused/full checks/all demos and browser; reviewed commit/push/exact
+- [x] Verify focused/full checks/all demos and browser; reviewed commit/push/exact
   CI before Step 19c. No reconciliation-complete claim in this slice.
