@@ -55,13 +55,14 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ASSETS:
             name, kind = ASSETS[self.path]
             return self.respond(200, (STATIC / name).read_bytes(), kind)
-        if urlsplit(self.path).path == '/api/financial-statements':
+        if urlsplit(self.path).path in ('/api/financial-statements', '/api/cash-flow'):
             try:
                 values = parse_qs(urlsplit(self.path).query, strict_parsing=True,
                                   keep_blank_values=True, max_num_fields=1)
                 if set(values) != {'as_of'} or len(values['as_of']) != 1:
                     raise ValueError('financial statements require as_of exactly once')
-                return self.respond(200, self.server.workspace.financial_statements(values['as_of'][0]))
+                render = self.server.workspace.cash_flow if urlsplit(self.path).path == '/api/cash-flow' else self.server.workspace.financial_statements
+                return self.respond(200, render(values['as_of'][0]))
             except (ValueError, TypeError) as error:
                 return self.respond(409, dict(error=str(error)))
             except (sqlite3.Error, PersistenceBusy):

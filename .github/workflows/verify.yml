@@ -79,3 +79,5 @@ jobs:
         run: python3 -m accounting_harness demo-statements
       - name: Demonstrate confirmed period close and durable date lock
         run: python3 -m accounting_harness demo-close
+      - name: Demonstrate captured direct cash flow
+        run: python3 -m accounting_harness demo-cash-flow

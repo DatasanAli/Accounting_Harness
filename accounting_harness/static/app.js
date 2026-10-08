@@ -3,7 +3,7 @@
 const $ = id => document.getElementById(id);
 const views = {
   close: ['Period close', 'Review the complete January books, then explicitly close temporary balances and lock posting dates.'],
-  reports: ['Reports', 'Income, owner’s equity and assets linked to one captured set of books.'],
+  reports: ['Reports', 'Captured income, owner’s equity, assets and the sources and uses of Cash.'],
   'revenue-accrual': ['Revenue accruals', 'Completed unbilled services and their recorded cutoff assets.'],
   'expense-accrual': ['Expense accruals', 'Supported unbilled expenses and their recorded cutoff obligations.'],
   prepaid: ['Prepaid insurance', 'Coverage, supported consumption and the remaining recorded asset.'],
@@ -22,6 +22,8 @@ const sampleNames = {'rent-standard': 'January office rent', 'software-standard'
 const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'awaiting_review']);
 let state = null;
 let financialReport = null;
+let cashFlowReport = null;
+let capturingCashFlow = false;
 let closePreview = null;
 let closeBusy = false;
 let closeSelections = [];
@@ -1213,6 +1215,7 @@ function financialAccount(row) {
   return node;
 }
 function renderFinancialReports() {
+  renderCashFlow();
   const node = $('financial-reports'); node.replaceChildren();
   $('capture-financial-report').disabled = capturingFinancialReport;
   if (!financialReport) {
@@ -1275,6 +1278,58 @@ $('financial-report-form').addEventListener('submit', async event => {
   finally { capturingFinancialReport = false; renderFinancialReports(); }
 });
 $('financial-statement').addEventListener('change', renderFinancialReports);
+
+$('cash-flow-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (capturingCashFlow) return;
+  capturingCashFlow = true; renderCashFlow();
+  try {
+    cashFlowReport = await request('/api/cash-flow?as_of=' + encodeURIComponent($('cash-flow-cutoff').value));
+    notify('Cash flow captured through ' + cashFlowReport.as_of + '. Expand a cash movement for its evidence and classification.');
+  } catch (error) { notify('Unable to capture cash flow: ' + error.message + ' The previous capture remains displayed.', 'error'); }
+  finally { capturingCashFlow = false; renderCashFlow(); }
+});
+function renderCashFlow() {
+  const node = $('cash-flow-report'); node.replaceChildren();
+  $('capture-cash-flow').disabled = capturingCashFlow;
+  if (!cashFlowReport) return;
+  const report = cashFlowReport;
+  const card = add(el('article', null, 'card setup-card'), el('h3', 'Direct cash flow · through ' + report.as_of),
+    metadata([['Period start', report.period_start], ['Inclusive cutoff', report.as_of], ['Currency', report.currency],
+      ['Opening Cash', signedMoney(report.opening_cash_amount)], ['Operating receipts', signedMoney(report.operating_receipts_amount)],
+      ['Operating payments', signedMoney(report.operating_payments_amount)], ['Net operating cash', signedMoney(report.operating_amount)],
+      ['Net investing cash', signedMoney(report.investing_amount)], ['Net financing cash', signedMoney(report.financing_amount)],
+      ['Unresolved cash', signedMoney(report.unresolved_amount)], ['Net cash change', signedMoney(report.net_change_amount)],
+      ['Ending ledger Cash', signedMoney(report.ending_cash_amount)], ['Bridge residual', signedMoney(report.residual_amount)]]),
+    el('p', report.reconciled ? 'Cash bridge reconciles to the captured ledger.' : 'Cash bridge does not reconcile.', 'action-hint'),
+    status(report.classification_complete ? 'complete' : 'failed'),
+    el('p', report.classification_complete ? 'Classification complete under the displayed policy.' : 'Classification incomplete. Resolve every exception, including movements that net to zero.'));
+  for (const exception of report.exceptions) card.append(el('p', exception.journal_id + ': ' + exception.message + ' Cash ' + signedMoney(exception.cash_amount), 'error'));
+  for (const [category, title] of [['operating', 'Operating'], ['investing', 'Investing'], ['financing', 'Financing'], ['unresolved', 'Unresolved']]) {
+    card.append(el('h4', title + ' · ' + signedMoney(report[category + '_amount'])));
+    const rows = report.rows.filter(row => row.category === category);
+    if (!rows.length) card.append(el('p', 'No included cash movements.'));
+    for (const row of rows) {
+      const details = add(el('details'), el('summary', row.effective_date + ' · ' + row.journal_id + ' · ' + signedMoney(row.cash_amount)),
+        metadata([['Cash movement', signedMoney(row.cash_amount)], ['Category', row.category], ['Actor', row.actor_id],
+          ['Recorded at', row.recorded_at], ['Journal classification', row.classification], ['Original journal', row.original_entry_id || '—'],
+          ['Source references', row.source_ids.join(', ')]]), el('p', row.description),
+        table(['Account', 'Side', 'Posted amount · USD'], [...row.cash_lines, ...row.counterparts].map(line =>
+          [line.account, line.side, money(line.posted_amount)]), 'Cash and counterpart lines'));
+      if (row.exception) details.append(el('p', row.exception, 'error'));
+      if (row.payable_trace) details.append(jsonDetails('Captured approved payment and underlying bill evidence', row.payable_trace));
+      details.append(jsonDetails('Captured journal and source trace', row));
+      card.append(details);
+    }
+  }
+  digest(card, 'Cash-flow snapshot SHA-256', report.snapshot_digest);
+  digest(card, 'Financial snapshot SHA-256', report.financial_snapshot_digest);
+  card.append(jsonDetails('Captured policy, journal classifications and report identity', {policy: report.policy,
+    policy_digest: report.policy_digest, report_digest: report.report_digest,
+    included_journal_ids: report.included_journal_ids, excluded_closing_journal_ids: report.excluded_closing_journal_ids}));
+  node.append(card);
+}
+
 
 async function captureClose() {
   if (closeBusy) return;

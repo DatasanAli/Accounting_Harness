@@ -28,14 +28,14 @@ onboarding must preserve old context/approval bindings and gets its own step.
 
 | Order | Deliverable | Acceptance |
 | --- | --- | --- |
-| 12a (this request) | Localhost workspace; offline/Ollama/OpenAI selection; review, reject, post, audit and trial balance | Offline browser walkthrough; persistent restart; stale/duplicate approval refusal; network disabled by default; adapter contract tests |
+| 12a | Localhost workspace; offline/Ollama/OpenAI selection; review, reject, post, audit and trial balance | Offline browser walkthrough; persistent restart; stale/duplicate approval refusal; network disabled by default; adapter contract tests |
 | 13a | Register new structured synthetic receipts through the UI | Additive evidence enrollment without rewriting ledger context or old approvals; import retry/conflict/restart tests |
 | 13b | Cash receipts and expenses in the UI | Supported income/expense forms, exact cents, review before posting, negative and duplicate cases |
 | 14–16 | Bills, invoices, partial settlement and customer advances | Subledger/control-account reconciliation, overpayment and duplicate protection |
 | 17–19 | Bank CSV, matching and reviewed reconciliation | Ambiguity queue, timing differences, no unexplained completion |
 | 20–23 | Adjustments, statements, close/locks and exports | Reference-month expected results, frozen snapshots/policies, reproducible exports |
 | 24–28 | Service costs, budgets and scenarios | Recorded actuals separated from plans; deterministic comparisons |
-| 29–34 | Authenticated roles, selected integrations, recovery and pilot | Scoped human permissions, restore exercise, selected real-data policies and pilot checks |
+| 29–34 | Authenticated roles, offline integration contracts, recovery and synthetic acceptance | Scoped human permissions, simulated import/export, verified restore and complete synthetic browser rehearsal; live connections and actual pilot remain deferred |
 | 12b (when requested) | Connect and evaluate the chosen actual model | Bounded synthetic live evaluation, observed accuracy/latency/usage; no offline score substituted |
 
 Steps 13 onward may proceed offline under the user's new direction. The deferred
@@ -133,4 +133,6 @@ linked reversals, not deletion or a database reset.
 
 - Step 21: local 569 tests/30 demos, native linked reports/cutoff/drilldown/390px/restart pass with unchanged books; independent review approved without findings. Commit `511d932` matches remote and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37832868799); see [verification](07-period-close/STEP_21_VERIFICATION.md).
 
-- Step22: local588 tests/31 demos, native exact close/retry/backdate refusal/390px/frozen restart pass; independent review approved without findings. Commit/remote/exact CI pending; see [verification](07-period-close/STEP_22_VERIFICATION.md).
+- Step22: local588 tests/31 demos, native exact close/retry/backdate refusal/390px/frozen restart pass; independent review approved without findings. Commit `1bdb15e` matches remote and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37834858650); see [verification](07-period-close/STEP_22_VERIFICATION.md).
+
+- Step 23a: local 608 tests/32 demos, native cash bridges/AP trace/390px/unchanged state/frozen restart pass. Approval-content identity review finding fixed and scoped review approved. Commit/remote/exact CI pending; see [verification](07-period-close/STEP_23A_VERIFICATION.md).

@@ -1,6 +1,6 @@
 # Phase 07: Adjustments, statements and close
 
-Status: Step22 close/date locks pass588 tests,31 demos, native close/retry/backdate/mobile/restart checks and independent review with no findings. Upload/exact CI follow; see [verification](STEP_22_VERIFICATION.md). Step23a captured cash flow follows.
+Status: Step 23a cash flow passes 608 tests, 32 demos, native cutoff/trace/mobile/restart checks. The initial review finding was fixed and scoped review approved it. Upload/exact CI follow; see [verification](STEP_23A_VERIFICATION.md). Step 23b portable report packages follows.
 
 **Depends on:** Steps 02–19. Period policy is explicit before locking dates.
 
@@ -93,4 +93,4 @@ Do not reopen a locked period by editing dates. Reopening and prior-period corre
 
 The [Step20d adjusted operational fixture](STEP_20D_PLAN.md) precedes statements.
 It preserves the original fixture and explicitly records its own Jan1 insurance
-purchase so the delivered coverage policy applies; January31 expected totals match.
+purchase so the delivered coverage policy applies; January 31 expected totals match.

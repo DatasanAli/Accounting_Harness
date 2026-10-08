@@ -221,6 +221,7 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("demo-adjusted-month", help="assemble the supported adjusted reference month with explicit synthetic approvals")
     commands.add_parser("demo-close", help="explicitly close January and refuse backdated entries")
+    commands.add_parser("demo-cash-flow", help="capture direct cash categories and the exact cash bridge")
     commands.add_parser("demo-statements", help="capture linked income, owner equity and balance-sheet statements")
     commands.add_parser("demo-accounts", help="show the fictional account catalog and exact arithmetic")
     commands.add_parser("demo-journal", help="validate balanced and unbalanced fictional entries")
@@ -271,6 +272,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "demo-close":
             from accounting_harness.closing import demo_close
             demo_close()
+        elif args.command == "demo-cash-flow":
+            from accounting_harness.cash_flow import demo_cash_flow
+            demo_cash_flow()
         elif args.command == "demo-statements":
             from accounting_harness.financial_reports import demo_statements
             demo_statements()

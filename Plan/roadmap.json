@@ -304,7 +304,9 @@
         {
           "id": "22",
           "title": "Closing entries and date locks",
-          "status": "complete"
+          "status": "complete",
+          "commit": "1bdb15e9e98dc1f188fb5de2b410c5f9793b620c",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37834858650"
         },
         {
           "id": "23",
@@ -314,12 +316,12 @@
             {
               "id": "23a",
               "title": "Captured direct cash-flow statement",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "23b",
               "title": "Portable reproducible report packages",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         }
