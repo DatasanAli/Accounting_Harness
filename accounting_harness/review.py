@@ -203,8 +203,9 @@ class SQLiteReviewStore:
             BEGIN SELECT RAISE(ABORT, 'missing or unexpected operation intent'); END""")
 
     def validate(self, proposal, evidence, *, operation_intent=None, draft_id=None):
-        """Read-only validation against registered evidence and the frozen ledger."""
-        result = validate_journal(proposal, self.ledger._empty.catalog, known_source_ids=self.ledger.known_source_ids())
+        """Read-only validation against registered evidence and the current ledger catalog."""
+        catalog = self.ledger.current_catalog()
+        result = validate_journal(proposal, catalog, known_source_ids=self.ledger.known_source_ids())
         findings = list(result.findings)
         if not isinstance(proposal, dict):
             return tuple(findings)
@@ -229,6 +230,11 @@ class SQLiteReviewStore:
                 findings.append(Finding('conflicting_evidence', source_id, 'evidence differs from enrollment anchor'))
             records.append(source)
         if self.policy_version == 'review-v1':
+            extension_codes = {a.code for a in catalog.accounts} - {a.code for a in self.ledger._empty.catalog.accounts}
+            for line in proposal.get('lines', []) if isinstance(proposal.get('lines'), list) else []:
+                if isinstance(line, dict) and isinstance(line.get('account'), str) and line['account'] in extension_codes:
+                    findings.append(Finding('unsupported_account', 'lines',
+                                            'receipt policy requires an original baseline account'))
             if valid_sources and len(sources) != 1:
                 findings.append(Finding('unsupported_evidence', 'source_ids', 'receipt policy requires one source'))
             for record in records:

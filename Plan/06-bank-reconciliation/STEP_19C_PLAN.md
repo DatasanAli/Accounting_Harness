@@ -56,6 +56,18 @@ actor/time and references with scoped exact retry. Repeating the same completion
 returns its original record; changed payload conflicts. New later activity can
 require a new reconciliation revision, never an edit to the old record.
 
+## Reference fixture funding
+
+For the full-January end-to-end example, record a supported owner funding journal
+950.00 on January 1 and include its matching +950.00 bank row. The full statement
+therefore opens at 0.00, includes funding +950.00 and the fee -10.00, and closes at
+940.00. The phrase starting bank/book950 describes cash before the later deposit,
+payment and fee; do not mislabel the January 1 journal as a pre-period opening
+balance or silently ignore it as an unmatched book movement. Match the funding
+row as well as the posted fee. The later +200.00 deposit and -150.00 payment are
+the two reviewed timing items. This preserves the stated 990.00 reconciliation
+without inventing an opening balance or suppressing a cash exception.
+
 ## Task 1: timing evidence, report and explicit completion
 
 **Files:** Bank reconciliation module/service, workspace/HTTP/CLI/static and focused

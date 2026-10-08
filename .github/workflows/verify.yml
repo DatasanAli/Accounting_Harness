@@ -61,3 +61,5 @@ jobs:
         run: python3 -m accounting_harness demo-bank-import
       - name: Demonstrate human-confirmed bank matching and ambiguity
         run: python3 -m accounting_harness demo-bank-match
+      - name: Demonstrate audited bank-fee account activation
+        run: python3 -m accounting_harness demo-bank-fee-account

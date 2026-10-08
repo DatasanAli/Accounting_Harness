@@ -75,6 +75,11 @@ class Workspace:
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
                     yield registry, ledger, store, app, engine
 
+    @staticmethod
+    def _account_activation(ledger):
+        receipt = ledger.bank_fee_account_activation()
+        return dict(asdict(receipt), recorded_at=receipt.recorded_at.isoformat()) if receipt else None
+
     def import_bank_statement(self, data):
         with self.storage() as (_, ledger, _, _, _):
             return BankStatementService(ledger).import_statement(data, actor_id='local-operator')
@@ -330,18 +335,29 @@ class Workspace:
             journals = [dict(payload, lines=[dict(account=line.account, side=line.side,
                         amount=str(line.amount)) for line in entry.lines])
                         for payload, entry in zip(snapshot, report.snapshot.entries)]
+            catalog = asdict(report.snapshot.catalog)
+            report_identity = [ledger._context, snapshot]
+            if report.snapshot.catalog != ledger._empty.catalog:
+                report_identity.append(catalog)
             return dict(entity_id=self.catalog.entity_id, period='January 2026', currency='USD',
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
+                bank_fee_account_activation=self._account_activation(ledger),
                 bank_statements=BankStatementService(ledger).list_statements(),
                 journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances,
                 trial_balance=dict(as_of=report.as_of.isoformat(), policy=report.policy,
-                    snapshot_digest=digest([ledger._context, snapshot]),
+                    snapshot_digest=digest(report_identity), catalog=catalog,
                     included_entry_ids=list(report.included_entry_ids),
                     total_debits=str(report.total_debits), total_credits=str(report.total_credits),
                     rows=[dict(account=r.account, name=r.name, debit=str(r.debit), credit=str(r.credit))
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'bank-fee-account':
+            if data != {}:
+                raise ValueError('fixed bank-fee account setup accepts no fields')
+            with self.storage() as (_, ledger, _, _, _):
+                ledger.ensure_bank_fee_account(actor_id='local-operator')
+                return self._account_activation(ledger)
         if action in ('bank-match', 'bank-unmatch'):
             with self.storage() as (_, ledger, _, _, _):
                 return BankStatementService(ledger).matching_action(action.removeprefix('bank-'), data, actor_id='local-operator')
@@ -772,3 +788,23 @@ def demo_advance_earning():
         print('Approval:', posted['approval_id'], '; actor: local-operator; policy: advance-earning-v1')
         print('Snapshot:', report['snapshot_digest'], '; report:', report['report_digest'])
         print('Captured pre-earning report remains 600.00; restart/exact retries retain two journals; zero model calls.')
+
+
+def demo_bank_fee_account():
+    from tempfile import TemporaryDirectory
+    with TemporaryDirectory(prefix='accounting-bank-fee-account-') as directory:
+        workspace = Workspace(directory)
+        before = workspace.state()
+        original = workspace.action('bank-fee-account', {})
+        reopened = Workspace(directory)
+        assert reopened.action('bank-fee-account', {}) == original
+        after = reopened.state()
+        assert before['journal_count'] == after['journal_count'] == 0
+        assert before['trial_balance']['total_debits'] == after['trial_balance']['total_debits'] == '0.00'
+        assert len(before['trial_balance']['catalog']['accounts']) == 13
+        assert len(after['trial_balance']['catalog']['accounts']) == 14
+        assert original['account_code'] == '5300'
+        assert json.loads(original['canonical_metadata'])['temporary'] is True
+        print('Activated 5300 Bank Fees Expense (temporary, debit-normal expense).')
+        print('Reopen/retry preserves original activation actor/time; zero additional journals.')
+        print('Original 13-account context unchanged; current catalog has 14 accounts; no model calls.')

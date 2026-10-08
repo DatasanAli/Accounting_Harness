@@ -8,14 +8,14 @@ from dataclasses import asdict, dataclass, replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from accounting_harness.domain.accounts import AccountCatalog, _validate_text
+from accounting_harness.domain.accounts import Account, AccountCatalog, _validate_text
 from accounting_harness.domain.journal import Finding
 from accounting_harness.domain.ledger import (
     EntryRejected, InMemoryLedger, LedgerEntry, LedgerLine, LedgerSnapshot, trial_balance,
 )
 from accounting_harness.domain.money import Money
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 MAX_CENTS = 2**63 - 1
 OPERATION = "post-v1"
 REVERSAL_OPERATION = "reverse-v1"
@@ -95,6 +95,20 @@ class EnrollmentReceipt:
     state: str
 
 
+@dataclass(frozen=True, slots=True)
+class AccountExtensionReceipt:
+    account_code: str
+    entity_id: str
+    metadata_digest: str
+    canonical_metadata: str
+    actor_id: str
+    recorded_at: datetime
+    operation: str
+
+
+BANK_FEE_ACCOUNT = Account('5300', 'Bank Fees Expense', 'expense', 'debit', temporary=True)
+
+
 def _canonical(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
@@ -106,7 +120,7 @@ class SQLiteLedger:
     (2000 ms by default, at most 60000 ms per lock acquisition). A busy failure
     rolls back; the caller may retry using the same explicit idempotency key.
     Existing files must match the frozen context. Schema v1 migrates atomically
-    through v2 to v3; other versions are rejected. No context change, update or deletion API.
+    through v2, v3 and v4; other versions are rejected. No context change, update or deletion API.
     """
 
     def __init__(
@@ -196,7 +210,7 @@ class SQLiteLedger:
                     BEFORE INSERT ON {table}
                     BEGIN SELECT RAISE(ABORT, 'ledger context is frozen'); END""")
             version = 1
-        elif version not in (1, 2, SCHEMA_VERSION):
+        elif version not in (1, 2, 3, SCHEMA_VERSION):
             raise ValueError(f"unsupported schema version: {version}")
         else:
             stored = self._connection.execute(
@@ -208,6 +222,8 @@ class SQLiteLedger:
             version = 2
         if version == 2:
             self._migrate_v3()
+        if self._connection.execute("PRAGMA user_version").fetchone()[0] == 3:
+            self._migrate_v4()
 
     def admit(self, proposal: object, *, idempotency_key: str, actor_id: str) -> PostingReceipt:
         """Validate and store one entry atomically, or return its original receipt.
@@ -295,6 +311,73 @@ class SQLiteLedger:
             BEGIN SELECT RAISE(ABORT, 'source enrollment cannot replace existing evidence'); END""")
         self._connection.execute('PRAGMA user_version = 3')
 
+    def _migrate_v4(self):
+        self._connection.execute("""CREATE TABLE account_extensions (
+            account_code TEXT PRIMARY KEY REFERENCES accounts(code) DEFERRABLE INITIALLY DEFERRED
+                CHECK(account_code='5300'),
+            entity_id TEXT NOT NULL REFERENCES ledger_context(entity_id),
+            metadata_digest TEXT NOT NULL CHECK(length(metadata_digest)=64 AND metadata_digest NOT GLOB '*[^0-9a-f]*'),
+            canonical_metadata TEXT NOT NULL CHECK(length(canonical_metadata)>0),
+            actor_id TEXT NOT NULL CHECK(length(trim(actor_id))>0 AND actor_id=trim(actor_id)),
+            recorded_at TEXT NOT NULL CHECK(recorded_at GLOB '*T*+00:00'),
+            operation TEXT NOT NULL CHECK(operation='activate-bank-fee-account-v1')
+        ) STRICT, WITHOUT ROWID""")
+        self._connection.execute('DROP TRIGGER accounts_frozen')
+        self._connection.execute("""CREATE TRIGGER accounts_extension_required BEFORE INSERT ON accounts
+            WHEN EXISTS (SELECT 1 FROM accounts WHERE code=NEW.code)
+                OR NOT EXISTS (SELECT 1 FROM account_extensions WHERE account_code=NEW.code)
+            BEGIN SELECT RAISE(ABORT, 'account requires new audited extension'); END""")
+        for action in ('UPDATE', 'DELETE'):
+            self._connection.execute(f"""CREATE TRIGGER account_extensions_no_{action.lower()}
+                BEFORE {action} ON account_extensions
+                BEGIN SELECT RAISE(ABORT, 'account extensions are append-only'); END""")
+        self._connection.execute("""CREATE TRIGGER account_extensions_no_replace
+            BEFORE INSERT ON account_extensions
+            WHEN EXISTS (SELECT 1 FROM account_extensions WHERE account_code=NEW.account_code)
+                OR EXISTS (SELECT 1 FROM accounts WHERE code=NEW.account_code)
+            BEGIN SELECT RAISE(ABORT, 'account extension cannot replace existing account'); END""")
+        self._connection.execute('PRAGMA user_version = 4')
+
+    def bank_fee_account_activation(self) -> AccountExtensionReceipt | None:
+        """Read the original audit; no catalog cache survives a transaction."""
+        row = self._connection.execute('SELECT * FROM account_extensions WHERE account_code=?',
+                                       (BANK_FEE_ACCOUNT.code,)).fetchone()
+        if row is None:
+            return None
+        canonical = _canonical(asdict(BANK_FEE_ACCOUNT))
+        digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        if row[:4] != (BANK_FEE_ACCOUNT.code, self._empty.catalog.entity_id, digest, canonical):
+            raise ValueError('account extension conflicts with fixed bank-fee metadata')
+        return AccountExtensionReceipt(*row[:5], datetime.fromisoformat(row[5]), row[6])
+
+    def current_catalog(self) -> AccountCatalog:
+        """Baseline plus immutable extensions, read in the caller's transaction."""
+        # An unmigrated ledger has only the frozen baseline catalog.
+        if self._connection.execute("PRAGMA user_version").fetchone()[0] < 4:
+            return self._empty.catalog
+        if self.bank_fee_account_activation() is None:
+            return self._empty.catalog
+        return replace(self._empty.catalog, accounts=(*self._empty.catalog.accounts, BANK_FEE_ACCOUNT))
+
+    def ensure_bank_fee_account(self, *, actor_id: str) -> AccountExtensionReceipt:
+        """Activate only the trusted fixed expense definition; creates no journal."""
+        _validate_text(actor_id, 'actor ID')
+        with self._transaction(write=True):
+            if any(a.code == BANK_FEE_ACCOUNT.code for a in self._empty.catalog.accounts):
+                raise ValueError('bank-fee account conflicts with frozen baseline account')
+            prior = self.bank_fee_account_activation()
+            if prior is not None:
+                return prior
+            canonical = _canonical(asdict(BANK_FEE_ACCOUNT))
+            receipt = AccountExtensionReceipt(BANK_FEE_ACCOUNT.code, self._empty.catalog.entity_id,
+                hashlib.sha256(canonical.encode('utf-8')).hexdigest(), canonical, actor_id,
+                datetime.now(timezone.utc), 'activate-bank-fee-account-v1')
+            self._connection.execute('INSERT INTO account_extensions VALUES (?,?,?,?,?,?,?)',
+                (receipt.account_code, receipt.entity_id, receipt.metadata_digest, canonical,
+                 actor_id, receipt.recorded_at.isoformat(), receipt.operation))
+            self._connection.execute('INSERT INTO accounts VALUES (?)', (receipt.account_code,))
+            return receipt
+
     def known_source_ids(self) -> frozenset[str]:
         """Current admissible sources; the original context stays frozen."""
         return frozenset(row[0] for row in self._connection.execute('SELECT id FROM sources'))
@@ -330,7 +413,7 @@ class SQLiteLedger:
             return EnrollmentReceipt(document_id, entity, digest, canonical, actor_id, recorded, 'enrolled')
 
     def _validate_entry(self, proposal) -> LedgerEntry:
-        validator = InMemoryLedger(self._empty.catalog, self._empty.period_start,
+        validator = InMemoryLedger(self.current_catalog(), self._empty.period_start,
                                    self._empty.period_end, known_source_ids=self.known_source_ids())
         entry = validator.admit(proposal)
         for index, line in enumerate(entry.lines):
@@ -482,7 +565,7 @@ class SQLiteLedger:
         rows = self._connection.execute(
             "SELECT id, entity_id, currency, effective_date, description FROM journals "
             "ORDER BY effective_date, id").fetchall()
-        return replace(self._empty, entries=tuple(self._entry(row) for row in rows))
+        return replace(self._empty, catalog=self.current_catalog(), entries=tuple(self._entry(row) for row in rows))
 
     def trial_balance(self, as_of: date | str):
         return trial_balance(self.snapshot, as_of)

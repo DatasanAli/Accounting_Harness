@@ -246,6 +246,10 @@ def advances_report(snapshot, *, as_of):
         unassigned_control_cents=control-remaining, reconciled=control == remaining)
     if snapshot.earnings is not None:
         report.update(schema_version=2, earnings=earnings)
+    catalog = asdict(snapshot.ledger.catalog)
+    if _canonical(catalog) != _canonical(json.loads(snapshot.ledger_context)['catalog']):
+        # Preserve historical report bytes; new captures bind their effective catalog.
+        report.update(catalog=catalog, snapshot_digest=digest([snapshot_digest, catalog]))
     return dict(report, report_digest=digest(report))
 
 

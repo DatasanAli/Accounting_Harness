@@ -63,7 +63,7 @@ class ReversalTests(unittest.TestCase):
             'journals', 'lines', 'journal_sources', 'posting_events', 'idempotency', 'reversals')}
 
     def test_schema_supports_durable_reversal_links(self):
-        self.assertEqual(self.sql().execute('PRAGMA user_version').fetchone()[0], 3)
+        self.assertEqual(self.sql().execute('PRAGMA user_version').fetchone()[0], 4)
 
     def test_full_reversal_preserves_original_and_snapshot_across_restart(self):
         before = self.ledger.trial_balance('2026-01-31')
@@ -227,7 +227,7 @@ class ReversalTests(unittest.TestCase):
         tables = ('journals', 'lines', 'journal_sources', 'posting_events', 'idempotency')
         before = {t: sql.execute(f'SELECT * FROM {t}').fetchall() for t in tables}
         self.ledger = self.open()
-        self.assertEqual(sql.execute('PRAGMA user_version').fetchone()[0], 3)
+        self.assertEqual(sql.execute('PRAGMA user_version').fetchone()[0], 4)
         self.assertEqual({t: sql.execute(f'SELECT * FROM {t}').fetchall() for t in tables}, before)
         original = self.ledger.receipt('expense')
         self.assertEqual(self.ledger.admit(self.proposal, idempotency_key='original-key',

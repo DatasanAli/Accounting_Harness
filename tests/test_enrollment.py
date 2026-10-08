@@ -168,7 +168,7 @@ class EnrollmentTests(unittest.TestCase):
             dump = {t: db.execute(f'SELECT * FROM {t}').fetchall() for t in
                     ('ledger_context', 'sources', 'journals', 'lines', 'journal_sources', 'posting_events', 'idempotency')}
         with SQLiteLedger(path, **self.options) as ledger:
-            self.assertEqual(ledger._connection.execute('PRAGMA user_version').fetchone(), (3,))
+            self.assertEqual(ledger._connection.execute('PRAGMA user_version').fetchone(), (4,))
             for table, rows in dump.items():
                 self.assertEqual(ledger._connection.execute(f'SELECT * FROM {table}').fetchall(), rows)
             self.assertEqual(ledger.admit(self.proposal, actor_id='old', idempotency_key='old'), receipt)

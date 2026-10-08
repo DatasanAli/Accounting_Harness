@@ -118,7 +118,7 @@ class AgentTools:
         try:
             if name == 'read_accounts':
                 return dict(entity_id=self._entity_id,
-                            accounts=[asdict(a) for a in self._store.ledger._empty.catalog.list_accounts()])
+                            accounts=[asdict(a) for a in self._store.ledger.current_catalog().list_accounts()])
             if name == 'get_evidence':
                 record = self._store.registry.get(args['source_id'])
                 return dict(entity_id=record.entity_id, source_id=record.document_id,

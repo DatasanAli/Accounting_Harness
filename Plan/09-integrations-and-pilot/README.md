@@ -86,6 +86,14 @@ Copyable prompt:
 
 ### Step 33: Recovery and operational visibility
 
+A browser-workspace copy during Step 19a reproduced a current limitation: the run
+log binds absolute ledger/registry paths, so opening the copy at a new destination
+fails its scope check. The recovery design must explicitly support a verified
+relocation without rewriting old run checkpoints, approvals or scope history.
+Test the restored app and pending/completed runs at the separate destination;
+copying SQLite files or comparing balances alone does not prove recovery. Keep
+all related workspace databases consistent and preserve the original untouched.
+
 - **Build:** Add backup/restore runbook, one recovery drill, structured redacted metrics and failure alerts.
 - **Test:** Restore to a separate test database; compare journals, balances and review/run states; verify stalled-run and failed-sync detection; document measured recovery times.
 - **Verify manually:** Run one restore and reconcile its ledger to the recorded snapshot.

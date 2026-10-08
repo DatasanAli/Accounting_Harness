@@ -73,6 +73,9 @@ Copyable prompt:
 
 ### Step 23: Cash flow and reproducible exports
 
+Follow the [cash-flow and export contract](STEP_23_PLAN.md), delivered as separate
+23a cash-flow and 23b portable export slices.
+
 - **Build:** Add a statement of cash flows for supported transactions, using a direct operating section first, and CSV/JSON report exports.
 - **Test:** Reference operating cash flow -$400.00, investing $0.00, financing $9,800.00, ending cash $9,400.00; round-trip export preserves dates/cents and snapshots.
 - **Verify manually:** Reconcile opening cash plus cash flows to closing cash and export the month.

@@ -221,7 +221,8 @@
           "id": "18",
           "title": "Matching and exceptions",
           "status": "complete",
-          "delivery_gate": "Local checks/browser/independent review passed; exact upload and CI still pending."
+          "commit": "aa7a97575878aa9e32a395ad2b4e69c6b339526a",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37814013196"
         },
         {
           "id": "19",
@@ -231,12 +232,13 @@
             {
               "id": "19a",
               "title": "Audited fixed bank-fee account enrollment",
-              "status": "ready"
+              "status": "complete",
+              "delivery_gate": "Local checks/browser/independent review passed (one minor validation consistency finding); exact upload/CI pending."
             },
             {
               "id": "19b",
               "title": "Reviewed bank-fee adjustment",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "19c",
@@ -270,7 +272,19 @@
         {
           "id": "23",
           "title": "Cash flow and reproducible exports",
-          "status": "planned"
+          "status": "planned",
+          "substeps": [
+            {
+              "id": "23a",
+              "title": "Captured direct cash-flow statement",
+              "status": "planned"
+            },
+            {
+              "id": "23b",
+              "title": "Portable reproducible report packages",
+              "status": "planned"
+            }
+          ]
         }
       ]
     },

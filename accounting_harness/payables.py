@@ -238,6 +238,10 @@ def payables_report(snapshot, *, as_of):
         activation=json.loads(snapshot.activation_json) if snapshot.activation_json else None,
         bills=bills, payments=payments, vendors=vendors, ap_control_cents=control, subledger_cents=subledger,
         unassigned_control_cents=control-subledger, reconciled=control == subledger)
+    catalog = asdict(snapshot.ledger.catalog)
+    if _canonical(catalog) != _canonical(json.loads(snapshot.ledger_context)['catalog']):
+        # Preserve historical report bytes; new captures bind their effective catalog.
+        report.update(catalog=catalog, snapshot_digest=digest([snapshot_digest, catalog]))
     return dict(report, report_digest=digest(report))
 
 

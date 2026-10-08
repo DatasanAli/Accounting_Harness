@@ -276,7 +276,7 @@ class PersistenceTests(unittest.TestCase):
     def test_schema_version_and_unknown_version_refusal_preserve_data(self):
         self.post()
         sql = self.sql()
-        self.assertEqual(sql.execute("PRAGMA user_version").fetchone()[0], 3)
+        self.assertEqual(sql.execute("PRAGMA user_version").fetchone()[0], 4)
         sql.execute("PRAGMA user_version = 999")
         with self.assertRaisesRegex(ValueError, "schema version"):
             self.open()

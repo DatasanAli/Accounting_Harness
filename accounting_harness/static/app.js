@@ -686,6 +686,29 @@ function renderPayables() {
 }
 
 function renderBank() {
+  const setup = $('bank-fee-setup'); setup.replaceChildren();
+  setup.append(el('h3', '5300 · Bank Fees Expense'), el('p',
+    'Activate this fixed temporary expense account for separately reviewed bank fees. Setup creates no journal and grants no posting approval.'));
+  const activation = state.bank_fee_account_activation;
+  if (activation) {
+    setup.append(metadata([['Status', 'Active · debit-normal expense'],
+      ['Activated by', activation.actor_id], ['Original activation', activation.recorded_at]]),
+      add(el('details'), el('summary', 'Original account activation audit'),
+        el('pre', JSON.stringify(activation, null, 2))));
+  } else {
+    const activate = button('Activate Bank Fees Expense 5300', async () => {
+      busy = true; render();
+      try {
+        await request('/api/bank-fee-account', {});
+        await refresh();
+        notify('Bank Fees Expense 5300 is active. No journal was posted.');
+      } catch (error) {
+        notify('Activation was not confirmed: ' + error.message + ' Retry to recover the original audit.', 'error');
+      } finally { busy = false; render(); }
+    });
+    activate.disabled = busy;
+    setup.append(activate);
+  }
   $('import-bank').disabled = busy;
   const node = $('bank-list'); node.replaceChildren();
   const statements = state.bank_statements || [];

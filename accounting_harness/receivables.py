@@ -247,6 +247,10 @@ def receivables_report(snapshot, *, as_of):
         invoices=invoices, collections=collections, customers=customers, aging_cents=_aging(invoices),
         ar_control_cents=control, subledger_cents=subledger,
         unassigned_control_cents=control-subledger, reconciled=control == subledger)
+    catalog = asdict(snapshot.ledger.catalog)
+    if _canonical(catalog) != _canonical(json.loads(snapshot.ledger_context)['catalog']):
+        # Preserve historical report bytes; new captures bind their effective catalog.
+        report.update(catalog=catalog, snapshot_digest=digest([snapshot_digest, catalog]))
     return dict(report, report_digest=digest(report))
 
 

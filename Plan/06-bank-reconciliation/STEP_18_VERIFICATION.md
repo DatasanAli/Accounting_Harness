@@ -35,8 +35,7 @@ created by matching. The actual 500px viewport had no horizontal page overflow.
 The guarded suite passed **440 tests** in 26.230 seconds, including **42 focused
 bank tests**. Foundation, all **22 demos**, JavaScript syntax and diff checks
 passed. Independent review approved spec compliance and quality with no findings.
-Commit/upload and exact-SHA CI verification are pending; no delivery result is
-inferred from local tests.
+Delivered as [aa7a975](https://github.com/DatasanAli/Accounting_Harness/commit/aa7a97575878aa9e32a395ad2b4e69c6b339526a); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37814013196). The remote main SHA matched the local commit.
 
 ```sh
 python3 scripts/verify_foundation.py

@@ -64,17 +64,17 @@ a free-form account editor. Show account name/code and original activation audit
 call sites, workspace/CLI/minimal UI and focused migration/enrollment tests.
 Parent owns docs/CI/browser/delivery.
 
-- [ ] RED: 5300 unavailable before activation, available afterward with exact
+- [x] RED: 5300 unavailable before activation, available afterward with exact
   metadata, unchanged journal count/balances and original baseline context.
-- [ ] Preserve an existing posted retry, pending approved receipt, invoice/payment
+- [x] Preserve an existing posted retry, pending approved receipt, invoice/payment
   approval and provider run through activation/reopen; bytes and results unchanged.
-- [ ] Old captured snapshot/catalog/report remains identical. New captured catalog
+- [x] Old captured snapshot/catalog/report remains identical. New captured catalog
   includes 5300; balanced fee proposal passes generic journal account validation,
   while unsupported old recognition policies continue to refuse fee posting.
-- [ ] Test exact concurrent retry, already-open connection visibility, wrong entity,
+- [x] Test exact concurrent retry, already-open connection visibility, wrong entity,
   conflicting metadata, direct unaudited/replace attempts, immutable rows and
   faults at migration/anchor/account insertion boundaries.
-- [ ] Add `demo-bank-fee-account` showing account activation with zero additional
+- [x] Add `demo-bank-fee-account` showing account activation with zero additional
   journals. Run focused then guarded full checks/all demos/JS/diff; freeze for
   parent review/browser/commit/exact CI before reconciliation/fee posting.
 
