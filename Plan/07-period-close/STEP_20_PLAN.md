@@ -32,7 +32,7 @@ not authorize recognition or bypass a managed control account.
 2. [20b accrued expense](STEP_20B_PLAN.md): a separately evidenced incurred, unbilled and unpaid
    expense credits a fixed Accrued Expenses liability, not AP. Plan its exact
    fact/intent/account activation contract before implementation.
-3. 20c accrued revenue: separately evidenced completed, unbilled and uncollected
+3. [20c accrued revenue](STEP_20C_PLAN.md): separately evidenced completed, unbilled and uncollected
    service debits a fixed Accrued Service Revenue asset, not AR. Plan its exact
    fact/intent/account activation contract before implementation.
 

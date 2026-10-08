@@ -59,3 +59,5 @@ jobs:
         run: python3 -m accounting_harness demo-advance-earning
       - name: Demonstrate immutable synthetic bank statement import
         run: python3 -m accounting_harness demo-bank-import
+      - name: Demonstrate human-confirmed bank matching and ambiguity
+        run: python3 -m accounting_harness demo-bank-match

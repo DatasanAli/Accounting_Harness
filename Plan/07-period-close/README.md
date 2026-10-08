@@ -60,6 +60,8 @@ Copyable prompt:
 
 ### Step 22: Closing entries and date locks
 
+See the [atomic close and lock plan](STEP_22_PLAN.md).
+
 - **Build:** Close temporary accounts to the sample's owner capital, save the close record, and lock the period.
 - **Test:** Revenue/expenses/drawings become zero post-close; capital is $10,900.00; repeat close is idempotent; late posting/reversal is rejected; pre-close income still reports $1,100.00.
 - **Verify manually:** Close the reference month and demonstrate a refused backdated posting.

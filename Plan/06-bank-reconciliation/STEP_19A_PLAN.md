@@ -21,7 +21,9 @@ extensions. No editable chart-of-accounts UI or general catalog framework.
   context. Existing `_context`, source bytes, approval bindings, idempotency
   envelopes and provider/run scopes remain byte-identical.
 - New account is `5300`, `Bank Fees Expense`, expense classification, debit normal,
-  active and entity-scoped. Reuse the existing Account validation and metadata
+  active, temporary and entity-scoped. In the existing Account metadata set
+  `temporary=True`, matching the other expense accounts so later closing includes
+  bank fees. Reuse the existing Account validation and metadata
   names rather than inventing another account model.
 - Never change, deactivate, relabel, replace or delete an existing account.
   Historical snapshot catalogs remain immutable; no financial journal is created

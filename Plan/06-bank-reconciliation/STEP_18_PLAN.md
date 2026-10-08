@@ -82,20 +82,20 @@ confirming a bank match.
 **Files:** Existing bank module/schema, workspace/HTTP/CLI/static UI, focused bank
 matching tests. Parent owns documentation/CI/browser/delivery.
 
-- [ ] RED: unique +200.00 bank receipt and posted Cash debit200.00 propose one pair;
+- [x] RED: unique +200.00 bank receipt and posted Cash debit200.00 propose one pair;
   explicit confirmation creates one match and no journal or balance change.
-- [ ] Two -150.00 bank candidates/journals remain ambiguous without exact reference;
+- [x] Two -150.00 bank candidates/journals remain ambiguous without exact reference;
   distinct equal amounts retain distinct identities. An exact reference can narrow
   candidates; opposite signs, currency, date-window and account mismatch fail.
-- [ ] Confirming a preexisting transfer/owner-contribution journal leaves its
+- [x] Confirming a preexisting transfer/owner-contribution journal leaves its
   original counterpart classification and revenue unchanged.
-- [ ] Race two confirmations for one bank row or journal: at most one active pair. Two equal bank rows competing for one book entry remain ambiguous before confirmation.
+- [x] Race two confirmations for one bank row or journal: at most one active pair. Two equal bank rows competing for one book entry remain ambiguous before confirmation.
   Exact concurrent retries return one receipt. Recompute uniqueness after a new
   same-amount journal arrives; refuse stale bindings.
-- [ ] Verify restart, overlapping statements, changed-key payload, unmatch reason,
+- [x] Verify restart, overlapping statements, changed-key payload, unmatch reason,
   stale unmatch, rematch, historical retry behavior, immutable events and injected
   event/retry/schema rollback. Assert unchanged bank/ledger source records.
-- [ ] Add browser candidate/confirm/exception/unmatch flow and `demo-bank-match`.
+- [x] Add browser candidate/confirm/exception/unmatch flow and `demo-bank-match`.
   Demo confirms one unique receipt and leaves two ambiguous alternatives unresolved.
-- [ ] Run focused tests, guarded suite/foundation/all demos/JS/diff checks; freeze
+- [x] Run focused tests, guarded suite/foundation/all demos/JS/diff checks; freeze
   report for parent browser/review/commit/push/exact-SHA CI before Step 19.

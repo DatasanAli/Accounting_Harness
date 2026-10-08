@@ -87,6 +87,10 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             return BankStatementService(ledger).detail(bank_account_id, statement_id)
 
+    def bank_matches(self, bank_account_id):
+        with self.storage() as (_, ledger, _, _, _):
+            return BankStatementService(ledger).matching(bank_account_id)
+
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
                      note='No model calls. Fixed fictional examples.'),
@@ -338,6 +342,9 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action in ('bank-match', 'bank-unmatch'):
+            with self.storage() as (_, ledger, _, _, _):
+                return BankStatementService(ledger).matching_action(action.removeprefix('bank-'), data, actor_id='local-operator')
         if action == 'bank-statements':
             return self.import_bank_statement(data)
         if action == 'sources':

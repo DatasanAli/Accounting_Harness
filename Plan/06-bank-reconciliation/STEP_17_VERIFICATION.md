@@ -50,7 +50,7 @@ finding was observed.
 The guarded suite passed **420 tests** in 23.940 seconds, including 22 focused bank
 checks. Foundation, all **21 demos**, JavaScript syntax and diff checks passed.
 Independent review approved spec compliance and task quality with no findings.
-Commit, remote comparison and exact-SHA GitHub CI are pending.
+Delivered as [4971d13](https://github.com/DatasanAli/Accounting_Harness/commit/4971d138d0100eea4cca05534659a8cd3fd0eb56); [exact-SHA CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37811461472). The remote main SHA matched the local commit.
 
 ```sh
 python3 scripts/verify_foundation.py

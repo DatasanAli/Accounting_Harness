@@ -55,9 +55,14 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ASSETS:
             name, kind = ASSETS[self.path]
             return self.respond(200, (STATIC / name).read_bytes(), kind)
-        if urlsplit(self.path).path == '/api/bank-statements':
+        if urlsplit(self.path).path in ('/api/bank-statements', '/api/bank-matches'):
             try:
                 query = urlsplit(self.path).query
+                if urlsplit(self.path).path == '/api/bank-matches':
+                    values = parse_qs(query, strict_parsing=True, keep_blank_values=True, max_num_fields=1)
+                    if set(values) != {'bank_account_id'} or len(values['bank_account_id']) != 1:
+                        raise ValueError('matching view requires bank_account_id exactly once')
+                    return self.respond(200, self.server.workspace.bank_matches(values['bank_account_id'][0]))
                 if not query:
                     return self.respond(200, self.server.workspace.list_bank_statements())
                 values = parse_qs(query, strict_parsing=True, keep_blank_values=True, max_num_fields=2)
@@ -66,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(200, self.server.workspace.bank_statement_detail(
                     values['bank_account_id'][0], values['statement_id'][0]))
             except KeyError:
-                return self.respond(404, dict(error='bank statement not found'))
+                return self.respond(404, dict(error='bank statement or account not found'))
             except (ValueError, TypeError) as error:
                 return self.respond(409, dict(error=str(error)))
             except (sqlite3.Error, PersistenceBusy):
@@ -100,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
-        if self.path not in ('/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
+        if self.path not in ('/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
                              '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals', '/api/invoice-proposals', '/api/advance-proposals', '/api/advance-earning-proposals', '/api/invoice-collection-proposals', '/api/bill-payment-proposals'):
             return self.respond(404, dict(error='not found'))
         try:

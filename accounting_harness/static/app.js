@@ -17,6 +17,8 @@ const sampleNames = {'rent-standard': 'January office rent', 'software-standard'
 const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'awaiting_review']);
 let state = null;
 let bankDetail = null;
+let bankMatchView = null;
+let pendingBankAction = null;
 let bankFileContent = null;
 let activeView = 'evidence';
 let selectedSource = '';
@@ -168,6 +170,7 @@ async function refresh() {
   $('refresh').disabled = true;
   try {
     state = await request('/api/state');
+    if (bankDetail) await loadBankMatches();
     if (pendingRun) {
       const recorded = state.runs.find(run => run.run_id === pendingRun.run_id);
       if (recorded && settled.has(recorded.state)) {
@@ -698,6 +701,7 @@ function renderBank() {
       try {
         const query = new URLSearchParams({bank_account_id: statement.bank_account_id, statement_id: statement.statement_id});
         bankDetail = await request('/api/bank-statements?' + query);
+        await loadBankMatches();
         renderBankDetail(); $('bank-detail').scrollIntoView({block: 'start'});
       } catch (error) { notify(error.message, 'error'); }
     });
@@ -720,6 +724,87 @@ function renderBankDetail() {
   digest(card, 'Canonical statement content SHA-256', audit.content_digest);
   card.append(add(el('details'), el('summary', 'Exact import audit and transaction trace'), el('pre', bankDetail.trace_json)));
   node.append(card);
+  renderBankMatches(node);
+}
+async function loadBankMatches() {
+  bankMatchView = null;
+  bankMatchView = await request('/api/bank-matches?' + new URLSearchParams({bank_account_id: bankDetail.statement.bank_account_id}));
+}
+async function bankMatchAction(action, payload) {
+  if (busy) return;
+  pendingBankAction = {action, payload};
+  busy = true; renderBank();
+  try {
+    const receipt = await request('/api/' + action, payload);
+    pendingBankAction = null;
+    notify((action === 'bank-match' ? 'Match confirmed. ' : 'Match removed with an audit reason. ') +
+      'Ledger unchanged. Audit: ' + receipt.event_id);
+    await refresh();
+  } catch (error) {
+    if (!error.uncertain) pendingBankAction = null;
+    notify(error.message + ' Refresh and inspect matching history; retry an uncertain action with its original request.', 'error');
+    await refresh();
+  } finally { busy = false; renderBank(); }
+}
+function renderBankMatches(node) {
+  if (!bankMatchView || bankMatchView.bank_account_id !== bankDetail.statement.bank_account_id) return;
+  const section = el('section', null, 'card draft-body');
+  section.append(el('h3', 'Bank-to-book matching'), el('p',
+    'Confirm a unique bank row and posted Cash journal after inspecting the pair. Matching leaves every journal and balance unchanged.'));
+  if (pendingBankAction) {
+    const retry = button('Retry original matching action', () => bankMatchAction(pendingBankAction.action, pendingBankAction.payload));
+    retry.disabled = busy;
+    section.append(el('p', 'A matching action has an uncertain result. Its original request is retained until recovered.'), retry);
+  }
+  const identities = new Set(bankDetail.rows.map(row => row.transaction_id));
+  for (const row of bankMatchView.rows.filter(item => identities.has(item.transaction_id))) {
+    const card = el('article', null, 'card draft-body');
+    card.append(el('h4', row.transaction_id + ' · ' + row.status), metadata([
+      ['Bank amount · USD', row.amount], ['Booking date', row.booking_date], ['Bank reference', row.reference || 'Not supplied'],
+      ['Policy', bankMatchView.policy]]));
+    if (row.active_match) {
+      const match = row.active_match;
+      card.append(metadata([['Matched journal', match.journal_id], ['Match actor', match.actor_id], ['Matched at', match.recorded_at]]),
+        add(el('details'), el('summary', 'Original match audit'), el('pre', JSON.stringify(match, null, 2))));
+      const form = el('form');
+      const label = el('label', 'Unmatch reason');
+      const reason = el('input'); reason.name = 'reason'; reason.required = true; reason.maxLength = 1000;
+      label.append(reason);
+      const submit = el('button', 'Unmatch', 'button secondary'); submit.type = 'submit'; submit.disabled = busy || !!pendingBankAction;
+      form.append(label, submit);
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!reason.value.trim()) return;
+        bankMatchAction('bank-unmatch', {bank_account_id: bankMatchView.bank_account_id,
+          match_event_id: match.event_id, reason: reason.value, idempotency_key: crypto.randomUUID()});
+      });
+      card.append(form);
+    } else {
+      card.append(el('p', row.reference_note));
+      if (row.candidates.length) card.append(table(['Journal', 'Evidence IDs', 'Effective date', 'Cash · USD', 'Date difference', 'Exact reference'],
+        row.candidates.map(item => [item.journal_id, item.source_ids.join(', '), item.effective_date, item.amount,
+          item.date_difference_days + ' days', item.reference_match ? 'Yes' : 'No']), 'Compared posted journals'));
+      else card.append(el('p', 'No eligible posted Cash journal. This row remains unmatched.'));
+      if (row.status === 'ambiguous') card.append(el('p', 'Ambiguous: a unique pair is required in both directions. No confirmation is available.'));
+      if (row.competing_transaction_ids.length) card.append(el('p', 'Other bank rows competing for these journals: ' + row.competing_transaction_ids.join(', ')));
+      for (const item of row.exceptions) card.append(el('p', 'Unsupported journal ' + item.journal_id + ': ' + item.reason + '.'));
+      if (row.confirmable) {
+        const pair = row.candidates[0];
+        card.append(el('p', 'Confirm this pair: ' + row.transaction_id + ' (' + row.amount + ' USD) ↔ ' + pair.journal_id + ' (' + pair.amount + ' USD).'));
+        const confirm = button('Confirm match', () => bankMatchAction('bank-match', {
+          bank_account_id: bankMatchView.bank_account_id, transaction_id: row.transaction_id,
+          journal_id: pair.journal_id, binding: row.binding, idempotency_key: crypto.randomUUID()
+        }), 'button');
+        confirm.disabled = busy || !!pendingBankAction;
+        card.append(confirm);
+      }
+    }
+    digest(card, 'Immutable bank content SHA-256', row.bank_digest);
+    section.append(card);
+  }
+  section.append(add(el('details'), el('summary', 'Matching history and candidate bindings'),
+    el('pre', JSON.stringify(bankMatchView, null, 2))));
+  node.append(section);
 }
 $('bank-file').addEventListener('change', async event => {
   const file = event.target.files[0];

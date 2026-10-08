@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "17",
-  "next_step": "18",
+  "current_step": "18",
+  "next_step": "19",
   "phases": [
     {
       "id": "01",
@@ -213,17 +213,37 @@
         {
           "id": "17",
           "title": "Bank statement CSV import",
-          "status": "complete"
+          "status": "complete",
+          "commit": "4971d138d0100eea4cca05534659a8cd3fd0eb56",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37811461472"
         },
         {
           "id": "18",
           "title": "Matching and exceptions",
-          "status": "ready"
+          "status": "complete",
+          "delivery_gate": "Local checks/browser/independent review passed; exact upload and CI still pending."
         },
         {
           "id": "19",
           "title": "Reconciliation and reviewed adjustments",
-          "status": "planned"
+          "status": "ready",
+          "substeps": [
+            {
+              "id": "19a",
+              "title": "Audited fixed bank-fee account enrollment",
+              "status": "ready"
+            },
+            {
+              "id": "19b",
+              "title": "Reviewed bank-fee adjustment",
+              "status": "planned"
+            },
+            {
+              "id": "19c",
+              "title": "Captured reconciliation and completion",
+              "status": "planned"
+            }
+          ]
         }
       ]
     },

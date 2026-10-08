@@ -113,4 +113,6 @@ linked reversals, not deletion or a database reset.
 
 - Step 16c: delivered as `0cc3e5f`, exact CI run 37809290761 passed; 398 tests/20 demos, preserved payable-workspace browser upgrade and independent review without findings. See [verification](05-service-bookkeeping/STEP_16C_VERIFICATION.md).
 
-- Step 17: locally verified, 420 tests/21 demos, browser import/retry/rejection/restart and independent review without findings; upload/exact CI pending. See [verification](06-bank-reconciliation/STEP_17_VERIFICATION.md).
+- Step 17: delivered as `4971d13`, exact CI run 37811461472 passed; 420 tests/21 demos, browser import/retry/rejection/restart and independent review without findings. See [verification](06-bank-reconciliation/STEP_17_VERIFICATION.md).
+
+- Step 18: local 440 tests/22 demos, browser matching/unmatch/rematch/restart and independent review without findings. Exact delivery pending; see [verification](06-bank-reconciliation/STEP_18_VERIFICATION.md).
