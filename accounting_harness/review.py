@@ -61,6 +61,7 @@ class SQLiteReviewStore:
             self._initialize()
             self._initialize_intents()
             self._initialize_payment_intents()
+            self._initialize_invoice_intents()
             self._initialize_claims()
 
     def _initialize_claims(self):
@@ -77,7 +78,7 @@ class SQLiteReviewStore:
 
     def _initialize(self):
         if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='review_schema'").fetchone():
-            if self.db.execute('SELECT version FROM review_schema').fetchall() not in ([(1,)], [(2,)], [(3,)]):
+            if self.db.execute('SELECT version FROM review_schema').fetchall() not in ([(1,)], [(2,)], [(3,)], [(4,)]):
                 raise ValueError('unsupported review schema version')
             return
         self.db.execute('CREATE TABLE review_schema (version INTEGER PRIMARY KEY) STRICT')
@@ -111,7 +112,7 @@ class SQLiteReviewStore:
             protect_table(self.db, table, conflict)
 
     def _initialize_intents(self):
-        if self.db.execute('SELECT version FROM review_schema').fetchall() in ([(2,)], [(3,)]):
+        if self.db.execute('SELECT version FROM review_schema').fetchall() in ([(2,)], [(3,)], [(4,)]):
             return
         self.db.execute("""CREATE TABLE draft_operation_intents (
             draft_id TEXT NOT NULL, revision INTEGER NOT NULL, intent_json TEXT NOT NULL,
@@ -138,16 +139,36 @@ class SQLiteReviewStore:
             BEGIN SELECT RAISE(ABORT, 'review records are append-only'); END""")
 
     def _initialize_payment_intents(self):
-        if self.db.execute('SELECT version FROM review_schema').fetchall() == [(3,)]:
+        if self.db.execute('SELECT version FROM review_schema').fetchall() in ([(3,)], [(4,)]):
             return
-        sql = self.db.execute("SELECT sql FROM sqlite_master WHERE name='intent_required_at_seal'").fetchone()[0]
-        self.db.execute('DROP TRIGGER intent_required_at_seal')
-        self.db.execute(sql.replace("!= 'bill-v1'", "NOT IN ('bill-v1','bill-payment-v1')")
-                           .replace("= 'bill-v1'", "IN ('bill-v1','bill-payment-v1')"))
+        self._replace_intent_seal("'bill-v1','bill-payment-v1'")
         self.db.execute('DROP TRIGGER review_schema_no_update')
         self.db.execute('UPDATE review_schema SET version=3')
         self.db.execute("""CREATE TRIGGER review_schema_no_update BEFORE UPDATE ON review_schema
             BEGIN SELECT RAISE(ABORT, 'review records are append-only'); END""")
+
+    def _initialize_invoice_intents(self):
+        if self.db.execute('SELECT version FROM review_schema').fetchall() == [(4,)]:
+            return
+        self._replace_intent_seal("'bill-v1','bill-payment-v1','invoice-v1'")
+        self.db.execute('DROP TRIGGER review_schema_no_update')
+        self.db.execute('UPDATE review_schema SET version=4')
+        self.db.execute("""CREATE TRIGGER review_schema_no_update BEFORE UPDATE ON review_schema
+            BEGIN SELECT RAISE(ABORT, 'review records are append-only'); END""")
+
+    def _replace_intent_seal(self, policies):
+        # Only versioned migration literals call this concrete seal; never rewrite stored SQL fragments.
+        self.db.execute('DROP TRIGGER intent_required_at_seal')
+        self.db.execute(f"""CREATE TRIGGER intent_required_at_seal BEFORE INSERT ON review_events
+            WHEN (SELECT policy_version FROM draft_revisions
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision) IN ({policies})
+                 AND NOT EXISTS (SELECT 1 FROM draft_operation_intents
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision)
+              OR (SELECT policy_version FROM draft_revisions
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision) NOT IN ({policies})
+                 AND EXISTS (SELECT 1 FROM draft_operation_intents
+                  WHERE draft_id=NEW.draft_id AND revision=NEW.revision)
+            BEGIN SELECT RAISE(ABORT, 'missing or unexpected operation intent'); END""")
 
     def validate(self, proposal, evidence, *, operation_intent=None, draft_id=None):
         """Read-only validation against registered evidence and the frozen ledger."""
@@ -189,12 +210,15 @@ class SQLiteReviewStore:
         elif self.policy_version == 'bill-v1':
             from accounting_harness.payables import validate_bill
             findings.extend(validate_bill(self, proposal, records, operation_intent, draft_id))
+        elif self.policy_version == 'invoice-v1':
+            from accounting_harness.receivables import validate_invoice
+            findings.extend(validate_invoice(self, proposal, records, operation_intent, draft_id))
         elif self.policy_version == 'bill-payment-v1':
             from accounting_harness.payables import validate_payment
             findings.extend(validate_payment(self, proposal, records, operation_intent, draft_id))
         else:
             findings.append(Finding('unsupported_policy', 'policy_version', 'unknown review policy'))
-        if operation_intent is not None and self.policy_version not in ('bill-v1', 'bill-payment-v1'):
+        if operation_intent is not None and self.policy_version not in ('bill-v1', 'bill-payment-v1', 'invoice-v1'):
             findings.append(Finding('unexpected_intent', 'operation_intent', 'policy does not accept an intent'))
         try:
             effective = accounting_date(proposal.get('effective_date'))
@@ -294,7 +318,7 @@ class SQLiteReviewStore:
             self.db.execute('INSERT INTO review_events VALUES (?,?,?)', (draft_id, revision, operation))
             self.db.execute('INSERT INTO review_requests VALUES (?,?,?,?,?)',
                             (operation, key, request_digest, draft_id, revision))
-            if self.policy_version in ('cash-v1', 'bill-v1', 'bill-payment-v1'):
+            if self.policy_version in ('cash-v1', 'bill-v1', 'bill-payment-v1', 'invoice-v1'):
                 from accounting_harness.operations import economic_claims
                 records = []
                 for source_id in evidence:

@@ -232,6 +232,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-provider", help="evaluate synthetic provider responses and demonstrate separate approval")
     commands.add_parser("demo-enrollment", help="enroll synthetic evidence while preserving approvals and balances")
     commands.add_parser("demo-bill-payment", help="record an evidenced partial vendor payment and reconcile AP")
+    commands.add_parser("demo-invoice", help="review a completed-service invoice and reconcile AR")
     commands.add_parser("demo-bill", help="review a separately evidenced vendor bill and reconcile AP")
     commands.add_parser("demo-cash", help="review rent and earned cash against paired synthetic facts")
     commands.add_parser("demo-web", help="exercise the persistent offline workspace and human posting")
@@ -256,6 +257,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "demo-bill-payment":
             from accounting_harness.workspace import demo_bill_payment
             demo_bill_payment()
+        elif args.command == "demo-invoice":
+            from accounting_harness.workspace import demo_invoice
+            demo_invoice()
         elif args.command == "demo-bill":
             from accounting_harness.workspace import demo_bill
             demo_bill()

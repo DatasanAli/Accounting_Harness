@@ -18,6 +18,8 @@ Build only one numbered step per request. Split a row further if it cannot be de
 
 ### Step 17: Bank statement CSV import
 
+Detailed bounded implementation: [Step 17 plan](STEP_17_PLAN.md).
+
 - **Build:** Add one documented fictional bank CSV format with account, dates, signed amount and transaction identity.
 - **Test:** Import twice without duplication; malformed dates/signs/currency fail; opening plus movements equals statement closing balance.
 - **Verify manually:** Import a tiny statement and list rows without ledger changes.
@@ -39,6 +41,15 @@ Copyable prompt:
 > Build Step 18: Matching and exceptions. Follow Plan/06-bank-reconciliation/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 19: Reconciliation and reviewed adjustments
+
+The current frozen 13-account catalog has no bank-fee expense account. Before
+implementing the reviewed fee, split out an independently verified additive
+account extension if it is still needed. Preserve original ledger context,
+approval/retry/provider bytes and captured snapshots; do not relabel software or
+rent expense as bank fees. Introduce a clearly named fictional bank-fee expense
+account with immutable metadata and audit, and use the effective captured catalog
+for new validation/reports. This is a dependency to resolve in the detailed Step
+19 plan, not authorization to modify the catalog during bank import.
 
 - **Build:** Produce a bank-to-book reconciliation, supporting book adjustments and completion status.
 - **Test:** Example: book $1,000.00 less $10.00 fee equals $990.00; bank $940.00 plus $200.00 deposit in transit less $150.00 outstanding payment equals $990.00. Post only the fee; unexplained differences block completion.

@@ -5,6 +5,7 @@ const views = {
   evidence: ['Evidence', 'Start with a receipt. Keep every decision connected to its evidence.'],
   review: ['Review queue', 'Your judgment is the last step between a proposal and the books.'],
   ledger: ['Ledger', 'Exact balances and a complete trail back to each approved receipt.'],
+  receivables: ['Customer invoices', 'Completed service invoices and the amount customers owe.'],
   payables: ['Vendor bills', 'Reviewed vendor expenses and the amount still payable.'],
   runs: ['Agent runs', 'See what was requested, what happened, and where the agent stopped.'],
   providers: ['Providers', 'Choose how proposals are prepared. You control every request.']
@@ -187,7 +188,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderPayables(); renderReceivables(); renderRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -288,6 +289,7 @@ $('receipt-form').addEventListener('submit', async event => {
 function renderCashChoices() {
   for (const [id, kinds] of [['cash-source-select', ['cash_movement']],
     ['recognition-source-select', ['incurred_expense', 'service_completion']],
+    ['invoice-source-select', ['customer_invoice']], ['completion-source-select', ['service_completion']],
     ['bill-source-select', ['vendor_bill']], ['incurrence-source-select', ['incurred_expense']],
     ['payment-cash-select', ['cash_movement']]]) {
     const select = $(id);
@@ -316,6 +318,8 @@ function renderCashChoices() {
   bills.value = selectedBill;
   $('prepare-payment').disabled = busy;
   $('register-payment-evidence').disabled = busy;
+  $('prepare-invoice').disabled = busy;
+  $('register-invoice-evidence').disabled = busy;
   $('prepare-bill').disabled = busy;
   $('register-bill-evidence').disabled = busy;
   $('prepare-cash').disabled = busy;
@@ -350,6 +354,77 @@ $('payment-proposal-form').addEventListener('submit', async event => {
   } catch (error) { await refresh(); notify(error.message, 'error'); }
   finally { busy = false; render(); }
 });
+$('invoice-evidence-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const input = Object.fromEntries(new FormData(event.currentTarget));
+  const common = {schema_version: 2, synthetic: true, entity_id: state.entity_id, currency: 'USD',
+    event_id: input.event_id, counterparty_id: input.counterparty_id, counterparty: input.counterparty,
+    document_date: input.document_date, amount: input.amount};
+  const invoice = {...common, document_id: input.invoice_source_id, kind: 'customer_invoice',
+    invoice_number: input.invoice_number, due_date: input.due_date, description: input.invoice_description};
+  const completion = {...common, document_id: input.completion_source_id, kind: 'service_completion',
+    completion_date: input.document_date,
+    description: input.completion_description};
+  if (invoice.document_id === completion.document_id) {
+    notify('Use distinct invoice and completion document IDs.', 'error'); return;
+  }
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/operation-sources', {document: invoice});
+    await request('/api/operation-sources', {document: completion});
+    selectedSource = invoice.document_id; remember('source', selectedSource);
+    await refresh();
+    $('invoice-source-select').value = invoice.document_id;
+    $('completion-source-select').value = completion.document_id;
+    $('invoice-proposal-panel').open = true;
+    notify('Both fictional facts are registered. Prepare the invoice draft, then review and approve separately.');
+  } catch (error) {
+    await refresh();
+    notify(error.message + ' One document may be registered. Retry with the same IDs and unchanged facts.', 'error');
+  } finally { busy = false; if (state) renderCashChoices(); }
+});
+$('invoice-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/invoice-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Invoice proposal recorded. Inspect both documents, the due date and exact AR/revenue journal before approval.');
+  } catch (error) {
+    await refresh(); notify(error.message + ' Retry the same pair to recover an existing proposal.', 'error');
+  } finally { busy = false; if (state) render(); }
+});
+
+function renderReceivables() {
+  const node = $('receivables-content'); node.replaceChildren();
+  const report = state.receivables;
+  if (!report) return;
+  const amounts = value => value.startsWith('-') ? '-' + money(value.slice(1)) : money(value);
+  const summary = el('section', null, 'card draft-body');
+  summary.append(metadata([['As of', report.as_of], ['AR control', amounts(report.ar_control_amount)],
+    ['Customer outstanding', amounts(report.subledger_amount)], ['Unassigned residual', amounts(report.unassigned_control_amount)],
+    ['Reconciliation', report.reconciled ? 'Reconciled' : 'Unassigned AR: correction workflow required']]));
+  summary.append(el('p', report.enabled ? 'New AR postings require an approved invoice. Managed invoice corrections are unavailable.'
+    : 'Invoice setup requires zero existing unassigned AR. Preparing the first valid invoice activates the control guard.', 'action-hint'));
+  digest(summary, 'Captured snapshot · ' + report.policy, report.snapshot_digest);
+  digest(summary, 'Reproducible report digest', report.report_digest);
+  node.append(summary);
+  if (report.customers.length) node.append(table(['Customer', 'Outstanding · USD'], report.customers.map(customer => [customer.names.join(' / ') + ' · ' + customer.customer_id, money(customer.outstanding_amount)]), 'Customer totals'));
+  if (!report.invoices.length) node.append(empty('No posted customer invoices', 'Register the invoice and separate completion evidence, prepare a proposal, then approve it in the review queue.'));
+  for (const invoice of report.invoices) {
+    const card = el('article', null, 'card draft-body');
+    card.append(el('h3', invoice.customer_name + ' · ' + invoice.invoice_number),
+      metadata([['Customer ID', invoice.customer_id], ['Recognition date', invoice.effective_date], ['Due date', invoice.due_date],
+        ['Principal', money(invoice.principal_amount)], ['Paid', money(invoice.paid_amount)], ['Outstanding', money(invoice.outstanding_amount)]]),
+      el('p', 'Invoice evidence: ' + invoice.invoice_source_id + ' · Completion evidence: ' + invoice.completion_source_id));
+    card.append(add(el('details'), el('summary', 'Invoice and approval trace'), el('pre', invoice.trace_json)));
+    node.append(card);
+  }
+}
+
 $('bill-evidence-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (busy || !state) return;
@@ -527,7 +602,7 @@ function renderDrafts() {
       ['Effective date', draft.proposal.effective_date], ['Description', draft.proposal.description]]),
       el('p', draft.reason, 'draft-reason'), journalLines(draft.proposal.lines));
     if (draft.operation_intent) body.append(add(el('div', null, 'document-description'),
-      el('h4', 'Bound payable operation · review vendor, dates, amount and evidence roles'),
+      el('h4', 'Bound operation · review parties, dates, amount and evidence roles'),
       el('pre', draft.operation_intent_json)));
     for (const id of Object.keys(draft.evidence)) {
       const fact = state.sources.find(item => item.source_id === id);

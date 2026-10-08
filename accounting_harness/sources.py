@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'customer_invoice': {'event_id', 'counterparty_id', 'invoice_number', 'due_date'},
     'vendor_bill': {'event_id', 'counterparty_id', 'bill_number', 'due_date'},
     'cash_movement': {'event_id', 'counterparty_id', 'direction', 'purpose'},
     'incurred_expense': {'event_id', 'counterparty_id', 'expense_account', 'incurred_date'},
@@ -73,9 +74,9 @@ def _content(document: object, entity_id: str) -> tuple[str, str]:
         if document['expense_account'] not in ('5000', '5100'):
             raise ValueError('expense account must be 5000 or 5100')
         accounting_date(document['incurred_date'])
-    if kind == 'vendor_bill':
+    if kind in ('vendor_bill', 'customer_invoice'):
         if accounting_date(document['due_date']) < accounting_date(document['document_date']):
-            raise ValueError('due date cannot precede bill issue date')
+            raise ValueError('due date cannot precede issue date')
     if kind == 'service_completion':
         accounting_date(document['completion_date'])
     accounting_date(document["document_date"])

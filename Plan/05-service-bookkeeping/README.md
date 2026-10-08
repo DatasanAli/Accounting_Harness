@@ -1,6 +1,6 @@
 # Phase 05: Daily service-business operations
 
-Status: Step 13a is delivered; Step 13b cash templates are delivered with verified CI. See [13a verification](STEP_13A_VERIFICATION.md) and [13b verification](STEP_13B_VERIFICATION.md). Step 14a vendor bill recognition is delivered with verified CI. Step 14b partial settlement is locally verified; see [payment verification](STEP_14B_VERIFICATION.md). Upload/CI pending; Step 15a follows verified delivery.
+Status: Step 13a is delivered; Step 13b cash templates are delivered with verified CI. See [13a verification](STEP_13A_VERIFICATION.md) and [13b verification](STEP_13B_VERIFICATION.md). Step 14a vendor bill recognition is delivered with verified CI. Step 14b partial settlement is delivered with verified CI; see [payment verification](STEP_14B_VERIFICATION.md). Step 15a invoice recognition is locally verified and reviewed; see [invoice verification](STEP_15A_VERIFICATION.md). Upload/CI pending, then Step 15b collection and aging.
 
 **Depends on:** Steps 02–11 and Step 12 offline contracts. Live model connection is deferred by user. Each workflow uses existing evidence, approval, and posting services.
 
@@ -59,6 +59,8 @@ Copyable prompt:
 > Build Step 15: Customer invoices and collection. Follow Plan/05-service-bookkeeping/README.md and the shared implementation/testing guidelines. Implement only this step, demonstrate it with fictional data, test it, then commit and push to GitHub. Report the evidence and stop.
 
 ### Step 16: Customer advances and earning
+
+Split into [16a advance receipt](STEP_16A_PLAN.md) and [16b supported earning](STEP_16B_PLAN.md), under [the Step 16 contract](STEP_16_PLAN.md).
 
 - **Build:** Track customer prepayments as liabilities and recognize only supported earned amounts.
 - **Test:** A $600.00 advance with $200.00 earned leaves $400.00 unearned; reject excess release and duplicate recognition.

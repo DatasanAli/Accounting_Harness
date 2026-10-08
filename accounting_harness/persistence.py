@@ -407,6 +407,9 @@ class SQLiteLedger:
                 "SELECT 1 FROM reversals WHERE original_id=?", (original_id,),
             ).fetchone():
                 raise ValueError("original journal is already reversed")
+            if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='customer_invoices'").fetchone():
+                if self._connection.execute('SELECT 1 FROM customer_invoices WHERE journal_id=?', (original_id,)).fetchone():
+                    raise ValueError('operational_reversal_not_supported: managed invoices require a linked correction workflow')
             if self._connection.execute("SELECT 1 FROM sqlite_master WHERE name='vendor_bills'").fetchone():
                 if self._connection.execute('SELECT 1 FROM vendor_bills WHERE journal_id=?', (original_id,)).fetchone():
                     raise ValueError('operational_reversal_not_supported: managed bills require a linked correction workflow')

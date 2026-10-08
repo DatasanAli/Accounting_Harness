@@ -148,7 +148,9 @@
             {
               "id": "14b",
               "title": "Recorded partial settlement",
-              "status": "complete"
+              "status": "complete",
+              "commit": "0e061604d57c3f70400a10e6f39bb1e7a5c0ecf8",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37797498803"
             }
           ]
         },
@@ -160,12 +162,12 @@
             {
               "id": "15a",
               "title": "Reviewed customer invoice recognition",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "15b",
               "title": "Recorded collection and aging",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         },

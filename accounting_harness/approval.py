@@ -1,5 +1,6 @@
 """Trusted local application approval/posting; never exposed as agent tools."""
 
+import hashlib
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -7,6 +8,21 @@ from datetime import datetime, timezone
 from accounting_harness.domain.accounts import _validate_text
 from accounting_harness.persistence import _canonical
 from accounting_harness.review import digest, protect_table
+
+
+def approved_source_content(db, registry, source_id, approval_id):
+    """Capture the original evidenced content, including initial-context sources."""
+    row = db.execute('SELECT content_digest, canonical_content FROM source_enrollments WHERE source_id=?',
+                     (source_id,)).fetchone()
+    if row is None:
+        source = registry.get(source_id)
+        row = (source.content_digest, source.canonical_content)
+    binding = json.loads(db.execute('SELECT binding_json FROM approvals WHERE approval_id=?',
+                                    (approval_id,)).fetchone()[0])
+    expected = binding['evidence'][source_id]
+    if row[0] != expected or hashlib.sha256(row[1].encode()).hexdigest() != expected:
+        raise ValueError('source differs from approved evidence')
+    return row[1]
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,6 +147,9 @@ class ReviewApplication:
             if current.policy_version in ('bill-v1', 'bill-payment-v1'):
                 from accounting_harness.payables import prepare_payable_post
                 prepare_payable_post(self.store, approval, current, entry)
+            if current.policy_version == 'invoice-v1':
+                from accounting_harness.receivables import prepare_receivable_post
+                prepare_receivable_post(self.store, approval, current, entry)
             receipt = self.ledger._store_entry(entry, actor_id)
             self.db.execute('INSERT INTO review_postings VALUES (?,?,?)',
                             (current.draft_id, approval_id, entry.id))

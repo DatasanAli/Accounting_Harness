@@ -70,5 +70,4 @@ commit; never delete payment/journal history to undo an accounting transaction.
 
 ## Delivery evidence
 
-Local verification is complete. Commit, remote SHA and exact-SHA Actions result
-will be recorded after review and upload; no GitHub success is claimed yet.
+Delivered as [0e06160](https://github.com/DatasanAli/Accounting_Harness/commit/0e061604d57c3f70400a10e6f39bb1e7a5c0ecf8). Local HEAD and remote main matched. [GitHub Actions run 37797498803](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37797498803) completed successfully for that exact SHA, including all 301 tests and 16 demos.

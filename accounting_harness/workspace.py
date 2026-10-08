@@ -18,6 +18,7 @@ from accounting_harness.review import SQLiteReviewStore, digest
 from accounting_harness.runs import RunLimits, SQLiteRunEngine
 from accounting_harness.sources import SQLiteSourceRegistry
 from accounting_harness.payables import PayablesService, payables_report
+from accounting_harness.receivables import ReceivablesService, receivables_report
 from accounting_harness.domain.money import Money
 from accounting_harness.operations import cash_expense_proposal, earned_cash_proposal
 
@@ -140,6 +141,9 @@ class Workspace:
             raise KeyError(draft_id)
         if row[0] == 'review-v1':
             return store, app
+        if row[0] == 'invoice-v1':
+            receivables = ReceivablesService(store.ledger, store.registry)
+            return receivables.store, receivables.app
         if row[0] == 'bill-v1':
             payables = PayablesService(store.ledger, store.registry)
             return payables.store, payables.app
@@ -168,6 +172,15 @@ class Workspace:
             draft = store.save('cash-' + identity, proposal, evidence=evidence, expected_revision=0,
                 actor_id='cash-template', idempotency_key='cash-' + identity,
                 reason='Deterministic synthetic cash proposal; human review required', require_unused_evidence=True)
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
+
+    def prepare_invoice(self, data):
+        fields(data, dict(invoice_source_id=str, completion_source_id=str))
+        with self.storage() as (registry, ledger, _, _, _):
+            service = ReceivablesService(ledger, registry)
+            draft = service.propose_invoice(**data, expected_revision=0, actor_id='invoice-template',
+                idempotency_key='web-invoice:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -220,6 +233,17 @@ class Workspace:
                     attempts=checkpoint.provider_attempts, reserved_nanodollars=checkpoint.cost_units,
                     trace=[dict(sequence=c.sequence, state=c.state, reason=c.reason,
                                 recorded_at_ms=c.recorded_at_ms) for c in engine.trace(run_id)]))
+            receivables = receivables_report(ReceivablesService(ledger, registry).snapshot(), as_of='2026-01-31')
+            for field in ('ar_control', 'subledger', 'unassigned_control'):
+                cents = receivables[field + '_cents']
+                receivables[field + '_amount'] = ('-' if cents < 0 else '') + str(Money(abs(cents)))
+            for invoice in receivables['invoices']:
+                for field in ('principal', 'paid', 'outstanding'):
+                    invoice[field + '_amount'] = str(Money(invoice[field + '_cents']))
+                # JSON numbers can exceed JavaScript's exact range; render this text verbatim.
+                invoice['trace_json'] = json.dumps(invoice, indent=2, sort_keys=True)
+            for customer in receivables['customers']:
+                customer['outstanding_amount'] = str(Money(customer['outstanding_cents']))
             payables = payables_report(PayablesService(ledger, registry).snapshot(), as_of='2026-01-31')
             for field in ('ap_control', 'subledger', 'unassigned_control'):
                 cents = payables[field + '_cents']
@@ -239,7 +263,7 @@ class Workspace:
                         for payload, entry in zip(snapshot, report.snapshot.entries)]
             return dict(entity_id=self.catalog.entity_id, period='January 2026', currency='USD',
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
-                journal_count=len(snapshot), journals=journals, payables=payables,
+                journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables,
                 trial_balance=dict(as_of=report.as_of.isoformat(), policy=report.policy,
                     snapshot_digest=digest([ledger._context, snapshot]),
                     included_entry_ids=list(report.included_entry_ids),
@@ -252,6 +276,8 @@ class Workspace:
             return self.register_source(data)
         if action == 'operation-sources':
             return self.register_operation_source(data)
+        if action == 'invoice-proposals':
+            return self.prepare_invoice(data)
         if action == 'bill-proposals':
             return self.prepare_bill(data)
         if action == 'bill-payment-proposals':
@@ -493,3 +519,44 @@ def demo_bill_payment():
         print('Operation sources: 3; report:', report['policy'], report['snapshot_digest'])
         print('Captured pre-payment outstanding stays 300.00; exact reopen/retries preserve two journals.')
         print('Managed bill/payment reversals unavailable; zero model calls.')
+
+
+def demo_invoice():
+    from tempfile import TemporaryDirectory
+    with TemporaryDirectory(prefix='accounting-invoice-') as directory:
+        workspace = Workspace(directory)
+        common = dict(schema_version=2, synthetic=True, entity_id=workspace.catalog.entity_id,
+            currency='USD', document_date='2026-01-10', amount='2500.00', event_id='service-completed-001',
+            counterparty='Fictional service customer', counterparty_id='customer-synthetic-1',
+            description='Synthetic independent service evidence')
+        invoice = dict(common, document_id='source-invoice-001', kind='customer_invoice',
+                    invoice_number='I-001', due_date='2026-01-25')
+        completion = dict(common, document_id='source-completion-001', kind='service_completion',
+                        completion_date='2026-01-10')
+        for document in (invoice, completion):
+            workspace.action('operation-sources', dict(document=document))
+        request = dict(invoice_source_id=invoice['document_id'], completion_source_id=completion['document_id'])
+        first = workspace.action('invoice-proposals', request)
+        before = workspace.state()
+        assert before['journal_count'] == 0 and not before['receivables']['invoices']
+        print('Pending invoice: 1; posted journals: 0; customer invoice rows: 0; invoice-v1.')
+        draft = before['drafts'][0]
+        confirmation = dict(draft_id=draft['draft_id'], revision=draft['revision'],
+                            confirmed_digest=draft['content_digest'])
+        posted = workspace.action('approve-post', confirmation)  # Separate simulated human decision.
+        reopened = Workspace(directory)
+        assert reopened.action('invoice-proposals', request) == first
+        assert reopened.action('approve-post', confirmation) == posted
+        state = reopened.state()
+        report = state['receivables']
+        rows = {r['account']: (r['debit'],r['credit']) for r in state['trial_balance']['rows']}
+        assert rows['1100'] == ('2500.00','0.00') and rows['4000'] == ('0.00','2500.00')
+        assert report['subledger_cents'] == report['ar_control_cents'] == 250000
+        assert report['unassigned_control_cents'] == 0 and len(report['invoices']) == 1
+        print('AR debit 2500.00; Revenue credit 2500.00; outstanding 2500.00 USD; residual 0.00.')
+        print('Due 2026-01-25; separate invoice/completion documents: 2; no payments recorded.')
+        print('Approval:', posted['approval_id'], '; actor: local-operator; policy: invoice-v1')
+        for source, evidence_digest in draft['evidence'].items():
+            print('Evidence:', source, evidence_digest)
+        print('Report:', report['policy'], report['snapshot_digest'])
+        print('Reopen and exact retries preserve one journal. Managed invoice reversals unavailable; zero model calls.')

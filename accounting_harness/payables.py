@@ -1,11 +1,10 @@
 """Reviewed vendor expense recognition and immutable AP control reconciliation."""
 
-import hashlib
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
-from accounting_harness.approval import ReviewApplication
+from accounting_harness.approval import ReviewApplication, approved_source_content
 from accounting_harness.domain.accounts import _validate_text
 from accounting_harness.domain.dates import accounting_date
 from accounting_harness.domain.journal import Finding
@@ -200,22 +199,11 @@ class PayablesSnapshot:
 
 def _snapshot(ledger, registry):
     db = ledger._connection
-    rows = db.execute('''SELECT b.*, e.canonical_content FROM vendor_bills b
-        LEFT JOIN source_enrollments e ON e.source_id=b.bill_source_id ORDER BY b.bill_id''').fetchall()
+    rows = db.execute('SELECT * FROM vendor_bills ORDER BY bill_id').fetchall()
     bills = []
     for row in rows:
-        content = row[-1]
-        if content is None:
-            # Initial-context sources lack enrollment anchors; capture their approved immutable content now.
-            source = registry.get(row[4])
-            binding = json.loads(db.execute('SELECT binding_json FROM approvals WHERE approval_id=?',
-                                            (row[10],)).fetchone()[0])
-            expected = binding['evidence'][row[4]]
-            if (source.content_digest != expected
-                    or hashlib.sha256(source.canonical_content.encode()).hexdigest() != expected):
-                raise ValueError('bill source differs from approved evidence')
-            content = source.canonical_content
-        bills.append(VendorBill(*row[:-1], json.loads(content)['counterparty']))
+        content = approved_source_content(db, registry, row[4], row[10])
+        bills.append(VendorBill(*row, json.loads(content)['counterparty']))
     activation = db.execute('SELECT * FROM payables_context').fetchone()
     return PayablesSnapshot(ledger._snapshot(), tuple(bills), _canonical(activation) if activation else None, ledger._context,
         tuple(VendorBillPayment(*r) for r in db.execute('SELECT * FROM vendor_bill_payments ORDER BY payment_event_id')))
