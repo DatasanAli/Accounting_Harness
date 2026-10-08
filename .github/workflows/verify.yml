@@ -41,3 +41,5 @@ jobs:
         run: python3 -m accounting_harness demo-provider
       - name: Demonstrate persistent offline localhost workspace
         run: python3 -m accounting_harness demo-web
+      - name: Demonstrate additive evidence enrollment and preserved approvals
+        run: python3 -m accounting_harness demo-enrollment

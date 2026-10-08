@@ -77,25 +77,25 @@ The constructor still requires the original baseline set. Workspace keeps its ex
 
 **Acceptance checklist:**
 
-- [ ] A posted legacy journal, an unposted approved legacy draft, and an in-progress run survive enrollment/reopen with identical context, approval binding, retry digests and receipts.
-- [ ] The old immutable snapshot/trial balance remains identical; new enrollment alone changes no balances.
-- [ ] A new source can be validated and posted through the ordinary human-review path after enrollment; an unenrolled source cannot.
-- [ ] Two already-open ledger connections observe the same enrolled IDs; concurrent enrollment produces one audit record and one source row.
-- [ ] Same identity/content retries return the original actor/time; conflict and wrong entity fail without writes.
-- [ ] Failure between registration/enrollment is visible and recoverable; failure between enrollment/source-row insertion rolls back both ledger rows.
-- [ ] A real v2 populated database migrates, and the checked-in v1 fixture still migrates through v2. Injected DDL failure leaves original version, triggers and historical records.
-- [ ] Existing direct-SQL immutability tests remain; replace the old assertion that *every* source insertion fails with assertions that unregistered, unaudited and replacement insertion fail.
-- [ ] Existing provider duplicate-source race tests and zero-discovery guard still pass.
+- [x] A posted legacy journal, an unposted approved legacy draft, and an in-progress run survive enrollment/reopen with identical context, approval binding, retry digests and receipts.
+- [x] The old immutable snapshot/trial balance remains identical; new enrollment alone changes no balances.
+- [x] A new source can be validated and posted through the ordinary human-review path after enrollment; an unenrolled source cannot.
+- [x] Two already-open ledger connections observe the same enrolled IDs; concurrent enrollment produces one audit record and one source row.
+- [x] Same identity/content retries return the original actor/time; conflict and wrong entity fail without writes.
+- [x] Failure between registration/enrollment is visible and recoverable; failure between enrollment/source-row insertion rolls back both ledger rows.
+- [x] A real v2 populated database migrates, and the checked-in v1 fixture still migrates through v2. Injected DDL failure leaves original version, triggers and historical records.
+- [x] Existing direct-SQL immutability tests remain; replace the old assertion that *every* source insertion fails with assertions that unregistered, unaudited and replacement insertion fail.
+- [x] Existing provider duplicate-source race tests and zero-discovery guard still pass.
 
 Demonstration: enroll a new 125.00 synthetic receipt after an existing post and approval, reopen, show original trial balance and retry receipt unchanged, then show the new document available for review with zero additional journals.
 
 
 ## Delivery checklist
 
-- [ ] Write tests that fail on the existing frozen-source API.
-- [ ] Implement additive enrollment and migration without changing old context/digest bytes.
-- [ ] Add source list/register endpoints and structured fictional receipt form; no provider call on registration.
-- [ ] Add `demo-enrollment` and CI/documentation commands.
-- [ ] Run foundation, guarded suite, prior demonstrations, new demonstration and browser import.
+- [x] Write tests that fail on the existing frozen-source API.
+- [x] Implement additive enrollment and migration without changing old context/digest bytes.
+- [x] Add source list/register endpoints and structured fictional receipt form; no provider call on registration.
+- [x] Add `demo-enrollment` and CI/documentation commands.
+- [x] Run foundation, guarded suite, prior demonstrations, new demonstration and browser import.
 - [ ] Review diff, commit intended files, push and verify exact SHA/CI.
-- [ ] Record delivery and continue to13b under the expanded user authorization.
+- [ ] Record delivery and continue to Step 13b under the expanded user authorization.

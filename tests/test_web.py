@@ -139,3 +139,60 @@ class WorkspaceHTTPTests(unittest.TestCase):
         self.assertEqual(state['drafts'], [])
         self.assertEqual(state['runs'][0]['state'], 'awaiting_review')
         self.assertEqual(state['runs'][0]['reason'], 'missing_facts')
+
+    def receipt(self, **changes):
+        return dict(document_id='typed-receipt', document_date='2026-01-15', amount='125.00',
+                    counterparty='Fictional shop', description='Fictional supplies', **changes)
+
+    def test_source_registration_listing_retry_and_restart_preserve_books(self):
+        before = self.request('GET', '/api/state')[1]['trial_balance']
+        payload = self.receipt()
+        status, result = self.request('POST', '/api/sources', payload)
+        self.assertEqual(status, 200, result)
+        self.assertEqual(result['state'], 'enrolled')
+        again = self.request('POST', '/api/sources', payload)[1]
+        self.assertEqual(result['enrollment'], again['enrollment'])
+        self.assertEqual(again['registration']['repeated'], True)
+        sources = self.request('GET', '/api/sources')[1]['sources']
+        self.assertEqual(len(sources), 6)
+        source = next(s for s in sources if s['source_id'] == payload['document_id'])
+        self.assertEqual(source['state'], 'enrolled')
+        self.assertFalse(source['offline_supported'])
+        state = self.request('GET', '/api/state')[1]
+        self.assertEqual(state['trial_balance'], before)
+        self.assertEqual(state['drafts'], [])
+        self.assertEqual(state['runs'], [])
+        self.assertEqual(self.request('POST', '/api/run', dict(source_id=payload['document_id'],
+                         provider='offline', run_id='unsupported'))[0], 409)
+        self.stop()
+        self.start()
+        self.assertEqual(len(self.request('GET', '/api/sources')[1]['sources']), 6)
+        self.assertEqual(self.request('GET', '/api/state')[1]['trial_balance'], before)
+
+    def test_registration_strict_amount_date_and_fields_leave_no_records(self):
+        for changes in ({'amount': 125.0}, {'amount': True}, {'amount': '125.001'}, {'amount': '0.00'},
+                        {'document_date': '2026-02-01'}, {'document_date': '2026-01-32'},
+                        {'synthetic': False}, {'entity_id': 'other'}, {'document_id': ' padded'}):
+            status, _ = self.request('POST', '/api/sources', dict(self.receipt(), **changes))
+            self.assertEqual(status, 409, changes)
+        self.assertEqual(len(self.request('GET', '/api/state')[1]['sources']), 5)
+
+    def test_registration_enrollment_gap_is_visible_and_resubmission_or_restart_repairs(self):
+        from accounting_harness.persistence import PersistenceBusy, SQLiteLedger
+        payload = self.receipt()
+        with patch.object(SQLiteLedger, 'enroll_source', side_effect=PersistenceBusy('injected')):
+            status, result = self.request('POST', '/api/sources', payload)
+            self.assertEqual(status, 503)
+            self.assertEqual(result['state'], 'registered_pending_enrollment')
+            sources = self.request('GET', '/api/sources')[1]['sources']
+            self.assertEqual(next(s for s in sources if s['source_id'] == payload['document_id'])['state'],
+                             'registered_pending_enrollment')
+        self.assertEqual(self.request('POST', '/api/sources', payload)[1]['state'], 'enrolled')
+        other = dict(payload, document_id='repair-on-restart')
+        with patch.object(SQLiteLedger, 'enroll_source', side_effect=PersistenceBusy('injected')):
+            self.assertEqual(self.request('POST', '/api/sources', other)[0], 503)
+        self.stop()
+        self.start()
+        self.assertEqual(next(s for s in self.request('GET', '/api/sources')[1]['sources']
+                              if s['source_id'] == other['document_id'])['state'], 'enrolled')
+        self.assertEqual(self.request('GET', '/api/state')[1]['journal_count'], 0)

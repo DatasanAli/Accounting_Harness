@@ -2,7 +2,7 @@
 
 Updated: 2026-10-08.
 
-**Completed work: Steps 01–11. Step 12 adapters/offline evaluation are implemented; live provider connection is explicitly deferred. Step 12a localhost workspace is locally verified; GitHub delivery is being checked.**
+**Completed work: Steps 01–11. Step 12 adapters/offline evaluation are implemented; live provider connection is explicitly deferred. Step 12a localhost workspace is delivered with verified GitHub CI. Step 13a evidence enrollment is locally verified; GitHub delivery is being checked.**
 
 The user requested the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independent numbered deliveries in this request;
@@ -19,7 +19,7 @@ See [the working plan](LOCALHOST_APP_PLAN.md).
 | Fictional reference month | Created with independent expected results |
 | Foundation verification | See the observed results in the verification record |
 | Money and chart of accounts | Implemented: exact USD cents, immutable accounts/catalog, validated JSON loader |
-| Application verification | 243 tests pass, including localhost HTTP, provider adapters and the zero-test discovery guard |
+| Application verification | 257 tests pass, including additive enrollment, localhost HTTP and the zero-test discovery guard |
 | Demonstration | 13 accounts; 0.10 + 0.20 = 0.30 USD; excess precision rejected |
 | Journal validation | Implemented: pure validation, field/line findings, exact totals, source/account/date checks |
 | Journal demonstration | Accepts 1000.00 / 1000.00; rejects 1000.00 / 999.00 with a 1.00 difference |
@@ -41,7 +41,7 @@ See [the working plan](LOCALHOST_APP_PLAN.md).
 | Provider proposal evaluation | 20/20 synthetic-response cases; 8/8 exact proposals, 12/12 review handoffs; not model accuracy |
 | Authenticated roles and integrations | Not implemented |
 | Delivery target | GitHub repository and CI; persistent localhost UI and CLI, no hosted deployment |
-| Next step | Deliver Step 12a localhost workspace, then Step 13a additive evidence enrollment |
+| Next step | Step 13a additive evidence enrollment, then 13b reviewed cash templates |
 
 Read the [Step 01 verification record](01-foundation/VERIFICATION.md), [Step 02 verification record](02-ledger-core/STEP_02_VERIFICATION.md), [Step 03 verification record](02-ledger-core/STEP_03_VERIFICATION.md), [Step 04 verification record](02-ledger-core/STEP_04_VERIFICATION.md), [Step 05 verification record](02-ledger-core/STEP_05_VERIFICATION.md), [Step 06 verification record](02-ledger-core/STEP_06_VERIFICATION.md), and [Step 07 verification record](03-evidence-and-review/STEP_07_VERIFICATION.md) for observed checks and limitations. GitHub's [commit history](https://github.com/DatasanAli/Accounting_Harness/commits/main/) and [verification workflow](https://github.com/DatasanAli/Accounting_Harness/actions/workflows/verify.yml) provide delivery evidence for each commit. The completion response must identify the exact commit and CI run.
 
@@ -78,3 +78,7 @@ Step 11 delivered as [9888182](https://github.com/DatasanAli/Accounting_Harness/
 [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/36860770328).
 
 Step 12a: [plan](LOCALHOST_APP_PLAN.md) and [verification](04-agent-harness/STEP_12A_VERIFICATION.md). Next: [Step 13a enrollment](05-service-bookkeeping/STEP_13A_PLAN.md).
+
+Step 12a delivered as [ddf53f9](https://github.com/DatasanAli/Accounting_Harness/commit/ddf53f93846ec92edf179b62b4523f72c497e2f7); [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37786950606). Local verification: 243 tests, 12 demos and desktop/mobile browser checks.
+
+Step 13a: [contract](05-service-bookkeeping/STEP_13A_PLAN.md) and [verification](05-service-bookkeeping/STEP_13A_VERIFICATION.md). Next: [Step 13b reviewed cash templates](05-service-bookkeeping/STEP_13B_PLAN.md).

@@ -89,12 +89,14 @@
           "title": "One real provider and proposal evaluation",
           "status": "deferred",
           "delivery_gate": "Bounded live synthetic evaluation remains deferred and does not block independent accounting/UI work.",
-          "deferred_reason": "User deferred live API/model connection on 2026-10-08; adapter/offline work is implemented and Step12a localhost implementation is locally verified. This is not a live evaluation pass.",
+          "deferred_reason": "User deferred live API/model connection on 2026-10-08; adapter/offline work is implemented and Step12a localhost implementation is delivered with verified CI. This is not a live evaluation pass.",
           "substeps": [
             {
               "id": "12a",
               "title": "Persistent localhost workspace and selectable provider adapters",
-              "status": "verified_local"
+              "status": "complete",
+              "commit": "ddf53f93846ec92edf179b62b4523f72c497e2f7",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37786950606"
             },
             {
               "id": "12b",
@@ -113,7 +115,19 @@
         {
           "id": "13",
           "title": "Cash receipts and expenses",
-          "status": "ready"
+          "status": "ready",
+          "substeps": [
+            {
+              "id": "13a",
+              "title": "Additive synthetic evidence enrollment",
+              "status": "verified_local"
+            },
+            {
+              "id": "13b",
+              "title": "Reviewed cash receipts and expenses",
+              "status": "planned"
+            }
+          ]
         },
         {
           "id": "14",

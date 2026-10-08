@@ -1,14 +1,12 @@
-# Active delivery: Step 12a, then Step 13a
+# Active delivery: Step 13a, then Step 13b
 
 The user has authorized both the working localhost app and the wider accounting
 roadmap in this request. Continue through individually verified commits without
 asking for the next step. Live model/API and external-account connections stay
 deferred. See [the working plan](LOCALHOST_APP_PLAN.md).
 
-Step 12a is in progress: persistent localhost UI, offline fixture proposals,
-Ollama/OpenAI choices disabled by default, explicit human review/posting, audit,
-run history and trial balance. Verify browser behavior, full suite/demos and the
-exact uploaded commit's CI before advancing.
+Step 12a is delivered: [commit ddf53f9](https://github.com/DatasanAli/Accounting_Harness/commit/ddf53f93846ec92edf179b62b4523f72c497e2f7), [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37786950606).
+Step 13a is in progress under [the enrollment plan](05-service-bookkeeping/STEP_13A_PLAN.md).
 
 ## Exact next implementation prompt
 

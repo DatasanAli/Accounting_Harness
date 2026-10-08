@@ -3,14 +3,16 @@
 import json
 import os
 import re
+import sqlite3
 from contextlib import contextmanager
 from dataclasses import asdict
 from pathlib import Path
 
 from accounting_harness.approval import ReviewApplication
 from accounting_harness.domain.accounts import load_account_catalog
+from accounting_harness.domain.dates import accounting_date
 from accounting_harness.local_providers import CORPUS, OfflineExpenseProvider, OllamaExpenseProvider
-from accounting_harness.persistence import SQLiteLedger
+from accounting_harness.persistence import SQLiteLedger, PersistenceBusy
 from accounting_harness.provider import MODEL, OpenAIExpenseProvider
 from accounting_harness.review import SQLiteReviewStore, digest
 from accounting_harness.runs import RunLimits, SQLiteRunEngine
@@ -27,6 +29,14 @@ def fields(data, expected):
             raise ValueError(f'{key} must be nonempty and at most 1000 characters')
 
 
+class EnrollmentPending(RuntimeError):
+    """Registration succeeded in its file; ledger enrollment can be retried."""
+    def __init__(self, registration):
+        self.result = dict(state='registered_pending_enrollment', registration=registration,
+            error='Receipt registered; enrollment pending. Resubmit the same receipt or restart to retry.')
+        super().__init__(self.result['error'])
+
+
 class Workspace:
     def __init__(self, directory, *, enable_providers=False, ollama_model=None):
         self.root = Path(directory).resolve()
@@ -39,9 +49,15 @@ class Workspace:
         selected = {'rent-standard', 'software-standard', 'ambiguity-1', 'missing-1', 'hostile-1'}
         self.cases = [c for c in json.loads(CORPUS.read_text())['cases'] if c['id'] in selected]
         self.sources = {c['document']['document_id']: c for c in self.cases}
-        with self.storage() as (registry, _, _, _, _):
+        with self.storage() as (registry, ledger, _, _, _):
             for case in self.cases:
                 registry.register(case['document'], actor_id='workspace-fixture-import')
+            for source in registry.list_documents():
+                if source.document_id not in ledger.known_source_ids():
+                    try:
+                        ledger.enroll_source(registry, source.document_id, actor_id='workspace-startup-recovery')
+                    except (ValueError, TypeError, sqlite3.Error, PersistenceBusy):
+                        pass  # Retain registered evidence; state explicitly shows pending enrollment.
 
     @contextmanager
     def storage(self):
@@ -63,11 +79,43 @@ class Workspace:
                      available=bool(self.enable_providers and os.environ.get('OPENAI_API_KEY')),
                      note='Connection unverified. Billable requests require explicit startup opt-in.')]
 
+    def _source_list(self, registry, ledger):
+        known = ledger.known_source_ids()
+        return [dict(source_id=s.document_id,
+                     sample_id=self.sources.get(s.document_id, {}).get('id'),
+                     offline_supported=s.document_id in self.sources,
+                     state=('already_known' if s.document_id in self.sources else 'enrolled')
+                         if s.document_id in known else 'registered_pending_enrollment',
+                     document=json.loads(s.canonical_content), content_digest=s.content_digest,
+                     registered_by=s.actor_id, registered_at=s.recorded_at.isoformat())
+                for s in registry.list_documents()]
+
+    def list_sources(self):
+        with self.storage() as (registry, ledger, _, _, _):
+            return dict(sources=self._source_list(registry, ledger))
+
+    def register_source(self, data):
+        fields(data, dict(document_id=str, document_date=str, amount=str, counterparty=str, description=str))
+        document_date = accounting_date(data['document_date'])
+        with self.storage() as (registry, ledger, _, _, _):
+            if not ledger._empty.period_start <= document_date <= ledger._empty.period_end:
+                raise ValueError('receipt date must be within January 2026')
+            result = registry.register(dict(data, entity_id=self.catalog.entity_id, schema_version=1,
+                                            synthetic=True, kind='receipt', currency='USD'), actor_id='local-operator')
+            registration = dict(document_id=result.record.document_id, repeated=result.repeated,
+                content_digest=result.record.content_digest, actor_id=result.record.actor_id,
+                recorded_at=result.record.recorded_at.isoformat())
+            try:
+                enrollment = ledger.enroll_source(registry, result.record.document_id, actor_id='local-operator')
+            except (ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
+                raise EnrollmentPending(registration) from error
+            receipt = asdict(enrollment)
+            receipt['recorded_at'] = enrollment.recorded_at.isoformat() if enrollment.recorded_at else None
+            return dict(state=enrollment.state, registration=registration, enrollment=receipt)
+
     def state(self):
         with self.storage() as (registry, ledger, store, app, engine):
-            sources = [dict(source_id=s, sample_id=c['id'],
-                document=json.loads(registry.get(s).canonical_content),
-                content_digest=registry.get(s).content_digest) for s, c in self.sources.items()]
+            sources = self._source_list(registry, ledger)
             drafts = []
             for (draft_id,) in store.db.execute('SELECT DISTINCT draft_id FROM draft_revisions ORDER BY draft_id'):
                 revision = store.get(draft_id)
@@ -108,6 +156,8 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'sources':
+            return self.register_source(data)
         schemas = {
             'run': dict(source_id=str, provider=str, run_id=str),
             'cancel': dict(run_id=str),
@@ -121,8 +171,12 @@ class Workspace:
         if action == 'run':
             if not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', data['run_id']):
                 raise ValueError('invalid run ID')
-            if data['source_id'] not in self.sources:
-                raise ValueError('select a registered workspace receipt')
+            with self.storage() as (registry, ledger, _, _, _):
+                registry.get(data['source_id'])
+                if data['source_id'] not in ledger.known_source_ids():
+                    raise ValueError('receipt enrollment pending; retry registration first')
+            if data['provider'] == 'offline' and data['source_id'] not in self.sources:
+                raise ValueError('offline playback supports only the original sample receipts')
             selected = next((p for p in self.providers() if p['id'] == data['provider']), None)
             if not selected or not selected['available']:
                 raise ValueError('provider disabled or not configured; offline demo is available')
@@ -152,3 +206,38 @@ class Workspace:
             receipt = app.post(approval.approval_id, actor_id='local-operator',
                                idempotency_key='web-post:' + approval.approval_id)
             return dict(journal_id=receipt.entry.id, approval_id=approval.approval_id)
+
+
+def demo_enrollment():
+    from tempfile import TemporaryDirectory
+    with TemporaryDirectory(prefix='accounting-enrollment-') as directory:
+        workspace = Workspace(directory)
+        confirmations = []
+        for sample, run_id in [('rent-standard', 'rent'), ('software-standard', 'software')]:
+            source_id = next(s for s, c in workspace.sources.items() if c['id'] == sample)
+            workspace.action('run', dict(source_id=source_id, provider='offline', run_id=run_id))
+            draft = next(d for d in workspace.state()['drafts'] if source_id in d['evidence'])
+            confirmation = dict(draft_id=draft['draft_id'], revision=draft['revision'],
+                                confirmed_digest=draft['content_digest'])
+            confirmations.append(confirmation)
+        posted = workspace.action('approve-post', confirmations[0])
+        with workspace.storage() as (_, ledger, _, app, _):
+            approval = app.approve(**confirmations[1], actor_id='local-operator', idempotency_key='demo-approval')
+            frozen_context = ledger._context
+        before = workspace.state()['trial_balance']
+        payload = dict(document_id='fictional-receipt-006', document_date='2026-01-15', amount='125.00',
+                       counterparty='Fictional supplies shop', description='Synthetic receipt for human review')
+        first = workspace.register_source(payload)
+        reopened = Workspace(directory)
+        retry = reopened.register_source(payload)
+        assert first['enrollment'] == retry['enrollment']
+        assert reopened.state()['trial_balance'] == before
+        assert reopened.action('approve-post', confirmations[0]) == posted
+        with reopened.storage() as (_, ledger, _, app, _):
+            assert ledger._context == frozen_context
+            assert app.approve(**confirmations[1], actor_id='local-operator', idempotency_key='demo-approval') == approval
+            assert ledger.counts()['journals'] == 1
+        assert next(s for s in reopened.list_sources()['sources'] if s['source_id'] == payload['document_id'])['state'] == 'enrolled'
+        print('Enrolled synthetic receipt 125.00 USD; reopen and retry preserve original enrollment actor/time.')
+        print('Original trial balance and posting retry receipt unchanged; prior approval remains bound.')
+        print('New evidence available for human review; zero additional journals and zero model calls.')

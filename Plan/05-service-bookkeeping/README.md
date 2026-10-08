@@ -1,8 +1,8 @@
 # Phase 05: Daily service-business operations
 
-Status: planned; no behavior in this phase is implemented yet.
+Status: Step 13a additive evidence enrollment is locally verified; [verification](STEP_13A_VERIFICATION.md). Step 13b reviewed cash templates is next.
 
-**Depends on:** Steps 02–12. Each workflow uses existing evidence, approval, and posting services.
+**Depends on:** Steps 02–11 and Step 12 offline contracts. Live model connection is deferred by user. Each workflow uses existing evidence, approval, and posting services.
 
 **Outcome:** Supported day-to-day cash, payable, receivable, and advance transactions reconcile to the ledger.
 
@@ -17,6 +17,11 @@ Introduce one workflow at a time and one document per demo. Define recognition f
 Build only one numbered step per request. Split a row further if it cannot be demonstrated and reviewed as one small change.
 
 ### Step 13: Cash receipts and expenses
+
+Split into [13a evidence enrollment](STEP_13A_PLAN.md) and
+[13b reviewed cash templates](STEP_13B_PLAN.md). The expanded 2026-10-08 request
+authorizes continuing after each separately verified delivery.
+
 
 - **Build:** Support incurred cash expenses and immediately earned service receipts through reviewed templates.
 - **Test:** Owner contributions, transfers and customer advances must not be misclassified as earned revenue; duplicate receipts fail safely.

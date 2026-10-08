@@ -80,7 +80,7 @@ no outbound requests during delivery; default bind 127.0.0.1; one local operator
   and the equivalent `test_web.py` command during red/green development.
 - [x] Run foundation, guarded full suite, all prior demos and `demo-web`; use a
   real browser for desktop/mobile layout and the proposal/review/post flow.
-- [ ] Record results and limitations, inspect/stage only intended paths, commit,
+- [x] Record results and limitations, inspect/stage only intended paths, commit,
   push and inspect the exact remote SHA/Actions run. Then continue with Step 13a
   under the user's expanded authorization.
 
@@ -97,3 +97,8 @@ the existing OpenAI adapter, not every provider or arbitrary compatible endpoint
 Revert published code with a new commit. Preserve the workspace's ledger,
 source registry and run log together. Posted accounting corrections still use
 linked reversals, not deletion or a database reset.
+
+## Delivery ledger
+
+- Step 12a: `ddf53f93846ec92edf179b62b4523f72c497e2f7`; [CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37786950606). 243 tests, 12 demos and browser checks. Live providers remain unconnected.
+- Step 13a: in progress under [the enrollment plan](05-service-bookkeeping/STEP_13A_PLAN.md).

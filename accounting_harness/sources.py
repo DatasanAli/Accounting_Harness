@@ -195,6 +195,14 @@ class SQLiteSourceRegistry:
             raise KeyError(document_id)
         return SourceRecord(*row[:5], datetime.fromisoformat(row[5]))
 
+    def list_documents(self) -> tuple[SourceRecord, ...]:
+        """Entity-local immutable records, ordered by stable document identity."""
+        rows = self._connection.execute("""SELECT d.entity_id, d.document_id, d.content_digest,
+            d.canonical_content, e.actor_id, e.recorded_at
+            FROM source_documents d JOIN registration_events e USING (entity_id, document_id)
+            WHERE d.entity_id=? ORDER BY d.document_id""", (self._entity_id,)).fetchall()
+        return tuple(SourceRecord(*row[:5], datetime.fromisoformat(row[5])) for row in rows)
+
     def counts(self) -> dict[str, int]:
         # One statement gives a consistent snapshot even during another connection's import.
         row = self._connection.execute("""SELECT

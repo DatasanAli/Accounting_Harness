@@ -15,7 +15,7 @@ from accounting_harness.domain.ledger import (
 )
 from accounting_harness.domain.money import Money
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 MAX_CENTS = 2**63 - 1
 OPERATION = "post-v1"
 REVERSAL_OPERATION = "reverse-v1"
@@ -84,6 +84,17 @@ class PostingReceipt:
     original_entry_id: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class EnrollmentReceipt:
+    source_id: str
+    entity_id: str
+    content_digest: str | None
+    canonical_content: str | None
+    actor_id: str | None
+    recorded_at: datetime | None
+    state: str
+
+
 def _canonical(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
@@ -95,7 +106,7 @@ class SQLiteLedger:
     (2000 ms by default, at most 60000 ms per lock acquisition). A busy failure
     rolls back; the caller may retry using the same explicit idempotency key.
     Existing files must match the frozen context. Schema v1 migrates atomically
-    to v2; other versions are rejected. No context change, update or deletion API.
+    through v2 to v3; other versions are rejected. No context change, update or deletion API.
     """
 
     def __init__(
@@ -185,7 +196,7 @@ class SQLiteLedger:
                     BEFORE INSERT ON {table}
                     BEGIN SELECT RAISE(ABORT, 'ledger context is frozen'); END""")
             version = 1
-        elif version not in (1, SCHEMA_VERSION):
+        elif version not in (1, 2, SCHEMA_VERSION):
             raise ValueError(f"unsupported schema version: {version}")
         else:
             stored = self._connection.execute(
@@ -194,6 +205,9 @@ class SQLiteLedger:
                 raise ValueError("database context does not match requested entity/catalog/period/sources")
         if version == 1:
             self._migrate_v2()
+            version = 2
+        if version == 2:
+            self._migrate_v3()
 
     def admit(self, proposal: object, *, idempotency_key: str, actor_id: str) -> PostingReceipt:
         """Validate and store one entry atomically, or return its original receipt.
@@ -252,11 +266,72 @@ class SQLiteLedger:
             BEFORE INSERT ON reversals WHEN EXISTS (SELECT 1 FROM reversals WHERE
                 reversal_id = NEW.original_id OR original_id = NEW.reversal_id)
             BEGIN SELECT RAISE(ABORT, 'reversal chains are not supported'); END""")
-        self._connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        self._connection.execute("PRAGMA user_version = 2")
+
+    def _migrate_v3(self):
+        self._connection.execute("""CREATE TABLE source_enrollments (
+            source_id TEXT PRIMARY KEY REFERENCES sources(id) DEFERRABLE INITIALLY DEFERRED
+                CHECK(length(trim(source_id)) > 0 AND source_id = trim(source_id)),
+            entity_id TEXT NOT NULL REFERENCES ledger_context(entity_id),
+            content_digest TEXT NOT NULL CHECK(length(content_digest)=64 AND content_digest NOT GLOB '*[^0-9a-f]*'),
+            canonical_content TEXT NOT NULL CHECK(length(canonical_content)>0),
+            actor_id TEXT NOT NULL CHECK(length(trim(actor_id))>0 AND actor_id=trim(actor_id)),
+            recorded_at TEXT NOT NULL CHECK(recorded_at GLOB '*T*+00:00'),
+            operation TEXT NOT NULL CHECK(operation='enroll-source-v1')
+        ) STRICT, WITHOUT ROWID""")
+        self._connection.execute('DROP TRIGGER sources_frozen')
+        self._connection.execute("""CREATE TRIGGER sources_enrollment_required BEFORE INSERT ON sources
+            WHEN EXISTS (SELECT 1 FROM sources WHERE id=NEW.id)
+                OR NOT EXISTS (SELECT 1 FROM source_enrollments WHERE source_id=NEW.id)
+            BEGIN SELECT RAISE(ABORT, 'source requires new enrollment'); END""")
+        for action in ('UPDATE', 'DELETE'):
+            self._connection.execute(f"""CREATE TRIGGER source_enrollments_no_{action.lower()}
+                BEFORE {action} ON source_enrollments
+                BEGIN SELECT RAISE(ABORT, 'source enrollments are append-only'); END""")
+        self._connection.execute("""CREATE TRIGGER source_enrollments_no_replace
+            BEFORE INSERT ON source_enrollments
+            WHEN EXISTS (SELECT 1 FROM source_enrollments WHERE source_id=NEW.source_id)
+                OR EXISTS (SELECT 1 FROM sources WHERE id=NEW.source_id)
+            BEGIN SELECT RAISE(ABORT, 'source enrollment cannot replace existing evidence'); END""")
+        self._connection.execute('PRAGMA user_version = 3')
+
+    def known_source_ids(self) -> frozenset[str]:
+        """Current admissible sources; the original context stays frozen."""
+        return frozenset(row[0] for row in self._connection.execute('SELECT id FROM sources'))
+
+    def enroll_source(self, registry, document_id: str, *, actor_id: str) -> EnrollmentReceipt:
+        """Anchor immutable registered evidence in one additive ledger transaction."""
+        from accounting_harness.sources import SQLiteSourceRegistry, _content
+        if not isinstance(registry, SQLiteSourceRegistry):
+            raise TypeError('enrollment requires a source registry')
+        _validate_text(actor_id, 'actor ID')
+        source = registry.get(document_id)
+        entity = self._empty.catalog.entity_id
+        if source.entity_id != entity or registry._entity_id != entity or source.document_id != document_id:
+            raise ValueError('registered source identity/entity differs')
+        document = dict(json.loads(source.canonical_content), entity_id=entity, document_id=document_id)
+        _, canonical = _content(document, entity)
+        digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+        if canonical != source.canonical_content or digest != source.content_digest:
+            raise ValueError('registered source content/digest differs')
+        with self._transaction(write=True):
+            prior = self._connection.execute('SELECT * FROM source_enrollments WHERE source_id=?',
+                                             (document_id,)).fetchone()
+            if prior:
+                if prior[1:4] != (entity, digest, canonical):
+                    raise ValueError('enrolled identity already binds different evidence')
+                return EnrollmentReceipt(*prior[:5], datetime.fromisoformat(prior[5]), 'enrolled')
+            if document_id in self._sources:
+                return EnrollmentReceipt(document_id, entity, None, None, None, None, 'already_known')
+            recorded = datetime.now(timezone.utc)
+            self._connection.execute('INSERT INTO source_enrollments VALUES (?,?,?,?,?,?,?)',
+                (document_id, entity, digest, canonical, actor_id, recorded.isoformat(), 'enroll-source-v1'))
+            self._connection.execute('INSERT INTO sources VALUES (?)', (document_id,))
+            return EnrollmentReceipt(document_id, entity, digest, canonical, actor_id, recorded, 'enrolled')
 
     def _validate_entry(self, proposal) -> LedgerEntry:
         validator = InMemoryLedger(self._empty.catalog, self._empty.period_start,
-                                   self._empty.period_end, known_source_ids=self._sources)
+                                   self._empty.period_end, known_source_ids=self.known_source_ids())
         entry = validator.admit(proposal)
         for index, line in enumerate(entry.lines):
             if line.amount.cents > MAX_CENTS:

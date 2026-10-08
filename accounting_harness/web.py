@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from accounting_harness.persistence import PersistenceBusy
-from accounting_harness.workspace import Workspace
+from accounting_harness.workspace import Workspace, EnrollmentPending
 
 STATIC = Path(__file__).with_name('static')
 ASSETS = {'/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'),
@@ -54,8 +54,10 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ASSETS:
             name, kind = ASSETS[self.path]
             return self.respond(200, (STATIC / name).read_bytes(), kind)
-        if self.path == '/api/state':
+        if self.path in ('/api/state', '/api/sources'):
             try:
+                if self.path == '/api/sources':
+                    return self.respond(200, self.server.workspace.list_sources())
                 state = self.server.workspace.state()
                 return self.respond(200, dict(state, csrf_token=self.server.csrf_token))
             except (sqlite3.Error, PersistenceBusy):
@@ -81,11 +83,13 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
-        if self.path not in ('/api/run', '/api/cancel', '/api/reject', '/api/approve-post'):
+        if self.path not in ('/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources'):
             return self.respond(404, dict(error='not found'))
         try:
             result = self.server.workspace.action(self.path.removeprefix('/api/'), data)
             self.respond(200, result)
+        except EnrollmentPending as error:
+            self.respond(503, error.result)
         except (ValueError, TypeError, KeyError) as error:
             self.respond(409, dict(error=str(error)))
         except (sqlite3.Error, PersistenceBusy):

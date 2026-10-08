@@ -57,7 +57,7 @@ Copyable prompt:
 
 ## Step 12a: localhost workspace (reprioritized on 2026-10-08)
 
-Locally verified under the [localhost and wider roadmap](../LOCALHOST_APP_PLAN.md); see [observed verification](STEP_12A_VERIFICATION.md).
+Delivered with verified CI under the [localhost and wider roadmap](../LOCALHOST_APP_PLAN.md); see [observed verification](STEP_12A_VERIFICATION.md).
 Expose existing evidence, review, posting, ledger and run services in a local UI.
 Offline fixture mode works without a key; selectable Ollama and OpenAI adapters
 stay disabled until explicit startup opt-in. No live connections are performed.

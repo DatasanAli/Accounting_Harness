@@ -200,8 +200,8 @@ function renderSources() {
     node.setAttribute('aria-pressed', source.source_id === selectedSource ? 'true' : 'false');
     const icon = el('span', '▤', 'receipt-icon'); icon.setAttribute('aria-hidden', 'true');
     const use = state.drafts.find(draft => Object.hasOwn(draft.evidence, source.source_id));
-    add(node, icon, add(el('span', null, 'source-copy'), el('strong', sampleNames[source.sample_id] || source.sample_id),
-      el('small', source.document.document_date + ' · ' + (use ? human(use.status) : 'Ready to propose'))),
+    add(node, icon, add(el('span', null, 'source-copy'), el('strong', sampleNames[source.sample_id] || source.source_id),
+      el('small', source.document.document_date + ' · ' + (use ? human(use.status) : human(source.state)))),
       el('span', money(source.document.amount), 'source-amount'));
     list.append(node);
   });
@@ -213,9 +213,10 @@ function renderSourceDetail() {
   if (!source) { node.append(empty('No receipts registered', 'This workspace needs its fictional evidence fixtures.')); return; }
   const document = source.document;
   add(node, add(el('div', null, 'detail-heading'), add(el('div'), el('span', 'FICTIONAL RECEIPT', 'tag'),
-    el('h3', sampleNames[source.sample_id] || source.sample_id)), el('strong', money(document.amount), 'money')),
+    el('h3', sampleNames[source.sample_id] || source.source_id)), el('strong', money(document.amount), 'money')),
     metadata([['Counterparty', document.counterparty], ['Document date', document.document_date],
-      ['Source identity', source.source_id], ['Currency', document.currency]]),
+      ['Source identity', source.source_id], ['Currency', document.currency],
+      ['Enrollment', human(source.state)], ['Registered by', source.registered_by]]),
     add(el('div', null, 'document-description'), el('h4', 'Source description'), el('p', document.description)));
   digest(node, 'Evidence SHA-256 · retained with the proposal', source.content_digest);
   const form = el('div', null, 'proposal-form');
@@ -224,7 +225,7 @@ function renderSourceDetail() {
   if (!state.providers.some(provider => provider.id === selectedProvider && provider.available)) selectedProvider = 'offline';
   state.providers.forEach(provider => {
     const option = el('option', provider.name + (provider.available ? '' : ' · unavailable'));
-    option.value = provider.id; option.disabled = !provider.available; select.append(option);
+    option.value = provider.id; option.disabled = !provider.available || (provider.id === 'offline' && !source.offline_supported); select.append(option);
   });
   select.value = pendingRun && pendingRun.source_id === source.source_id ? pendingRun.provider : selectedProvider;
   select.disabled = busy || !!pendingRun;
@@ -232,11 +233,14 @@ function renderSourceDetail() {
   select.addEventListener('change', () => {
     selectedProvider = select.value; remember('provider', selectedProvider);
     note.textContent = state.providers.find(provider => provider.id === select.value)?.note;
+    propose.disabled = busy || !!pendingRun || used || source.state === 'registered_pending_enrollment'
+      || (select.value === 'offline' && !source.offline_supported);
   });
   add(form, label, select, note);
   const used = state.drafts.some(draft => Object.hasOwn(draft.evidence, source.source_id));
   const propose = button(pendingRun ? 'Recover existing run' : 'Prepare proposal →', () => runProposal(), 'button');
-  propose.disabled = busy || !!pendingRun || used;
+  propose.disabled = busy || !!pendingRun || used || source.state === 'registered_pending_enrollment'
+    || (select.value === 'offline' && !source.offline_supported);
   form.append(propose);
   form.append(el('p', used ? 'This receipt already has a draft. Open the review queue to inspect its recorded decision.'
     : 'Creates a proposal only. You review and approve separately before any posting.', 'action-hint'));
@@ -252,8 +256,28 @@ function renderSourceDetail() {
     cancel.disabled = busy && !runBusy;
     form.append(add(el('div', null, 'actions'), retry, cancel));
   }
+  if (!source.offline_supported) form.append(el('p',
+    'This typed receipt is registered evidence. Offline playback supports only the original samples.', 'action-hint'));
+  if (source.state === 'registered_pending_enrollment') form.append(el('p',
+    'Enrollment is pending. Resubmit the same receipt below or restart the workspace to retry.', 'callout'));
   node.append(form);
 }
+
+$('receipt-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  busy = true; $('register-receipt').disabled = true;
+  try {
+    const result = await request('/api/sources', payload);
+    selectedSource = payload.document_id; remember('source', selectedSource);
+    await refresh();
+    notify('Receipt ' + payload.document_id + ': ' + human(result.state) + '. Ready to inspect; no journal created.');
+  } catch (error) {
+    await refresh();
+    notify(error.message + ' Keep the same document ID and content when retrying.', 'error');
+  } finally { busy = false; $('register-receipt').disabled = false; if (state) render(); }
+});
 async function runProposal(recover = false) {
   if (busy || (!recover && pendingRun)) return;
   if (!pendingRun) {
@@ -300,7 +324,7 @@ function renderDrafts() {
   [...state.drafts].sort((a, b) => ['posted', 'rejected'].includes(a.status) - ['posted', 'rejected'].includes(b.status)).forEach(draft => {
     const card = el('article', null, 'card');
     const source = state.sources.find(item => Object.hasOwn(draft.evidence, item.source_id));
-    add(card, add(el('div', null, 'card-heading'), el('h3', source ? sampleNames[source.sample_id] || source.sample_id : draft.draft_id), status(draft.status)));
+    add(card, add(el('div', null, 'card-heading'), el('h3', source ? sampleNames[source.sample_id] || source.source_id : draft.draft_id), status(draft.status)));
     const body = el('div', null, 'draft-body');
     add(body, metadata([['Draft identity', draft.draft_id], ['Revision', draft.revision],
       ['Effective date', draft.proposal.effective_date], ['Description', draft.proposal.description]]),

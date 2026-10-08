@@ -37,7 +37,20 @@
       </section>
       <section id="view-evidence" class="view" aria-labelledby="evidence-heading">
         <div class="section-heading"><h2 id="evidence-heading">Receipt workspace</h2><span class="muted">01 Evidence → 02 Proposal → 03 Human review</span></div>
-        <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered receipts"><div class="card-heading"><h3>Registered receipts</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">These samples are already registered. New receipt imports are a later step.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
+        <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered receipts"><div class="card-heading"><h3>Registered receipts</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">Inspect registered evidence and its enrollment state. New receipts use the form below.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
+        <details class="card setup-card"><summary>Register a synthetic receipt</summary>
+          <p>Use fictional January 2026 evidence only. Registration preserves the receipt for review; it does not create a proposal or journal.</p>
+          <form id="receipt-form" class="receipt-form">
+            <label>Document ID <input name="document_id" required maxlength="1000" placeholder="fictional-receipt-006"></label>
+            <small>Keep this identity when retrying. Registered content cannot be changed under the same ID.</small>
+            <label>Document date <input name="document_date" type="date" min="2026-01-01" max="2026-01-31" required></label>
+            <label>Amount · USD <input name="amount" inputmode="decimal" pattern="[0-9]+\.[0-9]{2}" required placeholder="125.00"></label>
+            <label>Counterparty <input name="counterparty" required maxlength="1000" placeholder="Fictional supplier"></label>
+            <label>Description <textarea name="description" required maxlength="1000" rows="3"></textarea></label>
+            <button id="register-receipt" class="button" type="submit">Register fictional receipt</button>
+            <p class="action-hint">Offline playback is limited to the original samples. Typed receipts remain available for later reviewed bookkeeping.</p>
+          </form>
+        </details>
       </section>
       <section id="view-review" class="view" aria-labelledby="review-heading" hidden><div class="section-heading"><h2 id="review-heading">Your review queue</h2><span class="muted">Inspect the evidence, then decide.</span></div><div id="draft-list" class="stack"></div></section>
       <section id="view-ledger" class="view" aria-labelledby="ledger-heading" hidden><div class="section-heading"><h2 id="ledger-heading">Trial balance &amp; audit trail</h2><span class="muted">Recorded actuals · USD</span></div><div id="ledger-content" class="stack"></div></section>

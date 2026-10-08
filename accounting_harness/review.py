@@ -95,7 +95,7 @@ class SQLiteReviewStore:
 
     def validate(self, proposal, evidence):
         """Read-only validation against registered evidence and the frozen ledger."""
-        result = validate_journal(proposal, self.ledger._empty.catalog, known_source_ids=self.ledger._sources)
+        result = validate_journal(proposal, self.ledger._empty.catalog, known_source_ids=self.ledger.known_source_ids())
         findings = list(result.findings)
         if not isinstance(proposal, dict):
             return tuple(findings)
@@ -113,6 +113,11 @@ class SQLiteReviewStore:
             if (source.content_digest != expected
                     or hashlib.sha256(source.canonical_content.encode()).hexdigest() != expected):
                 findings.append(Finding('conflicting_evidence', source_id, 'registered digest differs'))
+            anchor = self.db.execute(
+                'SELECT content_digest, canonical_content FROM source_enrollments WHERE source_id=?',
+                (source_id,)).fetchone()
+            if anchor is not None and anchor != (source.content_digest, source.canonical_content):
+                findings.append(Finding('conflicting_evidence', source_id, 'evidence differs from enrollment anchor'))
             records.append(source)
         if valid_sources and len(sources) != 1:
             findings.append(Finding('unsupported_evidence', 'source_ids', 'receipt policy requires one source'))

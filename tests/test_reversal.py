@@ -63,7 +63,7 @@ class ReversalTests(unittest.TestCase):
             'journals', 'lines', 'journal_sources', 'posting_events', 'idempotency', 'reversals')}
 
     def test_schema_supports_durable_reversal_links(self):
-        self.assertEqual(self.sql().execute('PRAGMA user_version').fetchone()[0], 2)
+        self.assertEqual(self.sql().execute('PRAGMA user_version').fetchone()[0], 3)
 
     def test_full_reversal_preserves_original_and_snapshot_across_restart(self):
         before = self.ledger.trial_balance('2026-01-31')
@@ -145,7 +145,7 @@ class ReversalTests(unittest.TestCase):
     def test_revalidates_current_accounts_sources_and_period_inside_transaction(self):
         # Context is frozen in this version. Substitute the service's trusted
         # context to exercise future policy changes without editing posted rows.
-        empty, sources = self.ledger._empty, self.ledger._sources
+        empty = self.ledger._empty
         before = self.state()
         for catalog in (
             replace(self.catalog, accounts=tuple(a for a in self.catalog.accounts if a.code != '5100')),
@@ -159,10 +159,8 @@ class ReversalTests(unittest.TestCase):
         with self.assertRaisesRegex(EntryRejected, 'date_out_of_range'):
             self.reverse()
         self.ledger._empty = empty
-        self.ledger._sources = frozenset()
         with self.assertRaises(EntryRejected):
-            self.reverse()
-        self.ledger._sources = sources
+            self.reverse(source_ids=['not-enrolled'])
         self.assertEqual(self.state(), before)
 
     def test_mid_write_and_after_event_failures_rollback_then_retry_once(self):
@@ -229,7 +227,7 @@ class ReversalTests(unittest.TestCase):
         tables = ('journals', 'lines', 'journal_sources', 'posting_events', 'idempotency')
         before = {t: sql.execute(f'SELECT * FROM {t}').fetchall() for t in tables}
         self.ledger = self.open()
-        self.assertEqual(sql.execute('PRAGMA user_version').fetchone()[0], 2)
+        self.assertEqual(sql.execute('PRAGMA user_version').fetchone()[0], 3)
         self.assertEqual({t: sql.execute(f'SELECT * FROM {t}').fetchall() for t in tables}, before)
         original = self.ledger.receipt('expense')
         self.assertEqual(self.ledger.admit(self.proposal, idempotency_key='original-key',
