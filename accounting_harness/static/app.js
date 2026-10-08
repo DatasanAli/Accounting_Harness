@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  budgets: ['Budgets', 'Version explicit operating assumptions and cash dates without changing recorded actuals.'],
   projects: ['Projects', 'Attribute recorded revenue and expense to projects with an exact bridge to the books.'],
   close: ['Period close', 'Review the complete January books, then explicitly close temporary balances and lock posting dates.'],
   reports: ['Reports', 'Captured income, owner’s equity, assets and the sources and uses of Cash.'],
@@ -2048,5 +2049,135 @@ function renderProjectCostReview() {
   save.disabled = projectCostBusy;
   const edit = button('Edit costing review',() => { pendingProjectCost = null; setProjectCostBusy(false); renderProjectCostReview(); });
   edit.disabled = projectCostBusy || projectCostUncertain;
+  node.append(add(el('div',null,'actions'),save,edit));
+}
+
+let budgetInputs = null, budgetBusy = false, pendingBudget = null, budgetUncertain = false;
+function setBudgetBusy(value) {
+  budgetBusy = value;
+  $('load-budget-inputs').disabled = value || !!pendingBudget;
+  $('budget-month').disabled = value || !!pendingBudget;
+  $('budget-fields').disabled = value || !!pendingBudget || !budgetInputs;
+  $('budget-versions').querySelectorAll('button').forEach(node => { node.disabled = value || !!pendingBudget; });
+}
+function budgetInput(row, field, label, value, options = null) {
+  const input = el(options ? 'select' : 'input'); input.dataset.field = field;
+  if (options) options.forEach(([text,key]) => input.append(new Option(text,key)));
+  else { input.type = 'text'; input.maxLength = 200; }
+  input.value = value ?? ''; input.required = true;
+  row.append(add(el('label'),el('span',label),input)); return input;
+}
+function addBudgetOperating(value = {}) {
+  const row = el('div',null,'card budget-operating-row');
+  budgetInput(row,'line_id','Stable line ID',value.line_id || '');
+  budgetInput(row,'account','Revenue / expense account',value.account || budgetInputs.accounts[0]?.code,
+    budgetInputs.accounts.map(a => [a.code + ' · ' + a.name + ' · ' + a.classification,a.code]));
+  budgetInput(row,'behavior','Fixed amount or variable hourly rate',value.behavior || 'fixed',[['Fixed USD','fixed'],['Variable USD / service hour','variable']]);
+  const amount = budgetInput(row,'amount','Amount / hourly rate · USD',value.amount || '0.00');
+  amount.pattern = '(0|[1-9][0-9]*)\\.[0-9]{2}'; amount.inputMode = 'decimal'; amount.maxLength = 20;
+  row.append(button('Remove operating line',() => row.remove())); $('budget-operating-rows').append(row);
+}
+function addBudgetCash(value = {}) {
+  const row = el('div',null,'card budget-cash-row');
+  budgetInput(row,'row_id','Stable cash row ID',value.row_id || '');
+  budgetInput(row,'direction','Direction',value.direction || 'receipt',[['Planned receipt','receipt'],['Planned payment','payment']]);
+  const amount = budgetInput(row,'amount','Positive cash amount · USD',value.amount || '');
+  amount.pattern = '(0|[1-9][0-9]*)\\.[0-9]{2}'; amount.inputMode = 'decimal'; amount.maxLength = 20;
+  const date = budgetInput(row,'expected_date','Expected calendar date',value.expected_date || '2026-01-31'); date.type = 'date';
+  budgetInput(row,'category','Cash category',value.category || '');
+  budgetInput(row,'budget_line_id','Budget line ID (optional)',value.budget_line_id || '').required = false;
+  const kind = budgetInput(row,'source_kind','Source reference status',value.source_reference?.kind || '',[
+    ['No source reference',''],['External reference · unverified','external'],['Enrolled source identity','actual']]);
+  kind.required = false;
+  const ref = budgetInput(row,'source_id','Source reference ID',value.source_reference?.id || ''); ref.required = !!kind.value;
+  const list = el('datalist'); list.id = 'budget-sources-' + crypto.randomUUID();
+  budgetInputs.source_ids.forEach(id => list.append(new Option(id,id))); ref.setAttribute('list',list.id); row.append(list);
+  kind.addEventListener('change',() => { ref.required = !!kind.value; if (!kind.value) ref.value = ''; });
+  row.append(button('Remove cash row',() => row.remove())); $('budget-cash-rows').append(row);
+}
+$('add-budget-operating').addEventListener('click',() => addBudgetOperating());
+$('add-budget-cash').addEventListener('click',() => addBudgetCash());
+function renderBudget(result) {
+  const report = result.report, node = $('budget-report'); node.replaceChildren();
+  const card = add(el('article',null,'card'),el('h3',report.name + ' · version ' + report.version),el('p',report.scope,'callout'),
+    metadata([['Scenario',report.scenario_id],['Month',report.month],['Dates',report.period_start + ' through ' + report.period_end],
+      ['Policy',report.policy],['Assumed activity',report.planned_minutes + ' service minutes · 60 minutes / hour'],
+      ['Reason',report.reason],['Explanation',report.explanation || 'None'],['Prior version',report.prior_version_id || 'Initial version'],
+      ['Recorded by',report.actor_id],['Recorded at',report.recorded_at]]),el('h4','Operating budget · accrual assumptions'),
+    table(['Line / account','Behavior','Assumption · USD','Planned · USD'],report.operating_lines.map(r => [r.line_id + ' / ' + r.account + ' · ' + r.account_metadata.name,r.behavior,r.amount + (r.behavior === 'variable' ? ' / hour' : ' fixed'),r.planned_amount])),
+    metadata([['Budget revenue',signedMoney(report.revenue_amount)],['Budget expenses',signedMoney(report.expense_amount)],['Budget income',signedMoney(report.income_amount)]]),
+    el('h4','Cash bridge · explicit opening and dated plans'),
+    table(['Cash component','USD'],[['Assumed opening cash',report.opening_cash_amount],['Planned receipts in month',report.receipts_amount],['Planned payments in month',report.payments_amount],['Planned ending cash',report.ending_cash_amount],['Funding gap',report.funding_gap_amount]]),
+    el('p','A funding gap is shown as a planning result. No borrowing or payment-date changes are inserted. Operating income does not automatically become cash.'));
+  const cashTable = rows => table(['Row / category','Direction','Expected date','USD','Budget line','Source'],rows.map(r => [r.row_id + ' / ' + r.category,r.direction,r.expected_date,r.planned_amount,r.budget_line_id || 'None',r.source_status + (r.source_reference ? ' · ' + r.source_reference.id : '')]));
+  card.append(el('h4','Cash rows in plan month'),cashTable(report.cash_rows),el('h4','Deferred / out-of-month cash schedule'),cashTable(report.deferred_rows),
+    metadata([['Deferred receipts',signedMoney(report.deferred_receipts_amount)],['Deferred payments',signedMoney(report.deferred_payments_amount)]]),
+    table(['Line','Exact numerator / denominator · cents','Rounding delta numerator','Rounded · cents'],report.operating_lines.map(r => [r.line_id,r.numerator + ' / ' + r.denominator,r.rounding_delta_numerator,r.planned_cents]),report.rounding_policy),
+    jsonDetails('Account totals and retained line IDs',report.accounts));
+  digest(card,'Scenario version',report.version_id); digest(card,'Budget report SHA-256',report.report_digest);
+  card.append(jsonDetails('Complete sealed scenario and original assumptions',result)); node.append(card);
+}
+function renderBudgetVersions() {
+  const node = $('budget-versions'); node.replaceChildren();
+  for (const version of budgetInputs.versions) {
+    const row = add(el('div'),el('p',version.name + ' · ' + version.scenario_id + ' · version ' + version.version + ' · ' + version.month));
+    const load = async edit => {
+      if (budgetBusy || pendingBudget) return; setBudgetBusy(true);
+      try {
+        const result = await request('/api/budget?version_id=' + encodeURIComponent(version.version_id)); renderBudget(result);
+        if (edit) {
+          for (const field of ['scenario_id','name','planned_minutes','opening_cash','explanation']) $('budget-form').elements.namedItem(field).value = result[field];
+          $('budget-prior').value = result.version_id; $('budget-reason').value = '';
+          $('budget-operating-rows').replaceChildren(); result.operating_lines.forEach(addBudgetOperating);
+          $('budget-cash-rows').replaceChildren(); result.cash_rows.forEach(addBudgetCash);
+          notify('Prior budget version selected. Edit assumptions, enter a reason and review the complete replacement.');
+        }
+      } catch (error) { notify(error.message,'error'); }
+      finally { setBudgetBusy(false); }
+    };
+    row.append(button('View saved budget',() => load(false)),button('Use as prior budget version',() => load(true))); node.append(row);
+  }
+}
+$('budget-inputs-form').addEventListener('submit',async event => {
+  event.preventDefault(); if (budgetBusy || pendingBudget) return; setBudgetBusy(true);
+  try {
+    budgetInputs = await request('/api/budget-inputs?month=' + encodeURIComponent($('budget-month').value));
+    renderBudgetVersions(); notify('Budget accounts and immutable versions loaded. Enter explicit assumptions or select a saved version.');
+  } catch (error) { notify(error.message,'error'); }
+  finally { setBudgetBusy(false); }
+});
+$('budget-form').addEventListener('submit',event => {
+  event.preventDefault(); if (budgetBusy || pendingBudget || !budgetInputs) return;
+  const values = Object.fromEntries(new FormData(event.target));
+  const readRows = id => Array.from($(id).children).map(row => Object.fromEntries(Array.from(row.querySelectorAll('[data-field]')).map(input => [input.dataset.field,input.value])));
+  const minutes = Number(values.planned_minutes);
+  if (!Number.isSafeInteger(minutes) || minutes < 0) { notify('Service minutes must be a nonnegative safe integer.','error'); return; }
+  pendingBudget = {entity_id:budgetInputs.entity_id,currency:'USD',month:budgetInputs.month,scenario_id:values.scenario_id,name:values.name,
+    prior_version_id:values.prior_version_id || null,planned_minutes:minutes,opening_cash:values.opening_cash,
+    reason:values.reason,explanation:values.explanation,idempotency_key:crypto.randomUUID(),operating_lines:readRows('budget-operating-rows'),
+    cash_rows:readRows('budget-cash-rows').map(r => ({row_id:r.row_id,direction:r.direction,amount:r.amount,expected_date:r.expected_date,category:r.category,
+      budget_line_id:r.budget_line_id || null,source_reference:r.source_kind ? {kind:r.source_kind,id:r.source_id} : null}))};
+  budgetUncertain = false; setBudgetBusy(false); renderBudgetReview();
+});
+function renderBudgetReview() {
+  const node = $('budget-review'); node.replaceChildren(); if (!pendingBudget) return;
+  const pending = pendingBudget;
+  node.append(el('h4','Confirm a new immutable budget version'),el('p','These are explicit management assumptions. Saving never posts, pays or grants accounting approval.'),
+    metadata([['Scenario',pending.scenario_id + ' · ' + pending.name],['Month',pending.month],['Planned service minutes',pending.planned_minutes],
+      ['Opening cash assumption',pending.opening_cash + ' USD'],['Prior version',pending.prior_version_id || 'Initial version'],['Reason',pending.reason]]),
+    table(['Operating line','Account','Behavior','Amount / rate · USD'],pending.operating_lines.map(r => [r.line_id,r.account,r.behavior,r.amount])),
+    table(['Cash row','Direction','Date','USD'],pending.cash_rows.map(r => [r.row_id,r.direction,r.expected_date,r.amount])),
+    jsonDetails('Complete assumptions and reference bindings to save',pending));
+  const save = button(budgetUncertain ? 'Retry same budget confirmation' : 'Confirm and save budget version',async () => {
+    if (budgetBusy) return; setBudgetBusy(true); renderBudgetReview();
+    try {
+      const result = await request($('budget-form').getAttribute('action'),pendingBudget);
+      pendingBudget = null; budgetUncertain = false; renderBudget(result);
+      $('budget-result').textContent = 'Saved ' + result.version_id + ' · version ' + result.version + '. Reload accounts and versions before another version.';
+      budgetInputs = null; $('budget-versions').replaceChildren(); notify('Budget version saved. Recorded actuals are unchanged.');
+    } catch (error) { budgetUncertain = error.uncertain; notify(error.message + (budgetUncertain ? ' Retry this exact confirmation to recover its original version.' : ' Edit the review to correct assumptions or select the current prior version.'),'error'); }
+    finally { setBudgetBusy(false); renderBudgetReview(); }
+  }); save.disabled = budgetBusy;
+  const edit = button('Edit budget review',() => { pendingBudget = null; setBudgetBusy(false); renderBudgetReview(); }); edit.disabled = budgetBusy || budgetUncertain;
   node.append(add(el('div',null,'actions'),save,edit));
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "25",
-  "next_step": "26",
+  "current_step": "26",
+  "next_step": "27",
   "phases": [
     {
       "id": "01",
@@ -360,17 +360,19 @@
         {
           "id": "25",
           "title": "Service project costing",
-          "status": "complete"
+          "status": "complete",
+          "commit": "c95bf4599fd4fa63bddd8ae72cfb8e37f500d0ad",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37845470497"
         },
         {
           "id": "26",
           "title": "Versioned operating and cash budgets",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "27",
           "title": "Flexible budgets and variance explanations",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "28",

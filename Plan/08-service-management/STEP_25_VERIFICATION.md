@@ -48,7 +48,7 @@ At 1280px, native version 2 shows 800.00/200.00 with a 560px form and
 - Final guarded full suite: 682 tests passed in 49.083s; discovery guard unchanged.
 - All 36 demonstrations, foundation, JavaScript syntax and diff checks passed.
 - Independent review approved spec and quality with no findings.
-- Commit/remote/exact CI checks are pending.
+- Delivered commit [c95bf45](https://github.com/DatasanAli/Accounting_Harness/commit/c95bf4599fd4fa63bddd8ae72cfb8e37f500d0ad) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37845470497) completed successfully.
 
 ```sh
 python3 scripts/verify_foundation.py

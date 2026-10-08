@@ -2,9 +2,9 @@
 
 Updated: 2026-10-08.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–25 (25 upload pending). Step 12 provider
+**Delivered:** Steps 01–11 and offline/local slices 12a–26 (26 upload pending). Step 12 provider
 adapters/offline evaluation are implemented; the live evaluation is deferred.
-**Next:** [Step 26 budgets](08-service-management/STEP_26_PLAN.md).
+**Next:** [Step 27 variance reporting](08-service-management/STEP_27_PLAN.md).
 
 The user authorized the localhost app **and the wider accounting roadmap** on
 2026-10-08. Continue through independently verified deliveries in this request;
@@ -23,14 +23,15 @@ supported prepaid consumption and evidenced unbilled expense/revenue accruals.
 Every posted operation retains its source, effective date and actor; managed
 controls enforce their approved effects.
 
-Latest local Step 25 checks: **682 tests and 36 demonstrations passed**.
-Native captured costing shows 700.00 modeled cost and 300.00 margin; an explicit
-new labor-rate version shows 800.00/200.00 while the original remains exact.
-Historical retry, stale-update refusal, true 390px/1280px layouts and frozen-code
-restart passed with unchanged actuals, time, reports and portable bytes.
-Independent review approved spec and quality without findings. Commit/push/exact
-CI are pending. Commands and coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md);
-observed boundaries are in [Step 25 verification](08-service-management/STEP_25_VERIFICATION.md).
+Latest local Step 26 checks: **702 tests and 37 demonstrations passed**.
+Native cash plans show 1300.00 ending cash, then -200.00 with 200.00 funding gap
+and 1500.00 deferred receipts after a separately confirmed date change. A separate
+480-minute operating budget shows 1000.00 revenue/500.00 expenses. Historical
+retry, stale refusal, true 390px/1280px layouts and final-code restart preserve all
+original budgets and prior actuals, cost models, reports and portable bytes.
+Independent review approved with no findings. Commit/push/exact CI are pending.
+Commands and coverage are in [TESTING_STRATEGY.md](TESTING_STRATEGY.md); observations
+are in [Step 26 verification](08-service-management/STEP_26_VERIFICATION.md).
 A foundation check is not application proof.
 
 The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
@@ -42,7 +43,7 @@ agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
-Project attribution, auditable service time and versioned project costing are implemented. Authenticated roles, budgets/variance reporting, integration contracts,
+Project attribution, auditable service time, versioned project costing and operating/cash budgets are implemented. Authenticated roles, variance/indicator reporting, integration contracts,
 and verified recovery are still planned. The existing local operator is not an
 authenticated reviewer. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
@@ -80,7 +81,8 @@ retained in the verification record and Git history.
 | 23b | [Portable report packages](07-period-close/STEP_23B_VERIFICATION.md) | [bf1fbb8](https://github.com/DatasanAli/Accounting_Harness/commit/bf1fbb8e369549babc02b007778574e72bc4ab3d) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37839537188) |
 | 24a | [Project attribution](08-service-management/STEP_24A_VERIFICATION.md) | [c5ce264](https://github.com/DatasanAli/Accounting_Harness/commit/c5ce264412de606bd620dbae5538bf4080347b92) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37841528029) |
 | 24b | [Auditable project time](08-service-management/STEP_24B_VERIFICATION.md) | [d745540](https://github.com/DatasanAli/Accounting_Harness/commit/d74554063e385b57b66d69301e7fa7cac1d93d73) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37843247067) |
-| 25 | [Versioned project costing](08-service-management/STEP_25_VERIFICATION.md) | Local checks/review passed | Upload pending |
+| 25 | [Versioned project costing](08-service-management/STEP_25_VERIFICATION.md) | [c95bf45](https://github.com/DatasanAli/Accounting_Harness/commit/c95bf4599fd4fa63bddd8ae72cfb8e37f500d0ad) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37845470497) |
+| 26 | [Operating and cash budgets](08-service-management/STEP_26_VERIFICATION.md) | Local checks/review passed | Upload pending |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

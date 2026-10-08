@@ -219,6 +219,7 @@ def demo_source() -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("demo-budget", help="save operating and dated cash assumptions without changing actuals")
     commands.add_parser("demo-project-cost", help="capture exact service project cost and modeled margin without changing actuals")
     commands.add_parser("demo-project-time", help="retain 600 auditable service minutes with duplicate protection and no financial posting")
     commands.add_parser("demo-project-dimensions", help="attribute recorded expense across projects with exact ledger reconciliation")
@@ -272,6 +273,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "serve":
             from accounting_harness.web import serve
             serve(args)
+        elif args.command == "demo-budget":
+            from accounting_harness.budget import demo_budget
+            demo_budget()
         elif args.command == "demo-project-cost":
             from accounting_harness.project_cost import demo_project_cost
             demo_project_cost()

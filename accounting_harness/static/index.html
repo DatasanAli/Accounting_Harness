@@ -19,6 +19,7 @@
       <button class="nav-item" data-view="ledger"><span aria-hidden="true">▥</span>Ledger</button>
       <button class="nav-item" data-view="close"><span aria-hidden="true">◷</span>Period close</button>
       <button class="nav-item" data-view="projects"><span aria-hidden="true">▦</span>Projects</button>
+      <button class="nav-item" data-view="budgets"><span aria-hidden="true">▦</span>Budgets</button>
       <button class="nav-item" data-view="reports"><span aria-hidden="true">▥</span>Reports</button>
       <button class="nav-item" data-view="receivables"><span aria-hidden="true">▣</span>Customer invoices</button>
       <button class="nav-item" data-view="advances"><span aria-hidden="true">▣</span>Customer advances</button>
@@ -44,6 +45,44 @@
         <div class="metric"><span>Needs your review</span><strong id="metric-review">—</strong><small>Human decisions come next</small></div>
         <div class="metric"><span>Posted journals</span><strong id="metric-journals">—</strong><small>Approved, permanent entries</small></div>
         <div class="metric"><span>Trial balance</span><strong id="metric-balance" class="money">—</strong><small id="balance-caption">USD per debit / credit column</small></div>
+      </section>
+      <section id="view-budgets" class="view" aria-labelledby="budgets-heading" hidden>
+        <div class="section-heading"><h2 id="budgets-heading">Operating and cash budgets</h2><span class="muted">Explicit management assumptions · USD</span></div>
+        <div class="card setup-card">
+          <p class="callout">Budgeted income, planned collections and recorded cash are separate facts. These plans never post journals, make payments, approve accounting or insert borrowing. Cash dates outside January stay in a separate schedule.</p>
+          <form id="budget-inputs-form" class="receipt-form">
+            <label>Plan month <input id="budget-month" type="month" required min="2026-01" max="2026-01" value="2026-01"></label>
+            <button id="load-budget-inputs" class="button" type="submit">Load budget accounts and versions</button>
+          </form>
+          <div id="budget-versions" class="stack"></div>
+        </div>
+        <div class="card setup-card">
+          <h3>Prepare a complete scenario version</h3>
+          <p>Service activity is a whole-month assumption in integer minutes, with 60 minutes per hour. Each variable line rounds half-up once; fixed amounts remain unchanged. Cash opening is an explicit assumption, separate from the ledger Cash balance.</p>
+          <form id="budget-form" action="/api/budget" class="receipt-form">
+            <fieldset id="budget-fields" disabled>
+              <label>Scenario ID <input id="budget-scenario" name="scenario_id" required maxlength="200"></label>
+              <label>Scenario name <input id="budget-name" name="name" required maxlength="200"></label>
+              <label>Prior version ID (blank for a new scenario) <input id="budget-prior" name="prior_version_id" maxlength="200"></label>
+              <label>Planned service minutes <input id="budget-minutes" name="planned_minutes" type="number" required min="0" max="9007199254740991" step="1" value="0"></label>
+              <label>Assumed opening cash · USD <input id="budget-opening" name="opening_cash" required inputmode="decimal" pattern="(0|[1-9][0-9]*)\.[0-9]{2}" value="0.00" maxlength="20"></label>
+              <h4>Operating assumptions</h4>
+              <p>Each line targets an active revenue or expense account. Amount means fixed USD or variable USD per service hour. Use stable unique line IDs.</p>
+              <div id="budget-operating-rows" class="stack"></div>
+              <button id="add-budget-operating" type="button" class="button secondary">Add operating line</button>
+              <h4>Dated cash assumptions</h4>
+              <p>Each receipt/payment has a stable unique row ID and date. Optional budget links must name a line in this version. Enrolled source references verify identity only; external references remain unverified assumptions.</p>
+              <div id="budget-cash-rows" class="stack"></div>
+              <button id="add-budget-cash" type="button" class="button secondary">Add planned cash row</button>
+              <label>Version reason <input id="budget-reason" name="reason" required maxlength="1000"></label>
+              <label>Explanation (optional) <textarea id="budget-explanation" name="explanation" maxlength="2000"></textarea></label>
+              <button id="review-budget" type="submit" class="button">Review budget version</button>
+            </fieldset>
+          </form>
+          <div id="budget-review" aria-live="polite"></div>
+          <p id="budget-result" class="digest" aria-live="polite"></p>
+        </div>
+        <div id="budget-report" class="stack"></div>
       </section>
       <section id="view-projects" class="view" aria-labelledby="projects-heading" hidden>
         <div class="section-heading"><h2 id="projects-heading">Project attribution</h2><span class="muted">Recorded actuals · management metadata</span></div>

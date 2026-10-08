@@ -80,11 +80,13 @@ class Workspace:
                 from accounting_harness.project_dimensions import ProjectDimensionsService
                 from accounting_harness.project_time import ProjectTimeService
                 from accounting_harness.project_cost import ProjectCostService
+                from accounting_harness.budget import BudgetService
                 with ledger._transaction(write=True):
                     RevenueAccrualService(ledger, registry)
                     ProjectDimensionsService(ledger)
                     ProjectTimeService(ledger)
                     ProjectCostService(ledger)
+                    BudgetService(ledger)
                 store = SQLiteReviewStore(ledger, registry)
                 app = ReviewApplication(store)
                 with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
@@ -155,6 +157,16 @@ class Workspace:
         from accounting_harness.project_cost import ProjectCostService
         with self.storage() as (_, ledger, _, _, _):
             return ProjectCostService(ledger).get(version_id)
+
+    def budget_inputs(self, month):
+        from accounting_harness.budget import BudgetService
+        with self.storage() as (_, ledger, _, _, _):
+            return BudgetService(ledger).inputs(month)
+
+    def budget(self, version_id):
+        from accounting_harness.budget import BudgetService
+        with self.storage() as (_, ledger, _, _, _):
+            return BudgetService(ledger).get(version_id)
 
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
@@ -476,6 +488,10 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'budget':
+            from accounting_harness.budget import BudgetService
+            with self.storage() as (_, ledger, _, _, _):
+                return BudgetService(ledger).save(data, actor_id='local-operator')
         if action == 'project-cost':
             from accounting_harness.project_cost import ProjectCostService
             with self.storage() as (_, ledger, _, _, _):
