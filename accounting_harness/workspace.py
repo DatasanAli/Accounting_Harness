@@ -4,7 +4,7 @@ import json
 import os
 import re
 import sqlite3
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from dataclasses import asdict, replace
 from pathlib import Path
 
@@ -49,9 +49,11 @@ class EnrollmentPending(RuntimeError):
 
 
 class Workspace:
-    def __init__(self, directory, *, enable_providers=False, ollama_model=None, entity_id=None):
+    def __init__(self, directory, *, enable_providers=False, ollama_model=None, entity_id=None, actor_id=None):
         # This is a trusted local constructor. The authenticated facade must check
         # its server-owned mapping BEFORE calling it (construction opens stores).
+        self.actor_id = actor_id
+        self.authority_guard = None
         self.root = Path(directory).resolve()
         if (self.root / 'ledger.sqlite3').exists():
             from accounting_harness.access import stored_entity_context
@@ -78,33 +80,38 @@ class Workspace:
             for source in registry.list_documents():
                 if source.document_id not in ledger.known_source_ids():
                     try:
-                        ledger.enroll_source(registry, source.document_id, actor_id='workspace-startup-recovery')
+                        ledger.enroll_source(registry, source.document_id, actor_id=(self.actor_id or 'workspace-startup-recovery'))
                     except (ValueError, TypeError, sqlite3.Error, PersistenceBusy):
                         pass  # Retain registered evidence; state explicitly shows pending enrollment.
 
     @contextmanager
     def storage(self):
-        with SQLiteSourceRegistry(self.root / 'sources.sqlite3', self.catalog.entity_id) as registry:
-            with SQLiteLedger(self.root / 'ledger.sqlite3', self.catalog, '2026-01-01', '2026-01-31',
-                              known_source_ids=set(self.sources)) as ledger:
-                # The accrual service owns ledger/review/approval/accrual schema setup
-                # in one transaction, before generic review handles can commit a migration.
-                from accounting_harness.project_dimensions import ProjectDimensionsService
-                from accounting_harness.project_time import ProjectTimeService
-                from accounting_harness.project_cost import ProjectCostService
-                from accounting_harness.budget import BudgetService
-                from accounting_harness.indicators import IndicatorService
-                with ledger._transaction(write=True):
-                    RevenueAccrualService(ledger, registry)
-                    ProjectDimensionsService(ledger)
-                    ProjectTimeService(ledger)
-                    ProjectCostService(ledger)
-                    BudgetService(ledger)
-                    IndicatorService(ledger)
-                store = SQLiteReviewStore(ledger, registry)
-                app = ReviewApplication(store)
-                with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
-                    yield registry, ledger, store, app, engine
+        with ExitStack() as authority:
+            if self.authority_guard:
+                authority.enter_context(self.authority_guard())
+            with SQLiteSourceRegistry(self.root / 'sources.sqlite3', self.catalog.entity_id) as registry:
+                with SQLiteLedger(self.root / 'ledger.sqlite3', self.catalog, '2026-01-01', '2026-01-31',
+                                  known_source_ids=set(self.sources)) as ledger:
+                    # The accrual service owns ledger/review/approval/accrual schema setup
+                    # in one transaction, before generic review handles can commit a migration.
+                    from accounting_harness.project_dimensions import ProjectDimensionsService
+                    from accounting_harness.project_time import ProjectTimeService
+                    from accounting_harness.project_cost import ProjectCostService
+                    from accounting_harness.budget import BudgetService
+                    from accounting_harness.indicators import IndicatorService
+                    with ledger._transaction(write=True):
+                        RevenueAccrualService(ledger, registry)
+                        ProjectDimensionsService(ledger)
+                        ProjectTimeService(ledger)
+                        ProjectCostService(ledger)
+                        BudgetService(ledger)
+                        IndicatorService(ledger)
+                    store = SQLiteReviewStore(ledger, registry)
+                    app = ReviewApplication(store)
+                    with SQLiteRunEngine(self.root / 'runs.sqlite3', store) as engine:
+                        engine.authority_guard = self.authority_guard
+                        authority.close()
+                        yield registry, ledger, store, app, engine
 
     @staticmethod
     def _account_activation(ledger):
@@ -113,7 +120,7 @@ class Workspace:
 
     def import_bank_statement(self, data):
         with self.storage() as (_, ledger, _, _, _):
-            return BankStatementService(ledger).import_statement(data, actor_id='local-operator')
+            return BankStatementService(ledger).import_statement(data, actor_id=(self.actor_id or 'local-operator'))
 
     def list_bank_statements(self):
         with self.storage() as (_, ledger, _, _, _):
@@ -230,8 +237,8 @@ class Workspace:
             if not ledger._empty.period_start <= document_date <= ledger._empty.period_end:
                 raise ValueError('receipt date must be within January 2026')
             result = registry.register(dict(data, entity_id=self.catalog.entity_id, schema_version=1,
-                                            synthetic=True, kind='receipt', currency='USD'), actor_id='local-operator')
-            return self._enroll_registered(registry, ledger, result)
+                                            synthetic=True, kind='receipt', currency='USD'), actor_id=(self.actor_id or 'local-operator'))
+            return self._enroll_registered(registry, ledger, result, actor_id=self.actor_id or 'local-operator')
 
     def register_operation_source(self, data):
         fields(data, dict(document=dict))
@@ -242,16 +249,16 @@ class Workspace:
             if field in document and not '2026-01-01' <= accounting_date(document[field]).isoformat() <= '2026-01-31':
                 raise ValueError('operation evidence dates must be within January 2026')
         with self.storage() as (registry, ledger, _, _, _):
-            result = registry.register(document, actor_id='local-operator')
-            return self._enroll_registered(registry, ledger, result)
+            result = registry.register(document, actor_id=(self.actor_id or 'local-operator'))
+            return self._enroll_registered(registry, ledger, result, actor_id=self.actor_id or 'local-operator')
 
     @staticmethod
-    def _enroll_registered(registry, ledger, result):
+    def _enroll_registered(registry, ledger, result, *, actor_id='local-operator'):
         registration = dict(document_id=result.record.document_id, repeated=result.repeated,
             content_digest=result.record.content_digest, actor_id=result.record.actor_id,
             recorded_at=result.record.recorded_at.isoformat())
         try:
-            enrollment = ledger.enroll_source(registry, result.record.document_id, actor_id='local-operator')
+            enrollment = ledger.enroll_source(registry, result.record.document_id, actor_id=actor_id)
         except (ValueError, TypeError, sqlite3.Error, PersistenceBusy) as error:
             raise EnrollmentPending(registration) from error
         receipt = asdict(enrollment)
@@ -308,7 +315,7 @@ class Workspace:
         fields(data, dict(incurrence_source_id=str, basis_source_id=str, expected_revision=int))
         with self.storage() as (registry, ledger, _, _, _):
             service = ExpenseAccrualService(ledger, registry)
-            draft = service.propose(**data, actor_id='expense-accrual-template',
+            draft = service.propose(**data, actor_id=(self.actor_id or 'expense-accrual-template'),
                 idempotency_key='web-expense-accrual:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -317,7 +324,7 @@ class Workspace:
         fields(data, dict(completion_source_id=str, basis_source_id=str, expected_revision=int))
         with self.storage() as (registry, ledger, _, _, _):
             service = RevenueAccrualService(ledger, registry)
-            draft = service.propose(**data, actor_id='local-operator',
+            draft = service.propose(**data, actor_id=(self.actor_id or 'local-operator'),
                 idempotency_key='web-revenue-accrual:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -325,7 +332,7 @@ class Workspace:
     def prepare_prepaid(self, data):
         fields(data, dict(coverage_source_id=str, allocation_month=str, expected_revision=int))
         with self.storage() as (registry, ledger, _, _, _):
-            draft = PrepaidService(ledger, registry).propose(**data, actor_id='local-operator',
+            draft = PrepaidService(ledger, registry).propose(**data, actor_id=(self.actor_id or 'local-operator'),
                 idempotency_key='web-prepaid:' + digest(data))
             if isinstance(draft, dict):
                 return draft
@@ -345,10 +352,10 @@ class Workspace:
                 if ledger.bank_fee_account_activation() is None:
                     raise ValueError('activate Bank Fees Expense first')
                 require_available(ledger, document)
-            result = registry.register(document, actor_id='local-operator')
-            self._enroll_registered(registry, ledger, result)
+            result = registry.register(document, actor_id=(self.actor_id or 'local-operator'))
+            self._enroll_registered(registry, ledger, result, actor_id=self.actor_id or 'local-operator')
             draft = service.propose(document, classification=data['classification'], reason=data['reason'],
-                expected_revision=data['expected_revision'], actor_id='local-operator', idempotency_key=key)
+                expected_revision=data['expected_revision'], actor_id=(self.actor_id or 'local-operator'), idempotency_key=key)
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -366,7 +373,7 @@ class Workspace:
             if store.validate(proposal, evidence):
                 raise ValueError('cash evidence must be valid and enrolled before preparation')
             draft = store.save('cash-' + identity, proposal, evidence=evidence, expected_revision=0,
-                actor_id='cash-template', idempotency_key='cash-' + identity,
+                actor_id=(self.actor_id or 'cash-template'), idempotency_key='cash-' + identity,
                 reason='Deterministic synthetic cash proposal; human review required', require_unused_evidence=True)
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -375,7 +382,7 @@ class Workspace:
         fields(data, dict(prepayment_source_id=str, cash_source_id=str))
         with self.storage() as (registry, ledger, _, _, _):
             service = AdvancesService(ledger, registry)
-            draft = service.propose_advance(**data, expected_revision=0, actor_id='advance-template',
+            draft = service.propose_advance(**data, expected_revision=0, actor_id=(self.actor_id or 'advance-template'),
                 idempotency_key='web-advance:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -384,7 +391,7 @@ class Workspace:
         fields(data, dict(invoice_source_id=str, completion_source_id=str))
         with self.storage() as (registry, ledger, _, _, _):
             service = ReceivablesService(ledger, registry)
-            draft = service.propose_invoice(**data, expected_revision=0, actor_id='invoice-template',
+            draft = service.propose_invoice(**data, expected_revision=0, actor_id=(self.actor_id or 'invoice-template'),
                 idempotency_key='web-invoice:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -393,7 +400,7 @@ class Workspace:
         fields(data, dict(bill_source_id=str, incurrence_source_id=str))
         with self.storage() as (registry, ledger, _, _, _):
             service = PayablesService(ledger, registry)
-            draft = service.propose_bill(**data, expected_revision=0, actor_id='bill-template',
+            draft = service.propose_bill(**data, expected_revision=0, actor_id=(self.actor_id or 'bill-template'),
                 idempotency_key='web-bill:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -402,7 +409,7 @@ class Workspace:
         fields(data, dict(bill_id=str, cash_source_id=str))
         with self.storage() as (registry, ledger, _, _, _):
             service = PayablesService(ledger, registry)
-            draft = service.propose_payment(**data, expected_revision=0, actor_id='bill-payment-template',
+            draft = service.propose_payment(**data, expected_revision=0, actor_id=(self.actor_id or 'bill-payment-template'),
                 idempotency_key='web-bill-payment:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -411,7 +418,7 @@ class Workspace:
         fields(data, dict(invoice_id=str, cash_source_id=str))
         with self.storage() as (registry, ledger, _, _, _):
             service = ReceivablesService(ledger, registry)
-            draft = service.propose_collection(**data, expected_revision=0, actor_id='invoice-collection-template',
+            draft = service.propose_collection(**data, expected_revision=0, actor_id=(self.actor_id or 'invoice-collection-template'),
                 idempotency_key='web-invoice-collection:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -420,7 +427,7 @@ class Workspace:
         fields(data, dict(advance_id=str, completion_source_id=str))
         with self.storage() as (registry, ledger, _, _, _):
             service = AdvancesService(ledger, registry)
-            draft = service.propose_earning(**data, expected_revision=0, actor_id='advance-earning-template',
+            draft = service.propose_earning(**data, expected_revision=0, actor_id=(self.actor_id or 'advance-earning-template'),
                 idempotency_key='web-advance-earning:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -451,7 +458,7 @@ class Workspace:
             for (run_id,) in engine.db.execute('SELECT run_id FROM runs ORDER BY run_id'):
                 checkpoint = engine.get(run_id)
                 configuration = json.loads(engine.configuration(run_id))
-                runs.append(dict(run_id=run_id, state=checkpoint.state, reason=checkpoint.reason,
+                runs.append(dict(initiator_id=configuration.get('initiator_id'), run_id=run_id, state=checkpoint.state, reason=checkpoint.reason,
                     source_id=configuration['provider']['source_id'], provider=configuration['provider'],
                     attempts=checkpoint.provider_attempts, reserved_nanodollars=checkpoint.cost_units,
                     trace=[dict(sequence=c.sequence, state=c.state, reason=c.reason,
@@ -521,35 +528,35 @@ class Workspace:
         if action == 'indicators':
             from accounting_harness.indicators import IndicatorService
             with self.storage() as (_,ledger,_,_,_):
-                return IndicatorService(ledger).save(data, actor_id='local-operator')
+                return IndicatorService(ledger).save(data, actor_id=(self.actor_id or 'local-operator'))
         if action == 'budget':
             from accounting_harness.budget import BudgetService
             with self.storage() as (_, ledger, _, _, _):
-                return BudgetService(ledger).save(data, actor_id='local-operator')
+                return BudgetService(ledger).save(data, actor_id=(self.actor_id or 'local-operator'))
         if action == 'project-cost':
             from accounting_harness.project_cost import ProjectCostService
             with self.storage() as (_, ledger, _, _, _):
-                return ProjectCostService(ledger).save(data, actor_id='local-operator')
+                return ProjectCostService(ledger).save(data, actor_id=(self.actor_id or 'local-operator'))
         if action in ('project-time', 'project-time-void'):
             from accounting_harness.project_time import ProjectTimeService
             with self.storage() as (_, ledger, _, _, _):
                 service = ProjectTimeService(ledger)
                 method = service.record if action == 'project-time' else service.void
-                return method(data, actor_id='local-operator')
+                return method(data, actor_id=(self.actor_id or 'local-operator'))
         if action in ('projects', 'project-assignments'):
             from accounting_harness.project_dimensions import ProjectDimensionsService
             with self.storage() as (_, ledger, _, _, _):
                 service = ProjectDimensionsService(ledger)
                 method = service.create_project if action == 'projects' else service.assign
-                return method(data, actor_id='local-operator')
+                return method(data, actor_id=(self.actor_id or 'local-operator'))
         if action in ('close-preview', 'close-confirm'):
             from accounting_harness.closing import CloseService
             with self.storage() as (registry, ledger, _, _, _):
                 service = CloseService(ledger, registry)
-                return service.preview(data) if action == 'close-preview' else service.confirm(data, actor_id='local-operator')
+                return service.preview(data, actor_id=self.actor_id) if action == 'close-preview' else service.confirm(data, actor_id=(self.actor_id or 'local-operator'))
         if action in ('bank-timing', 'bank-reconcile'):
             with self.storage() as (_, ledger, _, _, _):
-                return ReconciliationService(ledger).action(action.removeprefix('bank-'), data, actor_id='local-operator')
+                return ReconciliationService(ledger).action(action.removeprefix('bank-'), data, actor_id=(self.actor_id or 'local-operator'))
         if action == 'revenue-accrual-proposals':
             return self.prepare_revenue_accrual(data)
         if action == 'expense-accrual-proposals':
@@ -562,11 +569,11 @@ class Workspace:
             if data != {}:
                 raise ValueError('fixed bank-fee account setup accepts no fields')
             with self.storage() as (_, ledger, _, _, _):
-                ledger.ensure_bank_fee_account(actor_id='local-operator')
+                ledger.ensure_bank_fee_account(actor_id=(self.actor_id or 'local-operator'))
                 return self._account_activation(ledger)
         if action in ('bank-match', 'bank-unmatch'):
             with self.storage() as (_, ledger, _, _, _):
-                return BankStatementService(ledger).matching_action(action.removeprefix('bank-'), data, actor_id='local-operator')
+                return BankStatementService(ledger).matching_action(action.removeprefix('bank-'), data, actor_id=(self.actor_id or 'local-operator'))
         if action == 'bank-statements':
             return self.import_bank_statement(data)
         if action == 'sources':
@@ -620,22 +627,25 @@ class Workspace:
         with self.storage() as (_, _, store, app, engine):
             if action == 'run':
                 engine.start(data['run_id'], task_id=data['source_id'], provider=adapter,
-                    actor_id='workspace-agent', limits=RunLimits(5, adapter.timeout_ms + 10000,
+                    actor_id='workspace-agent', initiator_id=self.actor_id, limits=RunLimits(5, adapter.timeout_ms + 10000,
                                                                adapter.identity['reservation'], 0))
                 result = engine.run(data['run_id'], adapter)
                 return dict(run_id=result.run_id, state=result.state, reason=result.reason)
             if action == 'cancel':
-                result = engine.cancel(data['run_id'], actor_id='local-operator', reason='Cancelled in workspace')
+                if self.actor_id and json.loads(engine.configuration(data['run_id'])).get('initiator_id') != self.actor_id:
+                    from accounting_harness.access import AccessDenied
+                    raise AccessDenied()
+                result = engine.cancel(data['run_id'], actor_id=(self.actor_id or 'local-operator'), reason='Cancelled in workspace')
                 return dict(state=result.state)
             store, app = self._draft_services(store, app, data['draft_id'])
             if action == 'reject':
                 result = store.reject(data['draft_id'], expected_revision=data['revision'],
-                    reason=data['reason'], actor_id='local-operator',
+                    reason=data['reason'], actor_id=(self.actor_id or 'local-operator'),
                     idempotency_key='web-reject:' + digest(data))
                 return dict(state=result.state)
-            approval = app.approve(**data, actor_id='local-operator',
+            approval = app.approve(**data, actor_id=(self.actor_id or 'local-operator'),
                                    idempotency_key='web-approve:' + digest(data))
-            receipt = app.post(approval.approval_id, actor_id='local-operator',
+            receipt = app.post(approval.approval_id, actor_id=(self.actor_id or 'local-operator'),
                                idempotency_key='web-post:' + approval.approval_id)
             return dict(journal_id=receipt.entry.id, approval_id=approval.approval_id)
 
@@ -1014,3 +1024,6 @@ def demo_bank_fee_account():
         print('Activated 5300 Bank Fees Expense (temporary, debit-normal expense).')
         print('Reopen/retry preserves original activation actor/time; zero additional journals.')
         print('Original 13-account context unchanged; current catalog has 14 accounts; no model calls.')
+
+
+from accounting_harness.authenticated import AuthenticatedWorkspace

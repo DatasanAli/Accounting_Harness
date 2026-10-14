@@ -531,7 +531,7 @@ class AdvanceHTTPTests(unittest.TestCase):
         state = self.request('GET','/api/state')[1]
         self.assertEqual(state['advances']['subledger_cents'],60000)
         self.assertEqual(state['advances']['unassigned_control_cents'],0)
-        self.assertEqual(state['drafts'][0]['audit']['approval']['actor_id'],'local-operator')
+        self.assertEqual(state['drafts'][0]['audit']['approval']['actor_id'],self.server.test_user_id)
 
     def test_large_cents_review_and_report_have_exact_display_text(self):
         entity=self.request('GET','/api/state')[1]['entity_id']

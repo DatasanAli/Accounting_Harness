@@ -1,18 +1,43 @@
-"""Loopback-only HTTP interface for one local synthetic-workspace operator."""
+"""Authenticated loopback-only HTTP application; no accounting files open at startup."""
 
 import json
 import secrets
 import sqlite3
+import hashlib
+import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from accounting_harness.access import AccessStore, AccessDenied, AccessBusy, AuthenticationFailed
+from accounting_harness.authenticated import AuthenticatedWorkspace, ACTION_OPERATIONS
 from accounting_harness.persistence import PersistenceBusy
 from accounting_harness.workspace import Workspace, EnrollmentPending
 
 STATIC = Path(__file__).with_name('static')
 ASSETS = {'/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'),
           '/style.css': ('style.css', 'text/css')}
+# Fixed route -> facade method + exact query fields. Unknown routes never dispatch.
+GET_ROUTES = {
+    '/api/state': ('state', ()), '/api/sources': ('list_sources', ()),
+    '/api/report-export': ('report_package', ('as_of', 'format')),
+    '/api/budget': ('budget', ('version_id',)), '/api/budget-inputs': ('budget_inputs', ('month',)),
+    '/api/variance': ('variance', ('version_id',)), '/api/indicators': ('indicators', ('version_id',)),
+    '/api/indicator-inputs': ('indicator_inputs', ('month',)),
+    '/api/project-cost': ('project_cost', ('version_id',)),
+    '/api/financial-statements': ('financial_statements', ('as_of',)),
+    '/api/cash-flow': ('cash_flow', ('as_of',)),
+    '/api/project-dimensions': ('project_dimensions', ('as_of',)),
+    '/api/project-time': ('project_time', ('as_of',)),
+    '/api/project-cost-inputs': ('project_cost_inputs', ('as_of',)),
+    '/api/bank-statements': ('list_bank_statements', ()),
+    '/api/bank-matches': ('bank_matches', ('bank_account_id',)),
+    '/api/bank-reconciliation': ('bank_reconciliation', ('bank_account_id', 'statement_id')),
+}
+POST_ROUTES = {'/api/' + action: action for action in ACTION_OPERATIONS}
+SESSION_COOKIE = 'ah_session'
+LOGIN_COOKIE = 'ah_login'
 
 
 def unique_object(pairs):
@@ -30,9 +55,9 @@ class Handler(BaseHTTPRequestHandler):
         self.connection.settimeout(5)
 
     def log_message(self, *_):
-        pass  # No request bodies, paths or evidence in terminal access logs.
+        pass  # Never log bodies, credentials, paths or evidence.
 
-    def respond(self, status, value, kind='application/json', *, filename=None, package_digest=None):
+    def respond(self, status, value, kind='application/json', *, filename=None, package_digest=None, cookies=()):
         body = json.dumps(value).encode() if kind == 'application/json' and not isinstance(value, bytes) else value
         self.send_response(status)
         self.send_header('Content-Type', kind + ('; charset=utf-8' if kind != 'application/zip' else ''))
@@ -40,18 +65,61 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Disposition', 'attachment; filename="' + filename + '"')
         if package_digest:
             self.send_header('X-Report-Package-Digest', package_digest)
+        for cookie in cookies:
+            self.send_header('Set-Cookie', cookie)
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Referrer-Policy', 'no-referrer')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; "
-                         "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
         self.end_headers()
         self.wfile.write(body)
 
     def trusted_host(self):
         return self.headers.get_all('Host', []) in [[host] for host in self.server.allowed_hosts]
+
+    def cookie(self, name):
+        found = []
+        for header in self.headers.get_all('Cookie', []):
+            for item in header.split(';'):
+                key, separator, value = item.strip().partition('=')
+                if key == name:
+                    if not separator:
+                        raise AccessDenied()
+                    found.append(value)
+        if len(found) != 1:
+            raise AccessDenied()
+        return found[0]
+
+    @staticmethod
+    def cookie_header(name, value, *, clear=False):
+        return name + '=' + value + '; HttpOnly; SameSite=Strict; Path=/' + ('; Max-Age=0' if clear else '')
+
+    def session(self):
+        token = self.cookie(SESSION_COOKIE)
+        identity = self.server.access.session(token)
+        key = hashlib.sha256(token.encode()).hexdigest()
+        with self.server.browser_lock:
+            browser = self.server.browsers.setdefault(key, dict(entity_id=None, csrf_token=secrets.token_urlsafe(32)))
+            if browser['entity_id'] is not None and browser['entity_id'] not in [g['entity_id'] for g in identity['entities']]:
+                browser.update(entity_id=None, csrf_token=secrets.token_urlsafe(32))
+            result = dict(identity, **browser)
+        return token, key, result
+
+    def scope(self, *, mutate=False):
+        token, key, identity = self.session()
+        entity = identity['entity_id']
+        if not entity or self.headers.get_all('X-Entity-ID', []) != [entity]:
+            raise AccessDenied()
+        if mutate:
+            self.csrf(identity['csrf_token'])
+        return token, entity, identity
+
+    def csrf(self, expected):
+        supplied = self.headers.get_all('X-CSRF-Token', [])
+        if len(supplied) != 1 or not secrets.compare_digest(supplied[0].encode(), expected.encode()):
+            raise AccessDenied()
 
     def do_GET(self):
         if not self.trusted_host():
@@ -59,105 +127,57 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ASSETS:
             name, kind = ASSETS[self.path]
             return self.respond(200, (STATIC / name).read_bytes(), kind)
-        if urlsplit(self.path).path == '/api/report-export':
-            try:
+        try:
+            if self.path == '/api/login-challenge':
+                challenge = secrets.token_urlsafe(32)
+                with self.server.browser_lock:
+                    now = time.monotonic()
+                    self.server.challenges = {k:v for k,v in self.server.challenges.items() if v > now}
+                    if len(self.server.challenges) >= 256:
+                        raise AccessBusy('Login challenge capacity busy')
+                    self.server.challenges[challenge] = now + 300
+                return self.respond(200, dict(csrf_token=challenge), cookies=[self.cookie_header(LOGIN_COOKIE, challenge)])
+            if self.path == '/api/session':
+                return self.respond(200, self.session()[2])
+            token, entity, identity = self.scope()
+            parsed = urlsplit(self.path)
+            if parsed.path not in GET_ROUTES:
+                return self.respond(404, dict(error='not found'))
+            method, names = GET_ROUTES[parsed.path]
+            if parsed.path == '/api/bank-statements' and parsed.query:
+                method, names = 'bank_statement_detail', ('bank_account_id','statement_id')
+            values = parse_qs(parsed.query, strict_parsing=True, keep_blank_values=True, max_num_fields=len(names)) if parsed.query else {}
+            if set(values) != set(names) or any(len(v) != 1 for v in values.values()):
+                raise ValueError('request requires exactly: ' + ', '.join(names))
+            if parsed.path == '/api/report-export':
                 from accounting_harness.report_export import export_report_package
-                values = parse_qs(urlsplit(self.path).query, strict_parsing=True,
-                                  keep_blank_values=True, max_num_fields=2)
-                if set(values) != {'as_of','format'} or any(len(v) != 1 for v in values.values()):
-                    raise ValueError('report export requires as_of and format exactly once')
                 kind = values['format'][0]
                 if kind not in ('json','zip'):
                     raise ValueError('report format must be json or zip')
-                package = self.server.workspace.report_package(values['as_of'][0])
-                raw = export_report_package(package,kind)
-                return self.respond(200,raw,'application/json' if kind == 'json' else 'application/zip',
-                    filename='report.json' if kind == 'json' else 'reports.zip',package_digest=package['package_digest'])
-            except (ValueError, TypeError) as error:
-                return self.respond(409, dict(error=str(error)))
-            except (sqlite3.Error, PersistenceBusy):
-                return self.respond(503, dict(error='workspace busy or unavailable; retry export'))
-        if urlsplit(self.path).path in ('/api/budget', '/api/budget-inputs', '/api/variance', '/api/indicators', '/api/indicator-inputs'):
-            try:
-                path = urlsplit(self.path).path
-                field = 'month' if path.endswith('-inputs') else 'version_id'
-                values = parse_qs(urlsplit(self.path).query, strict_parsing=True, keep_blank_values=True, max_num_fields=1)
-                if set(values) != {field} or len(values[field]) != 1:
-                    raise ValueError('management report requires ' + field + ' exactly once')
-                method = {'/api/budget': self.server.workspace.budget, '/api/budget-inputs': self.server.workspace.budget_inputs,
-                          '/api/variance': self.server.workspace.variance, '/api/indicators': self.server.workspace.indicators,
-                          '/api/indicator-inputs': self.server.workspace.indicator_inputs}[path]
-                return self.respond(200, method(values[field][0]))
-            except (ValueError, TypeError) as error:
-                return self.respond(409, dict(error=str(error)))
-            except (sqlite3.Error, PersistenceBusy):
-                return self.respond(503, dict(error='workspace busy or unavailable; retry management read'))
-        if urlsplit(self.path).path == '/api/project-cost':
-            try:
-                values = parse_qs(urlsplit(self.path).query, strict_parsing=True, keep_blank_values=True, max_num_fields=1)
-                if set(values) != {'version_id'} or len(values['version_id']) != 1:
-                    raise ValueError('cost sheet requires version_id exactly once')
-                return self.respond(200, self.server.workspace.project_cost(values['version_id'][0]))
-            except (ValueError, TypeError) as error:
-                return self.respond(409, dict(error=str(error)))
-            except (sqlite3.Error, PersistenceBusy):
-                return self.respond(503, dict(error='workspace busy or unavailable; retry cost sheet'))
-        if urlsplit(self.path).path in ('/api/financial-statements', '/api/cash-flow', '/api/project-dimensions', '/api/project-time', '/api/project-cost-inputs'):
-            try:
-                values = parse_qs(urlsplit(self.path).query, strict_parsing=True,
-                                  keep_blank_values=True, max_num_fields=1)
-                if set(values) != {'as_of'} or len(values['as_of']) != 1:
-                    raise ValueError('financial statements require as_of exactly once')
-                render = {'/api/cash-flow': self.server.workspace.cash_flow,
-                          '/api/financial-statements': self.server.workspace.financial_statements,
-                          '/api/project-dimensions': self.server.workspace.project_dimensions,
-                          '/api/project-time': self.server.workspace.project_time,
-                          '/api/project-cost-inputs': self.server.workspace.project_cost_inputs}[urlsplit(self.path).path]
-                return self.respond(200, render(values['as_of'][0]))
-            except (ValueError, TypeError) as error:
-                return self.respond(409, dict(error=str(error)))
-            except (sqlite3.Error, PersistenceBusy):
-                return self.respond(503, dict(error='workspace busy or unavailable; retry capture'))
-        if urlsplit(self.path).path in ('/api/bank-statements', '/api/bank-matches', '/api/bank-reconciliation'):
-            try:
-                query = urlsplit(self.path).query
-                if urlsplit(self.path).path == '/api/bank-matches':
-                    values = parse_qs(query, strict_parsing=True, keep_blank_values=True, max_num_fields=1)
-                    if set(values) != {'bank_account_id'} or len(values['bank_account_id']) != 1:
-                        raise ValueError('matching view requires bank_account_id exactly once')
-                    return self.respond(200, self.server.workspace.bank_matches(values['bank_account_id'][0]))
-                reconciliation = urlsplit(self.path).path == '/api/bank-reconciliation'
-                if not query and not reconciliation:
-                    return self.respond(200, self.server.workspace.list_bank_statements())
-                values = parse_qs(query, strict_parsing=True, keep_blank_values=True, max_num_fields=2)
-                if set(values) != {'bank_account_id', 'statement_id'} or any(len(v) != 1 for v in values.values()):
-                    raise ValueError('bank detail requires bank_account_id and statement_id exactly once')
-                detail = self.server.workspace.bank_reconciliation if reconciliation else self.server.workspace.bank_statement_detail
-                return self.respond(200, detail(
-                    values['bank_account_id'][0], values['statement_id'][0]))
-            except KeyError:
-                return self.respond(404, dict(error='bank statement or account not found'))
-            except (ValueError, TypeError) as error:
-                return self.respond(409, dict(error=str(error)))
-            except (sqlite3.Error, PersistenceBusy):
-                return self.respond(503, dict(error='workspace busy or unavailable; retry refresh'))
-        if self.path in ('/api/state', '/api/sources'):
-            try:
-                if self.path == '/api/sources':
-                    return self.respond(200, self.server.workspace.list_sources())
-                state = self.server.workspace.state()
-                return self.respond(200, dict(state, csrf_token=self.server.csrf_token))
-            except (sqlite3.Error, PersistenceBusy):
-                return self.respond(503, dict(error='workspace busy or unavailable; retry refresh'))
-        self.respond(404, dict(error='not found'))
+                package = self.server.application.call(token, entity, method, values['as_of'][0])
+                return self.respond(200, export_report_package(package, kind),
+                    'application/json' if kind == 'json' else 'application/zip',
+                    filename='report.json' if kind == 'json' else 'reports.zip', package_digest=package['package_digest'])
+            result = self.server.application.call(token, entity, method, *(values[n][0] for n in names))
+            if method == 'state':
+                result = dict(result, csrf_token=identity['csrf_token'], identity=identity,
+                              allowed_actions=sorted(action for action, op in ACTION_OPERATIONS.items()
+                                  if op in next(g['capabilities'] for g in identity['entities'] if g['entity_id'] == entity)))
+            return self.respond(200, result)
+        except AccessDenied:
+            return self.respond(403, dict(error='Access denied'))
+        except KeyError:
+            return self.respond(404, dict(error='record not found'))
+        except (ValueError, TypeError) as error:
+            return self.respond(409, dict(error=str(error)))
+        except (sqlite3.Error, PersistenceBusy, AccessBusy):
+            return self.respond(503, dict(error='workspace busy or unavailable; retry'))
 
     def do_POST(self):
         host = self.headers.get('Host', '')
-        if (not self.trusted_host() or self.headers.get_all('Origin', []) != ['http://' + host]
-                or not secrets.compare_digest(self.headers.get('X-CSRF-Token', '').encode(),
-                                              self.server.csrf_token.encode())):
-            return self.respond(403, dict(error='local browser session required; refresh the page'))
-        if self.headers.get('Content-Type') != 'application/json':
+        if not self.trusted_host() or self.headers.get_all('Origin', []) != ['http://' + host]:
+            return self.respond(403, dict(error='local browser origin required'))
+        if self.headers.get_all('Content-Type', []) != ['application/json']:
             return self.respond(415, dict(error='application/json required'))
         if self.headers.get('Transfer-Encoding') or len(self.headers.get_all('Content-Length', [])) != 1:
             return self.respond(400, dict(error='one bounded Content-Length required'))
@@ -170,42 +190,83 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
         except (ValueError, UnicodeError, TimeoutError):
             return self.respond(400, dict(error='invalid JSON request'))
-        if self.path not in ('/api/indicators', '/api/budget', '/api/project-cost', '/api/project-time', '/api/project-time-void', '/api/projects', '/api/project-assignments', '/api/close-preview', '/api/close-confirm', '/api/bank-timing', '/api/bank-reconcile', '/api/bank-fee-proposals', '/api/bank-fee-account', '/api/bank-match', '/api/bank-unmatch', '/api/bank-statements', '/api/run', '/api/cancel', '/api/reject', '/api/approve-post', '/api/sources',
-                             '/api/revenue-accrual-proposals', '/api/expense-accrual-proposals', '/api/prepaid-proposals', '/api/operation-sources', '/api/cash-proposals', '/api/bill-proposals', '/api/invoice-proposals', '/api/advance-proposals', '/api/advance-earning-proposals', '/api/invoice-collection-proposals', '/api/bill-payment-proposals'):
-            return self.respond(404, dict(error='not found'))
         try:
-            result = self.server.workspace.action(self.path.removeprefix('/api/'), data)
-            self.respond(200, result)
+            if self.path == '/api/login':
+                challenge = self.cookie(LOGIN_COOKIE)
+                self.csrf(challenge)
+                with self.server.browser_lock:
+                    if self.server.challenges.pop(challenge, 0) <= time.monotonic():
+                        raise AccessDenied()
+                if set(data) != {'username','password'}:
+                    raise ValueError('login requires username and password')
+                token = self.server.access.login(data['username'], data['password'])
+                return self.respond(200, dict(authenticated=True), cookies=[self.cookie_header(SESSION_COOKIE, token), self.cookie_header(LOGIN_COOKIE,'',clear=True)])
+            token, key, identity = self.session()
+            self.csrf(identity['csrf_token'])
+            if self.path == '/api/logout':
+                if data != {}:
+                    raise ValueError('logout accepts no fields')
+                self.server.access.logout(token)
+                with self.server.browser_lock:
+                    self.server.browsers.pop(key, None)
+                return self.respond(200, dict(authenticated=False), cookies=[self.cookie_header(SESSION_COOKIE,'',clear=True)])
+            if self.path == '/api/entity':
+                if set(data) != {'entity_id'}:
+                    raise ValueError('entity selection requires entity_id')
+                self.server.access.authorize(token, data['entity_id'], 'read_audit')
+                with self.server.browser_lock:
+                    self.server.browsers[key] = dict(entity_id=data['entity_id'], csrf_token=secrets.token_urlsafe(32))
+                return self.respond(200, self.session()[2])
+            if self.path not in POST_ROUTES:
+                return self.respond(404, dict(error='not found'))
+            token, entity, _ = self.scope(mutate=True)
+            result = self.server.application.call(token, entity, 'action', POST_ROUTES[self.path], data)
+            return self.respond(200, result)
+        except AuthenticationFailed as error:
+            return self.respond(403, dict(error='Login failed', retry_at=error.retry_at.isoformat() if error.retry_at else None))
+        except AccessDenied:
+            return self.respond(403, dict(error='Access denied'))
         except EnrollmentPending as error:
-            self.respond(503, error.result)
+            return self.respond(503, error.result)
         except (ValueError, TypeError, KeyError) as error:
-            self.respond(409, dict(error=str(error)))
-        except (sqlite3.Error, PersistenceBusy):
-            self.respond(503, dict(error='workspace busy or unavailable; retry with the same request'))
+            return self.respond(409, dict(error=str(error)))
+        except (sqlite3.Error, PersistenceBusy, AccessBusy):
+            return self.respond(503, dict(error='workspace busy or unavailable; retry with the same request'))
 
 
-def make_server(directory, *, port=8765, enable_providers=False, ollama_model=None):
+def make_server(directory=None, *, access_db=None, port=8765, enable_providers=False, ollama_model=None):
+    if access_db is None:
+        raise ValueError('An explicitly provisioned --access-db is required; run local access setup first')
     if type(port) is not int or not 0 <= port <= 65535:
         raise ValueError('port must be between 0 and 65535')
-    workspace = Workspace(directory, enable_providers=enable_providers, ollama_model=ollama_model)
+    if not Path(access_db).is_file():
+        raise ValueError('Access database must already exist; run local access setup first')
+    access = AccessStore(access_db)
+    if directory is not None:
+        with access._transaction() as connection:
+            if not connection.execute('SELECT 1 FROM entities WHERE workspace_path=?', (str(Path(directory).resolve()),)).fetchone():
+                raise ValueError('--workspace must be an existing registered path')
     server = ThreadingHTTPServer(('127.0.0.1', port), Handler)
-    server.workspace = workspace
+    server.access = access
+    server.application = AuthenticatedWorkspace(access, enable_providers=enable_providers, ollama_model=ollama_model)
     server.allowed_hosts = {f'127.0.0.1:{server.server_port}', f'localhost:{server.server_port}'}
-    server.csrf_token = secrets.token_urlsafe(32)
+    server.browser_lock = threading.RLock()
+    server.browsers, server.challenges = {}, {}
     return server
 
 
 def serve(args):
-    with make_server(args.workspace, port=args.port, enable_providers=args.enable_providers,
+    with make_server(args.workspace, access_db=args.access_db, port=args.port, enable_providers=args.enable_providers,
                      ollama_model=args.ollama_model) as server:
         print(f'Accounting Harness: http://127.0.0.1:{server.server_port}', flush=True)
-        print(f'Fictional workspace: {server.workspace.root}', flush=True)
+        print('Login required. Entity access comes from current local grants.', flush=True)
+        print('Loopback HTTP only; remote/TLS hosting is unavailable.', flush=True)
         print('Provider calls enabled by operator.' if args.enable_providers else
               'Offline mode. No provider connections or model calls.', flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:
-            print('\nStopped. Workspace records are preserved.')
+            print('\\nStopped. Workspace records are preserved.')
 
 
 def demo_web():

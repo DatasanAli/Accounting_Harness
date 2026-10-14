@@ -19,7 +19,7 @@ from accounting_harness.adjusted_month import build_adjusted_month
 from accounting_harness.cash_flow import capture_cash_flow
 from accounting_harness.review import digest
 from accounting_harness.workspace import Workspace
-from accounting_harness.web import make_server
+from auth_fixture import make_server
 
 
 class ReportExportTests(unittest.TestCase):
@@ -299,7 +299,7 @@ class ReportExportTests(unittest.TestCase):
             thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
             def request(query):
                 conn=http.client.HTTPConnection('127.0.0.1',server.server_port,timeout=10)
-                conn.request('GET','/api/report-export'+query);response=conn.getresponse()
+                conn.request('GET','/api/report-export'+query,headers=server.test_headers);response=conn.getresponse()
                 result=response.status,dict(response.getheaders()),response.read();conn.close();return result
             try:
                 for kind,mime,filename in [('json','application/json','report.json'),('zip','application/zip','reports.zip')]:

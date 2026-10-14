@@ -4,37 +4,60 @@ An accounting agent harness for bookkeeping at a small service business, built o
 
 The intended workflow is: **evidence → proposed journal entry → validation → human approval → posting → reconciliation → reporting**. Accounting code owns calculations and ledger changes. The agent helps interpret evidence and propose work.
 
-**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Step 13b adds typed cash/recognition facts and reviewed cash expense and earned-service templates. Step 14a adds vendor bill recognition and AP reconciliation. Step 14b adds reviewed partial settlement with atomic payment allocation. Step 15a adds separately evidenced customer invoices and AR reconciliation. Step 15b adds partial collection and captured customer aging. Step 16a adds customer advances as reconciled unearned liabilities. Step 16b adds separately supported earning with unchanged cash and captured earning history. Step 16c hardens payable final approval/allocation checks and atomic upgrades. Step 17 adds immutable synthetic bank CSV import without ledger movement. Step 18 adds deterministic human-confirmed matching, unresolved ambiguity and audited unmatch. Step 19a adds immutable audited activation of the fixed bank-fee expense account. Step 19b adds imported bank-fee evidence, exact human-reviewed posting and separate matching. Step 19c adds captured bank-to-book reconciliation, reviewed timing differences and immutable completion history. Step 20a adds evidenced monthly prepaid insurance consumption with unchanged cash and captured remaining assets. Step 20b adds separately evidenced unbilled expense accruals with exact human review and a reconciled liability. Step 20c adds supported unbilled service revenue, a reconciled accrued asset and versioned combined accrual reports. Step 20d assembles and verifies the adjusted operational reference month. Step 21 adds captured income, owner’s equity and balance-sheet reports with exact account and journal drilldowns. Step 22 adds separately confirmed period close and durable January date locks while preserving captured pre-close statements. Step 23a adds captured direct cash flow, approved payable trace and visible classification exceptions. Step 23b adds deterministic JSON/CSV report packages with bounded offline verification. Step 24a adds immutable projects and versioned attribution that reconciles to recorded actuals. Step 24b adds exact service-time records with overlap checks and preserved void/replacement history. Step 25 adds immutable project cost scenarios with captured actuals/time, explicit rates and traceable modeled margins. Step 26 adds separate versioned operating assumptions and dated cash plans with deferred receipts/payments and visible funding gaps. Step 27 adds reproducible static/flexible/actual variance reports with exact favorable impacts, activity bridges and retained input downloads. Step 28 adds versioned single-service contribution/break-even scenarios and captured financial/operational indicators. Step 29a adds local credentials, opaque sessions, fixed entity roles and interactive administration. HTTP/UI authentication is the next delivery; the current server is still unauthenticated.
+**Current state:** Steps 01–11 are complete. The project has exact USD Money values, a validated entity-scoped chart of accounts, pure journal-entry validation with structured findings, an in-memory ledger with reproducible trial balances, atomic SQLite persistence with safe retries, linked full reversals that preserve original entries, immutable receipt registration, versioned drafts, local human approval with atomic posting, and five typed agent tools with 24 offline contract cases, and a durable bounded fake-provider run loop. Step 12 adds a bounded OpenAI expense adapter and 20 offline proposal cases; its live evaluation is deferred by request. Step 12a adds the persistent localhost UI and Ollama/offline adapters. Step 13a adds audited enrollment for new fictional receipts. Step 13b adds typed cash/recognition facts and reviewed cash expense and earned-service templates. Step 14a adds vendor bill recognition and AP reconciliation. Step 14b adds reviewed partial settlement with atomic payment allocation. Step 15a adds separately evidenced customer invoices and AR reconciliation. Step 15b adds partial collection and captured customer aging. Step 16a adds customer advances as reconciled unearned liabilities. Step 16b adds separately supported earning with unchanged cash and captured earning history. Step 16c hardens payable final approval/allocation checks and atomic upgrades. Step 17 adds immutable synthetic bank CSV import without ledger movement. Step 18 adds deterministic human-confirmed matching, unresolved ambiguity and audited unmatch. Step 19a adds immutable audited activation of the fixed bank-fee expense account. Step 19b adds imported bank-fee evidence, exact human-reviewed posting and separate matching. Step 19c adds captured bank-to-book reconciliation, reviewed timing differences and immutable completion history. Step 20a adds evidenced monthly prepaid insurance consumption with unchanged cash and captured remaining assets. Step 20b adds separately evidenced unbilled expense accruals with exact human review and a reconciled liability. Step 20c adds supported unbilled service revenue, a reconciled accrued asset and versioned combined accrual reports. Step 20d assembles and verifies the adjusted operational reference month. Step 21 adds captured income, owner’s equity and balance-sheet reports with exact account and journal drilldowns. Step 22 adds separately confirmed period close and durable January date locks while preserving captured pre-close statements. Step 23a adds captured direct cash flow, approved payable trace and visible classification exceptions. Step 23b adds deterministic JSON/CSV report packages with bounded offline verification. Step 24a adds immutable projects and versioned attribution that reconciles to recorded actuals. Step 24b adds exact service-time records with overlap checks and preserved void/replacement history. Step 25 adds immutable project cost scenarios with captured actuals/time, explicit rates and traceable modeled margins. Step 26 adds separate versioned operating assumptions and dated cash plans with deferred receipts/payments and visible funding gaps. Step 27 adds reproducible static/flexible/actual variance reports with exact favorable impacts, activity bridges and retained input downloads. Step 28 adds versioned single-service contribution/break-even scenarios and captured financial/operational indicators. Step 29a adds local credentials, opaque sessions, fixed entity roles and interactive administration. Step 29b enforces authenticated application/HTTP access, stable human actors, fixed entity roles and session-bound CSRF throughout the existing UI.
 
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
 
 ## Open the localhost workspace
 
+Python 3.12+ is enough; no packages are required. Set up accounts locally before
+starting the server. Passphrases are entered in a hidden terminal prompt, never
+as command-line arguments. Each grant prompts for `GRANT` confirmation.
+
 ```sh
-python3 -m accounting_harness serve
+# For a NEW fictional workspace only:
+python3 -m accounting_harness access-provision --access-db .local/access.sqlite3 --workspace .local/workspace --entity demo-service-001 --reason "Local synthetic setup"
+
+# If .local/workspace already exists, use THIS instead of access-provision.
+# Use the existing immutable entity ID (the original fixture is demo-service-001).
+python3 -m accounting_harness access-map-entity --access-db .local/access.sqlite3 --workspace .local/workspace --entity demo-service-001 --reason "Preserve existing workspace"
+
+python3 -m accounting_harness access-create-user --access-db .local/access.sqlite3 --username preparer --reason "Local preparer"
+python3 -m accounting_harness access-create-user --access-db .local/access.sqlite3 --username reviewer --reason "Local reviewer"
+python3 -m accounting_harness access-grant --access-db .local/access.sqlite3 --username preparer --entity demo-service-001 --role preparer --retry-key preparer-initial --reason "Prepare fictional books"
+python3 -m accounting_harness access-grant --access-db .local/access.sqlite3 --username reviewer --entity demo-service-001 --role reviewer --retry-key reviewer-initial --reason "Review fictional books"
+python3 -m accounting_harness serve --access-db .local/access.sqlite3
 ```
 
-Open **http://127.0.0.1:8765**. Python 3.12+ is enough; there are no packages to
-install. Records persist in ignored `.local/workspace/`. The initial workspace
-contains five fictional January 2026 receipts. The Evidence screen also registers
-new structured fictional receipts with stable IDs and audited ledger enrollment. Select a receipt, run the offline
-proposal, inspect the review, then explicitly approve/post or reject it. The
-ledger and run history survive restart. Stop the server with Ctrl-C.
+Open **http://127.0.0.1:8765** and sign in. A preparer registers evidence and
+prepares proposals; a reviewer inspects and approves/posts the exact revision.
+Use **Sign out** to change users. The entity selector lists only current grants.
+There is no default account, automatic owner login or public registration.
+An explicitly granted `owner` combines these roles and can activate fixed AP,
+AR, advance, accrued expense/revenue and bank-fee accounts through the sidebar.
+Preparers need owner activation before first use of those controls. Owner is a
+single-person option, not mandatory independent segregation of duties.
+
+Records remain at their registered paths; the existing workspace is not renamed
+or copied. Stop with Ctrl-C. Restart the same command to reuse durable identities,
+ledger and runs. Entity selection and CSRF are renewed after restart. Keep the
+identity database outside the financial workspace and all `.local/` files out of
+GitHub. Account reset, disable and grant/revoke commands are listed by `--help`.
 
 Offline demo mode uses fixed fixture responses; it is not a model. Provider
 choices are shown but disabled by default. No health check, model download or
 provider request runs on startup. Real API connection/evaluation is deferred at
 your request. The [localhost and wider roadmap](Plan/LOCALHOST_APP_PLAN.md) records
-remaining work and the expanded authorization to continue through it.
+remaining work. Implement one requested step at a time.
 
 When you later choose to connect a provider:
 
 ```sh
 # Ollama must already be running locally with your chosen model installed.
-python3 -m accounting_harness serve --enable-providers --ollama-model YOUR_LOCAL_MODEL
+python3 -m accounting_harness serve --access-db .local/access.sqlite3 --enable-providers --ollama-model YOUR_LOCAL_MODEL
 
 # OpenAI: set OPENAI_API_KEY privately in the launching environment first.
-python3 -m accounting_harness serve --enable-providers
+python3 -m accounting_harness serve --access-db .local/access.sqlite3 --enable-providers
 ```
 
 Choose the provider and press **Prepare proposal** in the UI. Ollama targets only
@@ -46,10 +69,21 @@ in the server environment. Neither provider has been connected/evaluated live by
 this work. Local model usage records zero provider billing, excluding your own
 hardware/energy costs. Unknown completion after interruption requires review.
 
-The server binds only to loopback and checks Host, Origin and a browser CSRF
-token. It is a single-operator fictional prototype; the operator label is not
-multi-user authentication. Structured fictional receipt entry and paired cash/recognition evidence are available. File extraction and wider workflows are subsequent roadmap deliveries. `--workspace PATH` selects another local directory;
-`--port PORT` changes the loopback port. Preserve ledger, sources and runs together.
+The server binds only to loopback and checks Host, Origin, cookie authentication,
+entity scope and session-bound CSRF. Cookies are host-only, HttpOnly,
+SameSite=Strict and Path=/; local HTTP supplies no TLS or Secure-cookie guarantee.
+Remote/TLS hosting remains unavailable. Sessions expire after 30 minutes without
+application activity or eight hours total; background status polling does not
+extend idle life. Revocation/expiry clears the UI on the next request or status
+poll (normally within 15 seconds).
+
+`--workspace PATH` optionally verifies an already registered path; it cannot
+select an arbitrary directory. `--port PORT` changes the loopback port. Preserve
+all workspace files together; verified relocation/recovery remains Step 33a.
+The authenticated public boundary is `AuthenticatedWorkspace.call(token,
+entity_id, method, *args)`. `Workspace`, store APIs, fixture demos and `review-post`
+are trusted local administrative primitives available to the OS file owner.
+See [route and side-effect inventory](Plan/09-integrations-and-pilot/STEP_29B_INVENTORY.md).
 
 ## Run the demonstration
 
@@ -96,6 +130,7 @@ python3 -m accounting_harness demo-budget
 python3 -m accounting_harness demo-variance
 python3 -m accounting_harness demo-indicators
 python3 -m accounting_harness demo-access
+python3 -m accounting_harness demo-authenticated-workspace
 ```
 
 The adjusted-month demonstration uses a distinct January 1 insurance-purchase variant; the original January 3 fixture stays unchanged. It labels trusted owner/purchase fixture entries separately from the eight reviewed operations.
@@ -131,15 +166,15 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 776 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all forty demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 802 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all 41 demonstrations.
 
-Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting is implemented; authenticated approval is not. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
+Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting and authenticated reviewer approval are implemented. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
 See [Step 02 verification and API examples](Plan/02-ledger-core/STEP_02_VERIFICATION.md), [Step 03 validation contract and verification](Plan/02-ledger-core/STEP_03_VERIFICATION.md), [Step 04 ledger API and verification](Plan/02-ledger-core/STEP_04_VERIFICATION.md), [Step 05 persistence/retry contract and verification](Plan/02-ledger-core/STEP_05_VERIFICATION.md), [Step 06 reversal/migration contract and verification](Plan/02-ledger-core/STEP_06_VERIFICATION.md), and [Step 07 source contract and verification](Plan/03-evidence-and-review/STEP_07_VERIFICATION.md).
 
 ## Delivery
 
-The delivery target is this repository on GitHub with its verification workflow and the localhost workspace. Run `python3 -m accounting_harness serve` after cloning; a hosted deployment is not configured.
+The delivery target is this repository on GitHub with its verification workflow and the localhost workspace. Complete local access setup above, then run `python3 -m accounting_harness serve --access-db .local/access.sqlite3`; a hosted deployment is not configured.
 
 ## Our build cycle
 
@@ -147,11 +182,11 @@ The delivery target is this repository on GitHub with its verification workflow 
 2. Implement that step and test its promised behavior and relevant failure cases.
 3. Demonstrate the result with fictional data.
 4. Update the plan and next-step prompt, commit, and push to GitHub.
-5. Verify the remote commit and CI result and report the evidence. The expanded 2026-10-08 request authorizes continuing through the wider roadmap; otherwise stop until the next request.
+5. Verify the remote commit and CI result and report the evidence. Stop until the user requests the next numbered step.
 
 Next prompt:
 
-> Build Step 29b: Require authenticated localhost access for every application read and action. Follow Plan/09-integrations-and-pilot/STEP_29B_PLAN.md. Inventory all routes and side effects, authorize before workspace construction, propagate stable human actors, and enforce preparer/reviewer/entity boundaries on direct facade and HTTP calls. Add login, logout, entity selection and session-bound CSRF with no implicit owner fallback. Preserve historical data and demonstrate native preparation followed by separate reviewer approval, revocation and restart. Verify, review, commit/push/exact CI, then continue the offline roadmap. Keep live connections deferred.
+> Build Step 30: Implement the offline QuickBooks JournalEntry read-adapter contract in Plan/09-integrations-and-pilot/STEP_30_PLAN.md. Keep the local ledger authoritative and all live connections deferred. Test pagination, stable IDs, duplicate retries, rate limits, interrupted resume, mapping and reconciliation with synthetic fixtures. Verify, independently review, demonstrate, commit, push and check exact CI. Report the evidence and stop.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 
@@ -234,8 +269,7 @@ service revenue zero. See [advance verification](Plan/05-service-bookkeeping/STE
 
 ## Local identity setup
 
-The identity core and interactive user/grant commands are implemented; connecting
-these checks to every HTTP operation is Step 29b. The current UI still uses the
-original local-operator boundary. See the [identity-core verification and exact
+The identity core, interactive user/grant commands and authenticated HTTP/UI
+boundary are implemented. Follow the login-first startup instructions above. See the [identity-core verification and exact
 setup commands](Plan/09-integrations-and-pilot/STEP_29A_VERIFICATION.md). Passwords
 are entered through hidden terminal prompts, and new users have no implicit grants.

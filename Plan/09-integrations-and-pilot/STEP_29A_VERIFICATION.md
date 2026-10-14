@@ -78,6 +78,6 @@ unauthenticated network administration interface.
 - Final-code original-workspace restart preserved all prior financial state,
   attribution/time, costing/budget/indicator versions, financial/cash-flow reports
   and portable export bytes. Fresh-process session checks also passed.
-- Commit, remote and exact-SHA CI remain pending.
+- Delivered commit [c480771](https://github.com/DatasanAli/Accounting_Harness/commit/c48077187bf96b0383f28f877292de7b9110e1b5) matches origin/main; [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426) completed successfully.
 
 No HTTP protection or live connection is claimed by this identity-core slice.

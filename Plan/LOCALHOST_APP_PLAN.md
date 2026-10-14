@@ -42,11 +42,10 @@ Steps 13 onward may proceed offline under the user's new direction. The deferred
 live evaluation remains a requirement for claiming model readiness and for a
 real-data pilot. The numbered accounting roadmap remains intact; lettered
 substeps record independently reviewable deliveries without renumbering history.
-The user explicitly expanded this request to **complete the wider accounting
-roadmap too**. This overrides the default stop-between-requests cadence for this
-request: continue through the numbered steps/substeps, with a separate reviewed
-commit and verified CI per delivery. Do not claim deferred live connections or
-actual pilot acceptance have occurred.
+The earlier 2026-10-08 request expanded the roadmap. The current 2026-10-14
+request authorizes Step 29b only. Follow the current one-step delivery cadence:
+verify, review, commit/push/check exact CI, report, and stop. Live connections and
+actual pilot acceptance remain deferred.
 
 ## Step 12a implementation plan
 
@@ -151,4 +150,6 @@ linked reversals, not deletion or a database reset.
 
 - Step 28: local 741 tests/39 demos, native60.00 contribution/20 whole units, exact captured ratios, three immutable what-if/indicator selections and explicit unavailable zero-contribution thresholds. Native 80,709-byte JSON, pure offline reproduction and final-fix restart preserve all prior state. Independent Important policy alias fixed and re-review approved; month-control Minor assigned 31c. Commit `b7f4a3a` matches remote and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480); see [verification](08-service-management/STEP_28_VERIFICATION.md).
 
-- Step 29a: local 776 tests/40 demos, hidden interactive passphrase setup, distinct entities, fixed-role denials, revocation/logout and fresh-process session persistence. Original mapped books remain byte-identical; final-code restart preserves all prior reports/scenarios/exports. Independent spec/quality review approved with no findings. Upload/exact CI pending; HTTP enforcement remains 29b. See [verification](09-integrations-and-pilot/STEP_29A_VERIFICATION.md).
+- Step 29a: local 776 tests/40 demos, hidden interactive passphrase setup, distinct entities, fixed-role denials, revocation/logout and fresh-process session persistence. Original mapped books remain byte-identical; final-code restart preserves all prior reports/scenarios/exports. Independent spec/quality review approved with no findings. Commit `c480771` matches origin/main and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426); HTTP enforcement remains 29b. See [verification](09-integrations-and-pilot/STEP_29A_VERIFICATION.md).
+
+- Step 29b: 802 tests/41 demos, authenticated native preparation and separate reviewer posting, denial/revocation, fresh-process restart, entity clearing and 390px identity/logout passed. Independent review has no remaining Important or Critical findings. Upload/exact CI pending; see [verification](09-integrations-and-pilot/STEP_29B_VERIFICATION.md). The current request stops after this delivery.

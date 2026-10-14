@@ -23,6 +23,9 @@ const views = {
 const sampleNames = {'rent-standard': 'January office rent', 'software-standard': 'Software subscription',
   'ambiguity-1': 'Ambiguous expense', 'missing-1': 'Missing receipt details', 'hostile-1': 'Document instruction test'};
 const settled = new Set(['completed', 'failed', 'exhausted', 'cancelled', 'awaiting_review']);
+let identity = null;
+let loginChallenge = null;
+let scopeGeneration = 0;
 let state = null;
 let financialReport = null;
 let cashFlowReport = null;
@@ -58,11 +61,9 @@ function remember(key, value) {
   catch { /* The workspace also works when browser storage is unavailable. */ }
 }
 activeView = recall('view', 'evidence');
-selectedSource = recall('source', '');
+selectedSource = '';
 selectedProvider = recall('provider', 'offline');
-pendingRun = recall('pending-run', null);
-if (pendingRun && (typeof pendingRun.run_id !== 'string' || typeof pendingRun.source_id !== 'string'
-    || !['offline', 'ollama', 'openai'].includes(pendingRun.provider))) pendingRun = null;
+pendingRun = null;
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -156,17 +157,20 @@ function showView(name, focus = false) {
   if (focus) $('main').focus();
 }
 async function request(path, payload, timeout = 15000) {
+  const generation = scopeGeneration;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    const options = {signal: controller.signal, credentials: 'same-origin', cache: 'no-store'};
+    const options = {signal: controller.signal, credentials: 'same-origin', cache: 'no-store', headers: {'X-Entity-ID': identity?.entity_id || ''}};
     if (payload !== undefined) {
       options.method = 'POST';
-      options.headers = {'Content-Type': 'application/json', 'X-CSRF-Token': state.csrf_token};
+      options.headers = {...options.headers, 'Content-Type': 'application/json', 'X-CSRF-Token': identity?.csrf_token || ''};
       options.body = JSON.stringify(payload);
     }
     const response = await fetch(path, options);
     const result = await response.json();
+    if (generation !== scopeGeneration) throw new Error('Entity selection changed; request discarded.');
+    if (response.status === 403) { lockWorkspace(); location.reload(); }
     if (!response.ok) {
       const error = new Error(result.error || 'The workspace could not complete this request.');
       error.uncertain = response.status >= 500;
@@ -189,6 +193,19 @@ async function refresh() {
   $('refresh').disabled = true;
   try {
     state = await request('/api/state');
+    if (!pendingRun) {
+      const saved = recall('pending-run', null);
+      if (saved?.user_id === identity.user_id && saved.entity_id === identity.entity_id
+          && saved.entity_id === state.entity_id && /^[A-Za-z0-9_-]{1,80}$/.test(saved.request?.run_id)
+          && typeof saved.request?.source_id === 'string'
+          && ['offline', 'ollama', 'openai'].includes(saved.request?.provider)) {
+        const recorded = state.runs.find(run => run.run_id === saved.request.run_id);
+        if (!recorded || recorded.initiator_id === identity.user_id) {
+          const {run_id, source_id, provider} = saved.request;
+          pendingRun = {run_id, source_id, provider};
+        }
+      }
+    }
     if (bankDetail) await loadBankMatches();
     if (pendingRun) {
       const recorded = state.runs.find(run => run.run_id === pendingRun.run_id);
@@ -204,6 +221,7 @@ async function refresh() {
   } finally { refreshBusy = false; $('refresh').disabled = false; }
 }
 function render() {
+  if (!state) return;
   $('entity-label').textContent = 'Synthetic service business · ' + state.entity_id;
   $('period-label').textContent = state.period + ' · ' + state.currency;
   const reviewCount = state.drafts.filter(draft => !['posted', 'rejected'].includes(draft.status)).length;
@@ -271,7 +289,7 @@ function renderSourceDetail() {
   });
   add(form, label, select, note);
   const used = state.drafts.some(draft => Object.hasOwn(draft.evidence, source.source_id));
-  const propose = button(pendingRun ? 'Recover existing run' : 'Prepare proposal →', () => runProposal(), 'button');
+  const propose = actionButton('run', pendingRun ? 'Recover existing run' : 'Prepare proposal →', () => runProposal(), 'button');
   propose.disabled = busy || !!pendingRun || used || source.state === 'registered_pending_enrollment'
     || (select.value === 'offline' && !source.offline_supported);
   form.append(propose);
@@ -284,8 +302,8 @@ function renderSourceDetail() {
       const progress = add(el('div', null, 'progress-line'), el('span', null, 'spinner'), el('span', 'Preparing proposal…', 'run-progress'));
       progress.setAttribute('role', 'status'); form.append(progress);
     }
-    const retry = button('Recover same run', () => runProposal(true)); retry.disabled = busy;
-    const cancel = button('Cancel run', () => cancelRun(pendingRun.run_id), 'button danger small');
+    const retry = actionButton('run', 'Recover same run', () => runProposal(true)); retry.disabled = busy;
+    const cancel = actionButton('cancel', 'Cancel run', () => cancelRun(pendingRun.run_id), 'button danger small');
     cancel.disabled = busy && !runBusy;
     form.append(add(el('div', null, 'actions'), retry, cancel));
   }
@@ -715,7 +733,7 @@ function renderBank() {
       add(el('details'), el('summary', 'Original account activation audit'),
         el('pre', JSON.stringify(activation, null, 2))));
   } else {
-    const activate = button('Activate Bank Fees Expense 5300', async () => {
+    const activate = actionButton('bank-fee-account', 'Activate Bank Fees Expense 5300', async () => {
       busy = true; render();
       try {
         await request('/api/bank-fee-account', {});
@@ -815,7 +833,7 @@ function renderReconciliation(node) {
   const base = () => ({bank_account_id: report.bank_account_id, statement_id: report.statement_id,
     binding: report.digest, idempotency_key: crypto.randomUUID()});
   const timingForm = (item, role, label) => {
-    const form = el('form', null, 'stack');
+    const form = el('form', null, 'stack'); form.dataset.action = 'bank-timing';
     const reasonLabel = el('label', 'Review reason for ' + item.journal_id);
     const reason = el('input'); reason.type = 'text'; reason.required = true; reason.maxLength = 1000;
     reasonLabel.append(reason);
@@ -857,12 +875,12 @@ function renderReconciliation(node) {
   const label = el('label', null, 'check-label');
   const confirmed = el('input'); confirmed.type = 'checkbox'; confirmed.disabled = busy || !report.can_complete;
   label.append(confirmed, document.createTextNode(' I reviewed the exact report, references and timing classifications.'));
-  const complete = button('Complete this reconciliation', () => reconciliationAction('bank-reconcile', base()));
+  const complete = actionButton('bank-reconcile', 'Complete this reconciliation', () => reconciliationAction('bank-reconcile', base()));
   complete.disabled = true;
   confirmed.addEventListener('change', () => { complete.disabled = busy || !report.can_complete || !confirmed.checked; });
   card.append(label, complete);
   if (pendingReconciliation) {
-    const retry = button('Retry original reconciliation action', () => reconciliationAction(pendingReconciliation.action, pendingReconciliation.payload));
+    const retry = actionButton(pendingReconciliation.action, 'Retry original reconciliation action', () => reconciliationAction(pendingReconciliation.action, pendingReconciliation.payload));
     retry.disabled = busy; card.append(retry);
   }
   for (const item of completions) {
@@ -912,7 +930,7 @@ function renderBankMatches(node) {
   section.append(el('h3', 'Bank-to-book matching'), el('p',
     'Confirm a unique bank row and posted Cash journal after inspecting the pair. Matching leaves every journal and balance unchanged.'));
   if (pendingBankAction) {
-    const retry = button('Retry original matching action', () => bankMatchAction(pendingBankAction.action, pendingBankAction.payload));
+    const retry = actionButton(pendingBankAction.action, 'Retry original matching action', () => bankMatchAction(pendingBankAction.action, pendingBankAction.payload));
     retry.disabled = busy;
     section.append(el('p', 'A matching action has an uncertain result. Its original request is retained until recovered.'), retry);
   }
@@ -926,7 +944,7 @@ function renderBankMatches(node) {
       const match = row.active_match;
       card.append(metadata([['Matched journal', match.journal_id], ['Match actor', match.actor_id], ['Matched at', match.recorded_at]]),
         add(el('details'), el('summary', 'Original match audit'), el('pre', JSON.stringify(match, null, 2))));
-      const form = el('form');
+      const form = el('form'); form.dataset.action = 'bank-unmatch';
       const label = el('label', 'Unmatch reason');
       const reason = el('input'); reason.name = 'reason'; reason.required = true; reason.maxLength = 1000;
       label.append(reason);
@@ -951,7 +969,7 @@ function renderBankMatches(node) {
       if (row.confirmable) {
         const pair = row.candidates[0];
         card.append(el('p', 'Confirm this pair: ' + row.transaction_id + ' (' + row.amount + ' USD) ↔ ' + pair.journal_id + ' (' + pair.amount + ' USD).'));
-        const confirm = button('Confirm match', () => bankMatchAction('bank-match', {
+        const confirm = actionButton('bank-match', 'Confirm match', () => bankMatchAction('bank-match', {
           bank_account_id: bankMatchView.bank_account_id, transaction_id: row.transaction_id,
           journal_id: pair.journal_id, binding: row.binding, idempotency_key: crypto.randomUUID()
         }), 'button');
@@ -967,7 +985,7 @@ function renderBankMatches(node) {
     else if (!row.active_match && !row.candidates.length && row.amount.startsWith('-')) {
       if (!state.bank_fee_account_activation) card.append(el('p', 'Activate Bank Fees Expense above before proposing a fee.'));
       else {
-        const form = el('form');
+        const form = el('form'); form.dataset.action = 'bank-fee-proposals';
         const classificationLabel = el('label', 'Operator classification');
         const classification = el('select'); classification.required = true;
         for (const [value, text] of [['', 'Choose treatment…'], ['bank_fee', 'Bank fee · whole imported transaction']]) {
@@ -988,7 +1006,7 @@ function renderBankMatches(node) {
       }
     }
     if (pendingBankFee?.transaction_id === row.transaction_id) {
-      const retry = button('Retry original fee proposal', () => bankFeeAction(pendingBankFee), 'button secondary');
+      const retry = actionButton('bank-fee-proposals', 'Retry original fee proposal', () => bankFeeAction(pendingBankFee), 'button secondary');
       retry.disabled = busy; card.append(retry);
     }
     digest(card, 'Immutable bank content SHA-256', row.bank_digest);
@@ -1091,7 +1109,7 @@ async function runProposal(recover = false) {
   if (busy || (!recover && pendingRun)) return;
   if (!pendingRun) {
     pendingRun = {source_id: selectedSource, provider: selectedProvider, run_id: crypto.randomUUID()};
-    remember('pending-run', pendingRun);
+    remember('pending-run', {user_id: identity.user_id, entity_id: identity.entity_id, request: pendingRun});
   }
   const payload = {...pendingRun};
   busy = true; runBusy = true; runStarted = Date.now(); render();
@@ -1155,7 +1173,7 @@ function renderDrafts() {
       body.append(findings);
     } else body.append(el('p', 'Deterministic validation passed. Classification still needs your judgment.', 'valid-note'));
     const decidable = !['posted', 'rejected'].includes(draft.status);
-    if (decidable && draft.reviewable) {
+    if (decidable && draft.reviewable && can('approve-post')) {
       const checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.disabled = busy;
       const confirmation = add(el('label', null, 'confirm'), checkbox,
         el('span', 'I have reviewed the accounts, amounts, effective date, all evidence, and this exact revision. I authorize posting to the fictional ledger.'));
@@ -1167,8 +1185,10 @@ function renderDrafts() {
       approve.disabled = true;
       checkbox.addEventListener('change', () => { approve.disabled = busy || !checkbox.checked; });
       add(body, confirmation, approve);
-    } else if (decidable) body.append(el('p', 'This proposal cannot be approved. Review the findings; no journal has been posted.', 'findings'));
-    if (decidable) {
+    } else if (decidable) body.append(el('p', draft.reviewable
+      ? 'A reviewer or owner must approve this proposal. Your preparer role cannot post it.'
+      : 'This proposal cannot be approved. Review the findings; no journal has been posted.', 'findings'));
+    if (decidable && can('reject')) {
       const form = el('form', null, 'reject-form');
       const id = 'reason-' + draft.draft_id;
       const label = el('label', 'Reject with a recorded reason', 'field-label'); label.htmlFor = id;
@@ -1417,7 +1437,7 @@ function renderClose() {
   const label = el('label'); const check = el('input'); check.type = 'checkbox';
   check.disabled = closeBusy || !closePreview.can_close;
   label.append(check, document.createTextNode(' I reviewed these captured statements, temporary balances, evidence and exact closing journal.'));
-  const confirm = button(pendingClose ? 'Retry same close confirmation' : 'Close and lock January', confirmClose, 'button');
+  const confirm = actionButton('close-confirm', pendingClose ? 'Retry same close confirmation' : 'Close and lock January', confirmClose, 'button');
   confirm.disabled = closeBusy || !closePreview.can_close || !pendingClose;
   check.addEventListener('change', () => { confirm.disabled = closeBusy || !closePreview.can_close || !check.checked; });
   confirmation.append(label, confirm); node.append(confirmation);
@@ -1484,8 +1504,8 @@ function renderRuns() {
     add(body, metadata([['Evidence', run.source_id], ['Provider', run.provider.provider_version], ['Model', run.provider.model],
       ['Provider attempts', run.attempts], ['Prompt version', run.provider.prompt_version], ['Reserved cost · USD nanodollars', String(run.reserved_nanodollars)]]),
       el('p', 'Outcome: ' + human(run.reason), 'draft-reason'), jsonDetails('Recorded checkpoint trail', run.trace));
-    if (!settled.has(run.state)) {
-      const cancel = button('Cancel run', () => cancelRun(run.run_id), 'button danger small'); cancel.disabled = busy && !runBusy;
+    if (!settled.has(run.state) && run.initiator_id === identity.user_id && can('cancel')) {
+      const cancel = actionButton('cancel', 'Cancel run', () => cancelRun(run.run_id), 'button danger small'); cancel.disabled = busy && !runBusy;
       body.append(cancel);
     }
     card.append(body); node.append(card);
@@ -1511,7 +1531,7 @@ setInterval(() => {
   });
 }, 1000);
 showView(activeView);
-refresh().then(ok => { if (ok && pendingRun) notify('A previous run is retained. Inspect its status or recover the same run before starting another.', 'progress'); });
+initializeIdentity();
 
 $('prepaid-coverage-form').addEventListener('submit', async event => {
   event.preventDefault();
@@ -1681,9 +1701,13 @@ $('report-export-form').addEventListener('submit', async event => {
   try {
     const kind = $('report-export-format').value;
     const query = new URLSearchParams({as_of: $('report-export-cutoff').value, format: kind});
-    const response = await fetch('/api/report-export?' + query);
+    const generation = scopeGeneration;
+    const response = await fetch('/api/report-export?' + query, {headers: {'X-Entity-ID': identity.entity_id}, cache: 'no-store'});
+    if (generation !== scopeGeneration) throw new Error('Entity selection changed; download discarded.');
+    if (response.status === 403) { lockWorkspace(); location.reload(); }
     if (!response.ok) throw new Error((await response.json()).error || 'Download failed');
     const blob = await response.blob();
+    if (generation !== scopeGeneration) throw new Error('Entity selection changed; download discarded.');
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.href = url;
@@ -1839,7 +1863,7 @@ function renderAttributionReview() {
       ['Unallocated',projectCentsAmount(BigInt(source.actual_cents)-assigned) + ' USD'],['Reason',pending.reason]]),
     table(['Project','Customer','Category','Behavior','Traceability','Signed USD'],pending.allocations.map(r => [r.project_id,r.customer_id || 'Unassigned',r.category,r.behavior,r.traceability,projectCentsAmount(BigInt(r.cents)*sign)]),'Every row to be saved'),
     jsonDetails('Exact source binding and prior revision',pending));
-  const save = button(attributionUncertain ? 'Retry same attribution confirmation' : 'Confirm and save attribution', async () => {
+  const save = actionButton('project-assignments', attributionUncertain ? 'Retry same attribution confirmation' : 'Confirm and save attribution', async () => {
     if (attributionBusy) return;
     attributionBusy = true; renderAttributionReview();
     try {
@@ -2036,7 +2060,7 @@ function renderProjectCostReview() {
     ['Labor assumption',pending.labor_rate + ' USD/hour'],['Overhead assumption',pending.overhead_rate + ' USD/hour'],['Prior version',pending.prior_version_id || 'Initial version'],['Reason',pending.reason]]),
     table(['Direct nonlabor journal','Portion','Signed USD'],portions.map(r => [r.journal_id,r.allocation_number,r.signed_amount]),'Exactly selected actual portions'),
     jsonDetails('Exact reviewed capture bindings and assumptions',pending));
-  const save = button(projectCostUncertain ? 'Retry same costing confirmation' : 'Confirm and save costing version',async () => {
+  const save = actionButton('project-cost', projectCostUncertain ? 'Retry same costing confirmation' : 'Confirm and save costing version',async () => {
     if (projectCostBusy) return; setProjectCostBusy(true); renderProjectCostReview();
     try {
       const result = await request($('project-cost-form').getAttribute('action'),pendingProjectCost);
@@ -2170,7 +2194,7 @@ function renderBudgetReview() {
     table(['Operating line','Account','Behavior','Amount / rate · USD'],pending.operating_lines.map(r => [r.line_id,r.account,r.behavior,r.amount])),
     table(['Cash row','Direction','Date','USD'],pending.cash_rows.map(r => [r.row_id,r.direction,r.expected_date,r.amount])),
     jsonDetails('Complete assumptions and reference bindings to save',pending));
-  const save = button(budgetUncertain ? 'Retry same budget confirmation' : 'Confirm and save budget version',async () => {
+  const save = actionButton('budget', budgetUncertain ? 'Retry same budget confirmation' : 'Confirm and save budget version',async () => {
     if (budgetBusy) return; setBudgetBusy(true); renderBudgetReview();
     try {
       const result = await request($('budget-form').getAttribute('action'),pendingBudget);
@@ -2250,7 +2274,7 @@ function renderIndicatorReview() {
       ['Fixed cost · USD',indicatorPending.fixed_cost],['Relevant range',indicatorPending.minimum_units + '–' + indicatorPending.maximum_units + ' whole units'],
       ['What-if units',indicatorPending.quantity ?? 'None'],['Reason',indicatorPending.reason]]),
     jsonDetails('Exact assumptions and indicator selection to save',indicatorPending));
-  const save = button(indicatorUncertain ? 'Retry same indicator confirmation' : 'Confirm and save indicator scenario',async () => {
+  const save = actionButton('indicators', indicatorUncertain ? 'Retry same indicator confirmation' : 'Confirm and save indicator scenario',async () => {
     if (indicatorBusy) return; setIndicatorBusy(true); renderIndicatorReview();
     try {
       const result = await request($('indicator-form').getAttribute('action'),indicatorPending);
@@ -2347,3 +2371,88 @@ function renderVariance(report) {
   }));
   node.append(card);
 }
+
+
+function can(action) { return !!state?.allowed_actions?.includes(action); }
+function actionButton(action, ...args) {
+  const node = button(...args); node.dataset.action = action;
+  node.dataset.authorized = String(can(action)); return node;
+}
+function applyPermissions() {
+  document.querySelectorAll('[data-action], form[action^="/api/"]').forEach(node => {
+    const action = node.dataset.action || node.getAttribute('action').slice(5);
+    node.dataset.authorized = String(can(action));
+  });
+}
+new MutationObserver(applyPermissions).observe(document.body, {childList: true, subtree: true});
+function lockWorkspace() {
+  scopeGeneration++;
+  document.body.classList.add('locked');
+  state = null; identity = null; selectedSource = ''; pendingRun = null;
+  financialReport = cashFlowReport = closePreview = pendingClose = bankDetail = bankMatchView = reconciliationView = null;
+  pendingReconciliation = pendingBankFee = pendingBankAction = bankFileContent = null;
+  projectReport = pendingAttribution = projectTimeReport = projectCostInputs = pendingProjectCost = null;
+  budgetInputs = pendingBudget = indicatorInputs = indicatorPending = null;
+  try { Object.keys(sessionStorage).filter(key => key.startsWith('accounting-')).forEach(key => sessionStorage.removeItem(key)); } catch {}
+  document.querySelectorAll('.view .stack, .view pre, .view select').forEach(node => node.replaceChildren());
+  document.querySelectorAll('input, textarea').forEach(node => { if (node.type === 'checkbox') node.checked = false; else node.value = ''; });
+  document.querySelectorAll('.metric strong').forEach(node => { node.textContent = '—'; });
+}
+async function sessionRequest(path, data, csrf) {
+  const options = {credentials: 'same-origin', cache: 'no-store'};
+  if (data !== undefined) Object.assign(options, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrf || ''}, body: JSON.stringify(data)});
+  const response = await fetch(path, options);
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Access denied');
+  return result;
+}
+async function initializeIdentity() {
+  try {
+    identity = await sessionRequest('/api/session');
+    if (!identity.entity_id && identity.entities.length) identity = await sessionRequest('/api/entity', {entity_id: identity.entities[0].entity_id}, identity.csrf_token);
+    if (!identity.entity_id) {
+      $('login-message').textContent = 'This account has no entity access. Ask the local administrator to grant access.';
+      const logout = button('Sign out', async () => { await sessionRequest('/api/logout', {}, identity.csrf_token); location.reload(); });
+      $('login-panel').append(logout); return;
+    }
+    $('signed-in-user').textContent = identity.username;
+    $('signed-in-role').textContent = identity.entities.find(g => g.entity_id === identity.entity_id).role;
+    $('entity-choice').replaceChildren(...identity.entities.map(g => { const option = el('option', g.entity_id + ' · ' + g.role); option.value = g.entity_id; option.selected = g.entity_id === identity.entity_id; return option; }));
+    if (await refresh()) { document.body.classList.remove('locked'); applyPermissions(); }
+  } catch {
+    identity = null;
+    try { loginChallenge = await sessionRequest('/api/login-challenge'); } catch (error) { $('login-message').textContent = error.message; }
+  }
+}
+$('login-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  try {
+    if (!loginChallenge) loginChallenge = await sessionRequest('/api/login-challenge');
+    const data = {username: $('login-username').value, password: $('login-password').value};
+    $('login-password').value = '';
+    await sessionRequest('/api/login', data, loginChallenge.csrf_token);
+    location.reload();
+  } catch (error) { $('login-message').textContent = error.message; loginChallenge = null; }
+});
+$('logout').addEventListener('click', async () => {
+  const csrf = identity.csrf_token; lockWorkspace();
+  try { await sessionRequest('/api/logout', {}, csrf); } finally { location.reload(); }
+});
+$('entity-choice').addEventListener('change', async event => {
+  const csrf = identity.csrf_token, entity = event.target.value; lockWorkspace();
+  try { await sessionRequest('/api/entity', {entity_id: entity}, csrf); } finally { location.reload(); }
+});
+$('activate-account-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  try { await request('/api/activate-account', {account: $('activate-account-choice').value}); await refresh(); notify('Fixed account activated with your authenticated audit identity.'); }
+  catch (error) { notify(error.message, 'error'); }
+});
+// Detect expiry/revocation even while the user is looking at a retained report.
+setInterval(async () => {
+  if (!identity) return;
+  const generation = scopeGeneration;
+  try { const current = await sessionRequest('/api/session');
+    if (generation !== scopeGeneration) return;
+    if (JSON.stringify(current) !== JSON.stringify(identity)) { lockWorkspace(); location.reload(); }
+  } catch { if (generation === scopeGeneration) { lockWorkspace(); location.reload(); } }
+}, 15000);

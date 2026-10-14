@@ -86,11 +86,12 @@ class OfflineExpenseProvider(provider.OpenAIExpenseProvider):
         if cancelled():
             raise provider.ProviderFailure('provider_cancelled')
         context = json.loads(json.loads(body)['input'])
+        # Exact synthetic content may be provisioned into a distinct entity. The
+        # validated tool context, not the original fixture label, supplies scope.
         for case in json.loads(CORPUS.read_text())['cases']:
             document = case['document']
             content = {k: v for k, v in document.items() if k not in ('entity_id', 'document_id')}
             if (document['document_id'] == context['evidence']['source_id']
-                    and document['entity_id'] == context['evidence']['entity_id']
                     and content == context['evidence']['document']):
                 return envelope(case['synthetic_response'])
         raise provider.ProviderFailure('offline_fixture_not_found')

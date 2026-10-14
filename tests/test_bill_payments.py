@@ -304,7 +304,7 @@ class PaymentHTTPTests(unittest.TestCase):
         self.assertEqual(state['payables']['payments'][0]['allocated_amount'],'100.00')
         self.assertIn('10000',state['payables']['payments'][0]['trace_json'])
         posted=next(d for d in state['drafts'] if d['policy_version']=='bill-payment-v1')
-        self.assertEqual(posted['audit']['approval']['actor_id'],'local-operator')
+        self.assertEqual(posted['audit']['approval']['actor_id'],self.server.test_user_id)
         self.assertEqual(self.request('POST','/api/approve-post',confirmation)[0],200)
 
     def test_payment_large_cents_remain_exact_in_ui_serialization(self):

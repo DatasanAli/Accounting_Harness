@@ -383,7 +383,7 @@ class CollectionHTTPTests(unittest.TestCase):
         self.assertEqual(state['receivables']['collections'][0]['allocated_amount'],'1500.00')
         self.assertIn('150000',state['receivables']['collections'][0]['trace_json'])
         posted=next(d for d in state['drafts'] if d['policy_version']=='invoice-collection-v1')
-        self.assertEqual(posted['audit']['approval']['actor_id'],'local-operator')
+        self.assertEqual(posted['audit']['approval']['actor_id'],self.server.test_user_id)
         self.assertEqual(self.request('POST','/api/approve-post',confirmation)[0],200)
 
     def test_collection_large_cents_remain_exact_in_ui_serialization(self):

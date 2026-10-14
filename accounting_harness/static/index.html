@@ -8,7 +8,17 @@
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
-<body>
+<body class="locked">
+  <section id="login-panel" class="card login-panel" aria-labelledby="login-heading">
+    <h1 id="login-heading">Sign in to Accounting Harness</h1>
+    <p>Use a local account created with the access setup commands. This application is available only on this workstation.</p>
+    <form id="login-form" class="receipt-form">
+      <label>Username <input id="login-username" autocomplete="username" required></label>
+      <label>Passphrase <input id="login-password" type="password" autocomplete="current-password" required></label>
+      <button class="button" type="submit">Sign in</button>
+    </form>
+    <p id="login-message" role="status" aria-live="polite"></p>
+  </section>
   <a class="skip-link" href="#main">Skip to workspace</a>
   <aside class="sidebar" aria-label="Workspace navigation">
     <a class="brand" href="#evidence"><span class="brand-mark" aria-hidden="true">a</span><span>Accounting<br><strong>Harness</strong></span></a>
@@ -32,8 +42,12 @@
       <button class="nav-item" data-view="runs"><span aria-hidden="true">↗</span>Agent runs</button>
       <button class="nav-item" data-view="providers"><span aria-hidden="true">⌘</span>Providers</button>
     </nav>
-    <div class="sidebar-note"><span class="status-dot" aria-hidden="true"></span>One local operator<p>Fictional books. Real accounting rules.</p></div>
-    <div class="operator"><span class="avatar" aria-hidden="true">LO</span><div>Local operator<small>Human review &amp; approval</small></div></div>
+    <div class="sidebar-note"><span class="status-dot" aria-hidden="true"></span>Authenticated local access<p>Fictional books. Real accounting rules.</p></div>
+    <div class="operator"><div><strong id="signed-in-user"></strong><small id="signed-in-role"></small></div></div>
+    <label class="entity-choice">Entity <select id="entity-choice"></select></label>
+    <button id="logout" class="button secondary">Sign out</button>
+    <form id="activate-account-form" data-action="activate-account"><label>Fixed account
+      <select id="activate-account-choice"><option value="2000">2000 · Accounts payable</option><option value="1100">1100 · Accounts receivable</option><option value="2100">2100 · Customer advances</option><option value="2050">2050 · Accrued expenses</option><option value="1150">1150 · Accrued revenue</option><option value="5300">5300 · Bank fees</option></select></label><button type="submit" class="button secondary">Activate fixed account</button></form>
   </aside>
   <div class="shell">
     <header class="topbar"><span id="entity-label">Synthetic service business</span><div><span class="local-badge">● Localhost</span><span id="period-label">January 2026 · USD</span></div></header>
@@ -136,7 +150,7 @@
         <div class="card setup-card">
           <h3>Create an immutable project</h3>
           <p>Customer IDs are optional management references for this entity. Project identity and customer reference remain fixed after creation.</p>
-          <form id="project-create-form" class="receipt-form">
+          <form data-action="projects" id="project-create-form" class="receipt-form">
             <label>Project ID <input name="project_id" required maxlength="200" placeholder="project-a"></label>
             <label>Project name <input name="name" required maxlength="200" placeholder="Project A"></label>
             <label>Customer reference (optional) <input name="customer_id" maxlength="200" placeholder="customer-a"></label>
@@ -155,7 +169,7 @@
         <div class="card setup-card">
           <h3>Review a complete allocation set</h3>
           <p>Choose a captured ordinary revenue or expense line. Enter positive USD portions and explicit classifications. The source supplies the financial sign; any remainder stays unallocated. Remove every row to clear an earlier assignment.</p>
-          <form id="project-assignment-form" class="receipt-form">
+          <form data-action="project-assignments" id="project-assignment-form" class="receipt-form">
             <fieldset id="project-assignment-fields" disabled>
               <label>Recorded source line <select id="project-source" required></select></label>
               <div id="project-source-context"></div>
@@ -248,7 +262,7 @@
         <div class="evidence-layout"><section class="card receipt-panel" aria-label="Registered evidence"><div class="card-heading"><h3>Registered evidence</h3><span id="receipt-total" class="tag">0 ITEMS</span></div><div id="source-list" class="source-list"><p class="empty">Loading your workspace…</p></div><p class="panel-footnote">Inspect registered evidence and its enrollment state. New receipts use the form below.</p></section><section id="source-detail" class="card receipt-detail" aria-label="Selected receipt"></section></div>
         <details class="card setup-card" id="earning-evidence-panel"><summary>Register completed service against a customer advance</summary>
           <p>Record the value earned by this completion. Its customer and contract must match the posted advance; its completion date must be on or after the receipt date.</p>
-          <form id="earning-evidence-form" class="receipt-form">
+          <form data-action="operation-sources" id="earning-evidence-form" class="receipt-form">
             <label>Completion event ID <input name="event_id" required maxlength="1000" placeholder="advance-completion-001"></label>
             <label>Completion document ID <input name="document_id" required maxlength="1000" placeholder="source-advance-completion-001"></label>
             <label>Customer ID <input name="counterparty_id" required maxlength="1000" placeholder="customer-1"></label>
@@ -261,7 +275,7 @@
           </form>
         </details>
         <details class="card setup-card" id="earning-proposal-panel"><summary>Prepare supported advance earning</summary>
-          <form id="earning-proposal-form" class="receipt-form">
+          <form data-action="advance-earning-proposals" id="earning-proposal-form" class="receipt-form">
             <label>Posted customer advance <select name="advance_id" id="earning-advance-select" required></select></label>
             <label>Completion evidence <select name="completion_source_id" id="earning-completion-select" required></select></label>
             <button id="prepare-earning" class="button" type="submit">Prepare earning draft</button>
@@ -270,7 +284,7 @@
         </details>
         <details class="card setup-card" id="advance-evidence-panel"><summary>Register a customer prepayment and cash receipt</summary>
           <p>Record an incoming advance for one fully prepaid service obligation. The paired facts establish a liability; earned revenue remains zero. Use a separate contract for each obligation. Both facts must share a January 2026 receipt date.</p>
-          <form id="advance-evidence-form" class="receipt-form">
+          <form data-action="operation-sources" id="advance-evidence-form" class="receipt-form">
             <label>Cash event ID <input name="event_id" required maxlength="1000" placeholder="advance-cash-001"></label>
             <label>Customer ID <input name="counterparty_id" required maxlength="1000" placeholder="customer-synthetic-1"></label>
             <label>Customer name <input name="counterparty" required maxlength="1000"></label>
@@ -285,7 +299,7 @@
           </form>
         </details>
         <details class="card setup-card" id="advance-proposal-panel"><summary>Prepare a reviewed customer advance</summary>
-          <form id="advance-proposal-form" class="receipt-form">
+          <form data-action="advance-proposals" id="advance-proposal-form" class="receipt-form">
             <label>Customer prepayment evidence <select name="prepayment_source_id" id="prepayment-source-select" required></select></label>
             <label>Incoming advance cash evidence <select name="cash_source_id" id="advance-cash-select" required></select></label>
             <button id="prepare-advance" class="button" type="submit">Prepare advance draft</button>
@@ -294,7 +308,7 @@
         </details>
         <details class="card setup-card" id="invoice-evidence-panel"><summary>Register a customer invoice and service completion</summary>
           <p>An invoice alone does not establish earned revenue. Assert the separate completion fact only when the fictional service was completed. Both facts must share a January 2026 date.</p>
-          <form id="invoice-evidence-form" class="receipt-form">
+          <form data-action="operation-sources" id="invoice-evidence-form" class="receipt-form">
             <label>Recognition event ID <input name="event_id" required maxlength="1000" placeholder="service-completed-001"></label>
             <label>Customer ID <input name="counterparty_id" required maxlength="1000" placeholder="customer-synthetic-1"></label>
             <label>Customer name <input name="counterparty" required maxlength="1000"></label>
@@ -310,7 +324,7 @@
           </form>
         </details>
         <details class="card setup-card" id="invoice-proposal-panel"><summary>Prepare a reviewed customer invoice</summary>
-          <form id="invoice-proposal-form" class="receipt-form">
+          <form data-action="invoice-proposals" id="invoice-proposal-form" class="receipt-form">
             <label>Customer invoice evidence <select name="invoice_source_id" id="invoice-source-select" required></select></label>
             <label>Service completion evidence <select name="completion_source_id" id="completion-source-select" required></select></label>
             <button id="prepare-invoice" class="button" type="submit">Prepare invoice draft</button>
@@ -319,7 +333,7 @@
         </details>
         <details class="card setup-card" id="bill-evidence-panel"><summary>Register a vendor bill and expense incurrence</summary>
           <p>Receiving an invoice alone does not establish an expense. Assert the separate incurrence fact only when the fictional service or expense was incurred. Both facts must share a January 2026 date.</p>
-          <form id="bill-evidence-form" class="receipt-form">
+          <form data-action="operation-sources" id="bill-evidence-form" class="receipt-form">
             <label>Recognition event ID <input name="event_id" required maxlength="1000" placeholder="software-incurred-001"></label>
             <label>Vendor ID <input name="counterparty_id" required maxlength="1000" placeholder="vendor-synthetic-1"></label>
             <label>Vendor name <input name="counterparty" required maxlength="1000"></label>
@@ -336,7 +350,7 @@
           </form>
         </details>
         <details class="card setup-card" id="bill-proposal-panel"><summary>Prepare a reviewed vendor bill</summary>
-          <form id="bill-proposal-form" class="receipt-form">
+          <form data-action="bill-proposals" id="bill-proposal-form" class="receipt-form">
             <label>Vendor bill evidence <select name="bill_source_id" id="bill-source-select" required></select></label>
             <label>Expense incurrence evidence <select name="incurrence_source_id" id="incurrence-source-select" required></select></label>
             <button id="prepare-bill" class="button" type="submit">Prepare bill draft</button>
@@ -345,7 +359,7 @@
         </details>
         <details class="card setup-card" id="collection-evidence-panel"><summary>Register a recorded customer collection</summary>
           <p>Record a fictional incoming settlement that already occurred. This form never sends money or customer messages.</p>
-          <form id="collection-evidence-form" class="receipt-form">
+          <form data-action="operation-sources" id="collection-evidence-form" class="receipt-form">
             <label>Collection event ID <input name="event_id" required maxlength="1000" placeholder="cash-in-001"></label>
             <label>Cash document ID <input name="document_id" required maxlength="1000" placeholder="source-collection-001"></label>
             <label>Customer ID <input name="counterparty_id" required maxlength="1000" placeholder="customer-synthetic-1"></label>
@@ -357,7 +371,7 @@
           </form>
         </details>
         <details class="card setup-card" id="collection-proposal-panel"><summary>Prepare a recorded invoice settlement</summary>
-          <form id="collection-proposal-form" class="receipt-form">
+          <form data-action="invoice-collection-proposals" id="collection-proposal-form" class="receipt-form">
             <label>Posted customer invoice <select name="invoice_id" id="collection-invoice-select" required></select></label>
             <label>Incoming settlement evidence <select name="cash_source_id" id="collection-cash-select" required></select></label>
             <button id="prepare-collection" class="button" type="submit">Prepare collection draft</button>
@@ -366,7 +380,7 @@
         </details>
         <details class="card setup-card" id="payment-evidence-panel"><summary>Register a recorded vendor payment</summary>
           <p>Record a fictional outgoing settlement that already occurred. This form never sends money or changes a bank account.</p>
-          <form id="payment-evidence-form" class="receipt-form">
+          <form data-action="operation-sources" id="payment-evidence-form" class="receipt-form">
             <label>Payment event ID <input name="event_id" required maxlength="1000" placeholder="cash-out-001"></label>
             <label>Cash document ID <input name="document_id" required maxlength="1000" placeholder="source-payment-001"></label>
             <label>Vendor ID <input name="counterparty_id" required maxlength="1000" placeholder="vendor-synthetic-1"></label>
@@ -378,7 +392,7 @@
           </form>
         </details>
         <details class="card setup-card" id="payment-proposal-panel"><summary>Prepare a recorded bill settlement</summary>
-          <form id="payment-proposal-form" class="receipt-form">
+          <form data-action="bill-payment-proposals" id="payment-proposal-form" class="receipt-form">
             <label>Posted vendor bill <select name="bill_id" id="payment-bill-select" required></select></label>
             <label>Outgoing settlement evidence <select name="cash_source_id" id="payment-cash-select" required></select></label>
             <button id="prepare-payment" class="button" type="submit">Prepare payment draft</button>
@@ -387,7 +401,7 @@
         </details>
         <details class="card setup-card" id="cash-evidence-panel"><summary>Register cash and recognition facts</summary>
           <p>Enter two fictional assertions for one economic event: money moved, and an expense was incurred or a service completed. Both must have the same amount, counterparty and January date. Cash alone does not establish revenue or expense.</p>
-          <form id="cash-evidence-form" class="receipt-form">
+          <form data-action="operation-sources" id="cash-evidence-form" class="receipt-form">
             <label>Recognition <select name="operation" id="cash-operation"><option value="cash_expense">Incurred expense paid now</option><option value="earned_cash">Completed service paid now</option></select></label>
             <label>Economic event ID <input name="event_id" required maxlength="1000" placeholder="fictional-rent-january"></label>
             <small>Reuse this event identity for the same economic event. A new document ID does not make a new event.</small>
@@ -405,7 +419,7 @@
           </form>
         </details>
         <details class="card setup-card" id="cash-proposal-panel"><summary>Prepare a reviewed cash proposal</summary>
-          <form id="cash-proposal-form" class="receipt-form">
+          <form data-action="cash-proposals" id="cash-proposal-form" class="receipt-form">
             <label>Operation <select name="operation" id="proposal-operation"><option value="cash_expense">Incurred cash expense</option><option value="earned_cash">Earned cash service revenue</option></select></label>
             <label>Cash evidence <select name="cash_source_id" id="cash-source-select" required></select></label>
             <label>Recognition evidence <select name="recognition_source_id" id="recognition-source-select" required></select></label>
@@ -415,7 +429,7 @@
         </details>
         <details class="card setup-card"><summary>Register a synthetic receipt</summary>
           <p>Use fictional January 2026 evidence only. Registration preserves the receipt for review; it does not create a proposal or journal.</p>
-          <form id="receipt-form" class="receipt-form">
+          <form data-action="sources" id="receipt-form" class="receipt-form">
             <label>Document ID <input name="document_id" required maxlength="1000" placeholder="fictional-receipt-006"></label>
             <small>Keep this identity when retrying. Registered content cannot be changed under the same ID.</small>
             <label>Document date <input name="document_date" type="date" min="2026-01-01" max="2026-01-31" required></label>
@@ -477,7 +491,7 @@
             <p>Limits: 8,192 CSV bytes, 100 rows, 512 characters per cell, 80 per ID, 22 per amount; absolute cents at most 9,223,372,036,854,775,807. The entire JSON request must fit 16,384 bytes including escaping. An empty statement requires equal opening and closing balances.</p>
             <p>Retry with the same metadata and original CSV bytes. Changed statement content, row order or file formatting under an existing statement ID conflicts. Unchanged transaction IDs may appear in overlapping statements.</p>
           </details>
-          <form id="bank-import-form" class="receipt-form">
+          <form data-action="bank-statements" id="bank-import-form" class="receipt-form">
             <label>Statement ID <input name="statement_id" required maxlength="80" value="fictional-january"></label>
             <label>Bank account ID <input name="bank_account_id" required maxlength="80" value="fictional-bank"></label>
             <label>Period start <input name="period_start" type="date" required min="2026-01-01" max="2026-01-31" value="2026-01-01"></label>
@@ -502,7 +516,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
         <div class="section-heading"><h2 id="expense-accrual-heading">Unbilled expense accruals</h2><span class="muted">Incurred. Unbilled. Unpaid.</span></div>
         <details class="card setup-card" id="expense-accrual-facts-panel"><summary>Register separate incurrence and cutoff evidence</summary>
           <p>Assert a January expense and separate January 31 evidence that the whole amount remains unbilled and unpaid. Both records refer to one vendor and economic event.</p>
-          <form id="expense-accrual-facts-form" class="receipt-form">
+          <form data-action="operation-sources" id="expense-accrual-facts-form" class="receipt-form">
             <label>Expense event ID <input name="event_id" required maxlength="1000" placeholder="software-january-001"></label>
             <label>Vendor ID <input name="counterparty_id" required maxlength="1000" placeholder="software-vendor"></label>
             <label>Original vendor name <input name="counterparty" required maxlength="1000"></label>
@@ -518,7 +532,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
           </form>
         </details>
         <details class="card setup-card" id="expense-accrual-proposal-panel"><summary>Prepare supported expense accrual</summary>
-          <form id="expense-accrual-proposal-form" class="receipt-form">
+          <form data-action="expense-accrual-proposals" id="expense-accrual-proposal-form" class="receipt-form">
             <label>Registered incurrence <select id="expense-accrual-incurrence-select" name="incurrence_source_id" required></select></label>
             <label>Registered unbilled/unpaid basis <select id="expense-accrual-basis-select" name="basis_source_id" required></select></label>
             <label>Current draft revision (0 for first preparation) <input name="expected_revision" type="number" min="0" step="1" required value="0"></label>
@@ -533,7 +547,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
         <div class="section-heading"><h2 id="revenue-accrual-heading">Unbilled revenue accruals</h2><span class="muted">Completed. Unbilled. Uncollected.</span></div>
         <details class="card setup-card" id="revenue-accrual-facts-panel"><summary>Register separate completion and cutoff evidence</summary>
           <p>Assert a completed January service and separate January 31 evidence that the whole amount remains unbilled and uncollected. Both records refer to one customer and economic event.</p>
-          <form id="revenue-accrual-facts-form" class="receipt-form">
+          <form data-action="operation-sources" id="revenue-accrual-facts-form" class="receipt-form">
             <label>Revenue event ID <input name="event_id" required maxlength="1000" placeholder="service-january-001"></label>
             <label>Customer ID <input name="counterparty_id" required maxlength="1000" placeholder="service-customer"></label>
             <label>Original customer name <input name="counterparty" required maxlength="1000"></label>
@@ -548,7 +562,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
           </form>
         </details>
         <details class="card setup-card" id="revenue-accrual-proposal-panel"><summary>Prepare supported revenue accrual</summary>
-          <form id="revenue-accrual-proposal-form" class="receipt-form">
+          <form data-action="revenue-accrual-proposals" id="revenue-accrual-proposal-form" class="receipt-form">
             <label>Registered completion <select id="revenue-accrual-completion-select" name="completion_source_id" required></select></label>
             <label>Registered unbilled/uncollected basis <select id="revenue-accrual-basis-select" name="basis_source_id" required></select></label>
             <label>Current draft revision (0 for first preparation) <input name="expected_revision" type="number" min="0" step="1" required value="0"></label>
@@ -563,7 +577,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
         <div class="section-heading"><h2 id="prepaid-heading">Prepaid insurance</h2><span class="muted">Explicit coverage. Supported monthly consumption.</span></div>
         <details class="card setup-card" id="prepaid-coverage-panel"><summary>Register insurance coverage for a posted purchase</summary>
           <p>The existing purchase must debit Prepaid Insurance and credit Cash for the full principal. Coverage uses complete calendar months.</p>
-          <form id="prepaid-coverage-form" class="receipt-form">
+          <form data-action="operation-sources" id="prepaid-coverage-form" class="receipt-form">
             <label>Coverage document ID <input name="document_id" required maxlength="1000" placeholder="coverage-001"></label>
             <label>Original posted journal ID <input name="original_journal_id" required maxlength="1000"></label>
             <label>Original purchase source ID <input name="original_source_id" required maxlength="1000"></label>
@@ -578,7 +592,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
           </form>
         </details>
         <details class="card setup-card" id="prepaid-proposal-panel"><summary>Prepare monthly insurance consumption</summary>
-          <form id="prepaid-proposal-form" class="receipt-form">
+          <form data-action="prepaid-proposals" id="prepaid-proposal-form" class="receipt-form">
             <label>Registered coverage <select id="prepaid-coverage-select" name="coverage_source_id" required></select></label>
             <label>Allocation month <input name="allocation_month" type="month" min="2026-01" max="2026-01" required value="2026-01"></label>
             <label>Current draft revision (0 for first preparation) <input name="expected_revision" type="number" min="0" step="1" required value="0"></label>
@@ -589,7 +603,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
         <div id="prepaid-report" class="stack"></div>
       </section>
       <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><div id="run-list" class="stack"></div></section>
-      <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>
+      <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --access-db PATH --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>
       <footer>Accounting Harness <span>Evidence preserved. Decisions recorded. Books kept exact.</span></footer>
     </main>
   </div>

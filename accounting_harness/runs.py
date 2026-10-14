@@ -3,7 +3,7 @@
 import json
 import sqlite3
 import time
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
@@ -112,6 +112,7 @@ class SQLiteRunEngine:
     """
     def __init__(self, path, store, *, clock_ms=None, busy_timeout_ms=2000):
         _integer(busy_timeout_ms, 'busy timeout', maximum=60000)
+        self.authority_guard = None
         self.store = store
         self._clock_ms = clock_ms or (lambda: time.time_ns() // 1_000_000)
         self._busy_timeout_ms = busy_timeout_ms
@@ -140,6 +141,12 @@ class SQLiteRunEngine:
 
     @contextmanager
     def _transaction(self):
+        with self.authority_guard() if self.authority_guard else nullcontext():
+            with self._unguarded_transaction():
+                yield
+
+    @contextmanager
+    def _unguarded_transaction(self):
         try:
             # ponytail: one write lock for all local runs; shard run files if contention matters.
             self.db.execute('BEGIN IMMEDIATE')
@@ -190,13 +197,16 @@ class SQLiteRunEngine:
             raise TypeError('unsupported provider type')
         return provider.identity
 
-    def start(self, run_id, *, task_id, provider, actor_id, limits):
+    def start(self, run_id, *, task_id, provider, actor_id, limits, initiator_id=None):
         for value, name in ((run_id, 'run ID'), (task_id, 'task ID'), (actor_id, 'actor ID')):
             _validate_text(value, name)
         if type(limits) is not RunLimits:
             raise TypeError('limits must be RunLimits')
         config = dict(task_id=task_id, actor_id=actor_id, limits=asdict(limits), provider=self._provider(provider),
                       scope=self._scope)
+        if initiator_id is not None:
+            _validate_text(initiator_id, 'initiator ID')
+            config['initiator_id'] = initiator_id
         with self._transaction():
             row = self.db.execute('SELECT config_json FROM runs WHERE run_id=?', (run_id,)).fetchone()
             if row:

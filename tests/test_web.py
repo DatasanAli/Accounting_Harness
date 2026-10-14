@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from accounting_harness.web import make_server
+from auth_fixture import make_server
 
 
 class WorkspaceHTTPTests(unittest.TestCase):
@@ -34,7 +34,7 @@ class WorkspaceHTTPTests(unittest.TestCase):
 
     def request(self, method, path, data=None, headers=None, raw=None):
         connection = http.client.HTTPConnection('127.0.0.1', self.port, timeout=5)
-        actual = dict(headers or {})
+        actual = dict(self.server.test_headers, **(headers or {}))
         if method == 'POST':
             actual = {'Content-Type': 'application/json', 'Origin': self.origin,
                       'X-CSRF-Token': getattr(self, 'token', ''), **actual}
@@ -73,7 +73,7 @@ class WorkspaceHTTPTests(unittest.TestCase):
         cash = next(row for row in state['trial_balance']['rows'] if row['account'] == '1000')
         self.assertEqual(cash['credit'], '1200.00')
         self.assertEqual(state['drafts'][0]['status'], 'posted')
-        self.assertEqual(state['drafts'][0]['audit']['approval']['actor_id'], 'local-operator')
+        self.assertEqual(state['drafts'][0]['audit']['approval']['actor_id'], self.server.test_user_id)
         snapshot = state['trial_balance']['snapshot_digest']
         self.stop()
         self.start()

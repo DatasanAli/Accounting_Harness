@@ -67,21 +67,24 @@ and a login-first startup flow, preserving the current workspace path.
 **Files:** Authenticated facade, workspace actor plumbing, HTTP/CLI/static and
 focused service/HTTP tests. Root owns setup documentation, CI and browser checks.
 
-- [ ] RED: unauthenticated state/source/report requests deny; preparer direct HTTP
+- [x] RED: unauthenticated state/source/report requests deny; preparer direct HTTP
   approval and direct facade approval deny without a new journal/event; forged
   role/actor/entity fields cannot alter that result.
-- [ ] Inventory and wire every existing read/mutation to fixed permissions.
+- [x] Inventory and wire every existing read/mutation to fixed permissions.
   Test that an intentionally unmapped operation fails closed. Reuse accounting
   tests unchanged where they exercise trusted primitives; migrate HTTP fixtures
   to real synthetic sessions instead of disabling authentication in test mode.
-- [ ] Test two real synthetic entities and two identities: each may access only
+- [x] Test two real synthetic entities and two identities: each may access only
   its grants; preparer prepares, reviewer approves exact revision; cross-entity
   source/draft/journal/report/run IDs fail without leakage or initialization.
-- [ ] Assert all new human audit actors equal authenticated IDs, agent tools
+- [x] Assert all new human audit actors equal authenticated IDs, agent tools
   still lack approval/posting, and historical records/digests remain byte-identical.
-- [ ] Exercise revoked/expired sessions, permission changes, stale approval,
+- [x] Exercise revoked/expired sessions, permission changes, stale approval,
   concurrent revocation, replayed cookies/CSRF, duplicate cookies and logout.
-- [ ] Add login/logout/entity UI and `demo-authenticated-workspace`; perform real
+- [x] Add login/logout/entity UI and `demo-authenticated-workspace`; perform real
   browser preparer denial then reviewer approval and restart-preserved identity.
-- [ ] Run focused then guarded suite/foundation/all demos/JS/diff; independently
-  review all route coverage, commit/push/exact CI before the offline read adapter.
+- [x] Run focused then guarded suite/foundation/all demos/JS/diff; independently
+  review all route coverage, commit/push/exact CI before reporting this step; wait for the next user request.
+
+Implementation inventory: [routes, permissions and side effects](STEP_29B_INVENTORY.md).
+Observed delivery results: [verification record](STEP_29B_VERIFICATION.md).

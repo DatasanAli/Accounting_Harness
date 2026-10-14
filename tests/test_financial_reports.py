@@ -13,7 +13,7 @@ from pathlib import Path
 from accounting_harness.adjusted_month import build_adjusted_month
 from accounting_harness.domain.ledger import LedgerLine
 from accounting_harness.domain.money import Money
-from accounting_harness.web import make_server
+from auth_fixture import make_server
 from accounting_harness.workspace import Workspace
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -227,7 +227,7 @@ class FinancialReportHTTPTests(unittest.TestCase):
             thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
             def request(path):
                 connection=http.client.HTTPConnection('127.0.0.1',server.server_port,timeout=10)
-                connection.request('GET',path)
+                connection.request('GET',path,headers=server.test_headers)
                 response=connection.getresponse();payload=response.read();status=response.status
                 connection.close()
                 return status,payload

@@ -337,7 +337,7 @@ class BankMatchHTTPTests(unittest.TestCase):
         self.assertEqual(self.request('POST','/api/bank-match',data,headers={'X-CSRF-Token':'bad'})[0],403)
         status, receipt = self.request('POST','/api/bank-match',data)
         self.assertEqual(status,200,receipt)
-        self.assertEqual(receipt['actor_id'],'local-operator')
+        self.assertEqual(receipt['actor_id'],self.server.test_user_id)
         undo = dict(bank_account_id='fictional-bank',match_event_id=receipt['event_id'],reason='Human correction',idempotency_key='http')
         self.assertEqual(self.request('POST','/api/bank-unmatch',undo)[0],200)
         self.stop()

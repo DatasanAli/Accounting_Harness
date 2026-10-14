@@ -263,8 +263,10 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-bank-match", help="confirm a unique bank match and retain ambiguous exceptions")
     commands.add_parser("demo-bank-import", help="import a fictional bank statement with exact retry and unchanged books")
     commands.add_parser("demo-web", help="exercise the persistent offline workspace and human posting")
+    commands.add_parser("demo-authenticated-workspace", help="demonstrate separate authenticated preparation and approval")
     web = commands.add_parser("serve", help="open a persistent fictional accounting workspace on localhost")
-    web.add_argument("--workspace", default=".local/workspace", help="local storage directory")
+    web.add_argument("--workspace", help="optional existing registered workspace path")
+    web.add_argument("--access-db", required=True, help="provisioned local identity database")
     web.add_argument("--port", type=int, default=8765)
     web.add_argument("--enable-providers", action="store_true", help="allow explicit Ollama/OpenAI requests from the UI")
     web.add_argument("--ollama-model", help="installed local Ollama model name; no downloads or automatic calls")
@@ -275,7 +277,10 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'demo-access':
+        if args.command == 'demo-authenticated-workspace':
+            from accounting_harness.authenticated import demo_authenticated_workspace
+            demo_authenticated_workspace()
+        elif args.command == 'demo-access':
             from accounting_harness.access_cli import demo_access
             demo_access()
         elif args.command.startswith('access-'):

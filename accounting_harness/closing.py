@@ -175,18 +175,18 @@ class CloseService:
         preview['digest']=digest(preview)
         return preview
 
-    def preview(self,data):
+    def preview(self,data,*,actor_id=None):
         self._request(data)
         with self.ledger._transaction():
             if self.recorded(): raise ValueError('period is already closed')
             preview=self._preview(data)
         if preview['can_close'] and preview['artifact']:
             artifact={k:v for k,v in preview['artifact'].items() if k!='content_digest'}
-            result=self.registry.register(artifact,actor_id='close-calculation-service')
+            result=self.registry.register(artifact,actor_id=actor_id or 'close-calculation-service')
             # Separate source file: registration may survive enrollment failure.
             # A retry with the same preview or startup recovery enrolls it.
             from accounting_harness.workspace import Workspace
-            Workspace._enroll_registered(self.registry,self.ledger,result)
+            Workspace._enroll_registered(self.registry,self.ledger,result,actor_id=actor_id or 'local-operator')
         return preview
 
     def confirm(self,data,*,actor_id):

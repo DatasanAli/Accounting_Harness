@@ -17,3 +17,19 @@
 #indicator-form fieldset { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
 #indicator-form fieldset label { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
 #indicator-form input[type="checkbox"] { width: auto; margin: 0; }
+
+/* Authentication never paints retained financial state behind the login form. */
+.locked .sidebar, .locked .shell, .locked .skip-link { display: none; }
+.login-panel { max-width: 520px; margin: 10vh auto; padding: 32px; }
+body:not(.locked) #login-panel { display: none; }
+[data-authorized="false"] { display: none !important; }
+.entity-choice { display: block; margin: 12px; }
+.entity-choice select, #activate-account-choice { max-width: 100%; }
+#logout, #activate-account-form { margin: 12px; }
+.sidebar { overflow-y: auto; }
+.sidebar .operator { display: flex; flex-shrink: 0; }
+@media (min-width: 851px) {
+  .sidebar nav { min-height: 120px; overflow-y: auto; flex: 1; }
+  .sidebar-note { margin: 12px; padding-top: 0; flex-shrink: 0; }
+  .workspace-label { margin-top: 24px; }
+}

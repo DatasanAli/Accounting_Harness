@@ -369,6 +369,20 @@ class AccessStore:
                                (_token_hash(token),row['user_id'],now,now,now+28800))
         return token
 
+    def session(self, token):
+        """Non-touching status check: background polling must not extend idle life."""
+        token_hash = _token_hash(token)
+        with self._transaction() as connection:
+            now = self._now()
+            row = connection.execute("SELECT s.*,u.username,u.disabled FROM sessions s JOIN users u USING(user_id) WHERE token_hash=?", (token_hash,)).fetchone()
+            if (row is None or row['disabled'] or row['revoked_at'] is not None
+                or not row['issued_at'] <= row['last_activity'] <= now
+                or now >= row['expires_at'] or now-row['last_activity'] >= 1800):
+                raise AccessDenied()
+            grants = connection.execute('SELECT entity_id,role FROM grants WHERE user_id=? ORDER BY entity_id', (row['user_id'],)).fetchall()
+            return dict(user_id=row['user_id'], username=row['username'], entities=[dict(entity_id=g['entity_id'], role=g['role'],
+                capabilities=sorted(ROLE_OPERATIONS.get(g['role'], frozenset()))) for g in grants])
+
     def logout(self, token):
         token_hash = _token_hash(token)
         with self._transaction() as connection:

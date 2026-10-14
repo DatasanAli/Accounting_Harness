@@ -247,7 +247,7 @@ class AccountExtensionHTTPTests(unittest.TestCase):
             self.assertEqual(status, 409)
         status, first = self.request('POST', '/api/bank-fee-account', {})
         self.assertEqual(status, 200, first)
-        self.assertEqual(first['actor_id'], 'local-operator')
+        self.assertEqual(first['actor_id'], self.server.test_user_id)
         self.assertEqual(self.request('POST', '/api/bank-fee-account', {})[1], first)
         after = self.request('GET', '/api/state')[1]
         self.assertEqual(after['bank_fee_account_activation'], first)

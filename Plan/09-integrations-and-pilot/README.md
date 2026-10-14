@@ -1,10 +1,10 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 29a identity/session/grant core is locally verified with 776 tests,
-40 demos, actual CLI/core restart checks and independent review without findings.
-Upload/exact CI are pending; see [verification](STEP_29A_VERIFICATION.md).
-Step 29b must wire every application/HTTP entry point before authenticated UI
-access is claimed. Later integration/recovery/pilot work remains planned.
+Status: Step 29b implements authenticated facade/HTTP/UI enforcement, stable human
+actors and initiator-bound runs. 802 tests/41 demos and browser checks passed; independent review has no remaining
+Important or Critical findings. Final GitHub delivery is pending and recorded in [verification](STEP_29B_VERIFICATION.md). The next requested
+implementation is Step 30's offline read adapter. The current request stops after
+29b; live connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 

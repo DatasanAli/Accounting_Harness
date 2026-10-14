@@ -263,7 +263,7 @@ class ProjectCostTests(unittest.TestCase):
         import http.client,threading
         from pathlib import Path
         from html.parser import HTMLParser
-        from accounting_harness.web import make_server
+        from auth_fixture import make_server
         class Forms(HTMLParser):
             def __init__(self): super().__init__(); self.routes={}
             def handle_starttag(self,tag,attrs):
@@ -276,7 +276,7 @@ class ProjectCostTests(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(thread.join); self.addCleanup(server.shutdown)
         host=f'127.0.0.1:{server.server_port}'
         def request(path,data=None,csrf=True):
-            conn=http.client.HTTPConnection(host); headers={'Origin':'http://'+host,'Content-Type':'application/json'}
+            conn=http.client.HTTPConnection(host); headers={**server.test_headers,'Origin':'http://'+host,'Content-Type':'application/json'}
             if csrf: headers['X-CSRF-Token']=server.csrf_token
             conn.request('GET' if data is None else 'POST',path,None if data is None else json.dumps(data),headers)
             response=conn.getresponse(); body=json.loads(response.read()); conn.close(); return response.status,body
@@ -289,7 +289,7 @@ class ProjectCostTests(unittest.TestCase):
             self.assertEqual(request('/api/project-cost-inputs'+query)[0],409)
         self.assertEqual(request('/api/project-cost-inputs?as_of=2026-01-31')[1]['time']['total_minutes'],600)
         status,result=request(route,data); self.assertEqual(status,200)
-        self.assertEqual(result['cost_sheet']['labor_amount'],'900719925474099.30'); self.assertEqual(result['actor_id'],'local-operator')
+        self.assertEqual(result['cost_sheet']['labor_amount'],'900719925474099.30'); self.assertEqual(result['actor_id'],server.test_user_id)
         self.assertEqual(request(route,data),(status,result))
         self.assertEqual(request('/api/project-cost?version_id='+result['version_id']),(200,result))
         for query in ('','?version_id=missing','?version_id=x&version_id=y','?version_id=x&extra=1'):

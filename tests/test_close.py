@@ -239,14 +239,14 @@ class CloseTests(unittest.TestCase):
 
     def test_http_close_confirmation_forgery_and_pending_draft_refusal(self):
         import http.client,threading
-        from accounting_harness.web import make_server
+        from auth_fixture import make_server
         server=make_server(self.directory.name,port=0)
         thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
         self.addCleanup(server.server_close);self.addCleanup(thread.join);self.addCleanup(server.shutdown)
         host=f'127.0.0.1:{server.server_port}'
         def request(path,data):
             connection=http.client.HTTPConnection(host)
-            connection.request('POST',path,json.dumps(data),headers={'Origin':'http://'+host,'Content-Type':'application/json','X-CSRF-Token':server.csrf_token})
+            connection.request('POST',path,json.dumps(data),headers={**server.test_headers,'Origin':'http://'+host,'Content-Type':'application/json','X-CSRF-Token':server.csrf_token})
             response=connection.getresponse();body=json.loads(response.read());connection.close();return response.status,body
         self.module()
         self.workspace.action('run',dict(source_id='synthetic-receipt-002',provider='offline',run_id='pending-close'))

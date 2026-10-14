@@ -172,12 +172,12 @@ class VarianceTests(unittest.TestCase):
         self.module()
         import http.client
         import threading
-        from accounting_harness.web import make_server
+        from auth_fixture import make_server
         budget=self.fixture(); before=self.workspace.report_package('2026-01-31')
         server=make_server(self.directory.name,port=0); thread=threading.Thread(target=server.serve_forever,daemon=True); thread.start()
         self.addCleanup(server.server_close); self.addCleanup(thread.join,2); self.addCleanup(server.shutdown)
         def get(path):
-            conn=http.client.HTTPConnection('127.0.0.1',server.server_address[1]); conn.request('GET',path)
+            conn=http.client.HTTPConnection('127.0.0.1',server.server_address[1]); conn.request('GET',path,headers=server.test_headers)
             response=conn.getresponse(); value=json.loads(response.read()); conn.close(); return response.status,value
         status,report=get('/api/variance?version_id='+budget['version_id'])
         self.assertEqual(status,200); self.assertEqual(report['totals']['revenue']['variance_amount'],'100.00')
@@ -273,7 +273,7 @@ class VarianceTests(unittest.TestCase):
         budget=self.budget(planned_minutes=9007199254740991,operating_lines=[dict(line_id='huge',account='4000',behavior='variable',amount='90071992547409.93')])
         report=self.report(budget)
         script=Path('accounting_harness/static/app.js').read_text().split('function renderVariance(report) {',1)[1]
-        script='function renderVariance(report) {'+script
+        script='function renderVariance(report) {'+script.split('\nfunction can(action)',1)[0]
         harness="""
 const rendered=[];
 const node=()=>({append(...x){rendered.push(...x);},replaceChildren(){},click(){}});

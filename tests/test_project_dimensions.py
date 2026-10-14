@@ -167,7 +167,7 @@ class ProjectDimensionsTests(unittest.TestCase):
 
     def test_http_project_actions_strict_capture_and_app_owned_actor(self):
         import http.client,threading
-        from accounting_harness.web import make_server
+        from auth_fixture import make_server
         self.module(); self.post()
         server=make_server(self.directory.name,port=0)
         thread=threading.Thread(target=server.serve_forever,daemon=True); thread.start()
@@ -175,7 +175,7 @@ class ProjectDimensionsTests(unittest.TestCase):
         host=f'127.0.0.1:{server.server_port}'
         def request(path,data=None,csrf=True):
             conn=http.client.HTTPConnection(host)
-            headers={'Origin':'http://'+host,'Content-Type':'application/json'}
+            headers={**server.test_headers,'Origin':'http://'+host,'Content-Type':'application/json'}
             if csrf: headers['X-CSRF-Token']=server.csrf_token
             conn.request('GET' if data is None else 'POST',path,None if data is None else json.dumps(data),headers)
             response=conn.getresponse(); body=json.loads(response.read()); conn.close(); return response.status,body
@@ -184,7 +184,7 @@ class ProjectDimensionsTests(unittest.TestCase):
             self.assertEqual(request('/api/projects',data,csrf=False)[0],403)
             self.assertEqual(request('/api/projects',dict(data,actor_id='admin'))[0],409)
             status,project=request('/api/projects',data)
-            self.assertEqual(status,200); self.assertEqual(project['actor_id'],'local-operator')
+            self.assertEqual(status,200); self.assertEqual(project['actor_id'],server.test_user_id)
         data=self.request()
         status,result=request('/api/project-assignments',data); self.assertEqual(status,200)
         self.assertEqual(request('/api/project-assignments',data),(status,result))

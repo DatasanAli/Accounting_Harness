@@ -99,3 +99,5 @@ jobs:
         run: python3 -m accounting_harness demo-indicators
       - name: Demonstrate local sessions and entity-scoped role grants
         run: python3 -m accounting_harness demo-access
+      - name: Demonstrate authenticated preparer and reviewer boundaries
+        run: python3 -m accounting_harness demo-authenticated-workspace

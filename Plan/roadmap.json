@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "28",
-  "next_step": "29",
+  "current_step": "29",
+  "next_step": "30",
   "phases": [
     {
       "id": "01",
@@ -395,24 +395,26 @@
         {
           "id": "29",
           "title": "Authenticated operator and entity access",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "29a",
               "title": "Local identities, sessions and entity grants",
-              "status": "complete"
+              "status": "complete",
+              "commit": "c48077187bf96b0383f28f877292de7b9110e1b5",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426"
             },
             {
               "id": "29b",
               "title": "Authenticated application and UI",
-              "status": "ready"
+              "status": "complete"
             }
           ]
         },
         {
           "id": "30",
           "title": "One sandbox read adapter",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "31",

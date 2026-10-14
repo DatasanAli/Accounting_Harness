@@ -280,7 +280,7 @@ class ProjectTimeTests(unittest.TestCase):
     def test_http_strict_payload_read_only_capture_and_native_routes(self):
         import http.client,threading
         from pathlib import Path
-        from accounting_harness.web import make_server
+        from auth_fixture import make_server
         from html.parser import HTMLParser
         class Forms(HTMLParser):
             def __init__(self): super().__init__(); self.routes={}
@@ -296,14 +296,14 @@ class ProjectTimeTests(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(thread.join); self.addCleanup(server.shutdown)
         host=f'127.0.0.1:{server.server_port}'
         def request(path,data=None,csrf=True):
-            conn=http.client.HTTPConnection(host); headers={'Origin':'http://'+host,'Content-Type':'application/json'}
+            conn=http.client.HTTPConnection(host); headers={**server.test_headers,'Origin':'http://'+host,'Content-Type':'application/json'}
             if csrf: headers['X-CSRF-Token']=server.csrf_token
             conn.request('GET' if data is None else 'POST',path,None if data is None else json.dumps(data),headers)
             response=conn.getresponse(); body=json.loads(response.read()); conn.close(); return response.status,body
         self.assertEqual(request('/api/project-time',self.data(),csrf=False)[0],403)
         self.assertEqual(request('/api/project-time',self.data(actor_id='admin'))[0],409)
         status,record=request(record_route,self.data()); self.assertEqual(status,200)
-        self.assertEqual(record['actor_id'],'local-operator')
+        self.assertEqual(record['actor_id'],server.test_user_id)
         self.assertEqual(request('/api/project-time',self.data()),(status,record))
         self.assertEqual(request('/api/project-time?as_of=2026-01-31')[1]['total_minutes'],300)
         self.assertEqual(request('/api/project-time-void',dict(self.void_data(record),actor_id='admin'))[0],409)

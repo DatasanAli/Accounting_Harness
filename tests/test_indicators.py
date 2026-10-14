@@ -191,7 +191,7 @@ class IndicatorTests(unittest.TestCase):
         import http.client,threading,subprocess,sys
         from pathlib import Path
         from html.parser import HTMLParser
-        from accounting_harness.web import make_server
+        from auth_fixture import make_server
         class Forms(HTMLParser):
             def __init__(self): super().__init__(); self.routes={}
             def handle_starttag(self,tag,attrs):
@@ -202,7 +202,7 @@ class IndicatorTests(unittest.TestCase):
         self.addCleanup(server.server_close); self.addCleanup(thread.join); self.addCleanup(server.shutdown)
         host=f'127.0.0.1:{server.server_port}'
         def request(path,data=None,csrf=True):
-            conn=http.client.HTTPConnection(host); headers={'Origin':'http://'+host,'Content-Type':'application/json'}
+            conn=http.client.HTTPConnection(host); headers={**server.test_headers,'Origin':'http://'+host,'Content-Type':'application/json'}
             if csrf: headers['X-CSRF-Token']=server.csrf_token
             conn.request('GET' if data is None else 'POST',path,None if data is None else json.dumps(data),headers)
             response=conn.getresponse(); body=json.loads(response.read()); conn.close(); return response.status,body
