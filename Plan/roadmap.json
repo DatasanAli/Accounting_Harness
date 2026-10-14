@@ -407,7 +407,9 @@
             {
               "id": "29b",
               "title": "Authenticated application and UI",
-              "status": "complete"
+              "status": "complete",
+              "commit": "81a1d021b4edd4aa3fc4bbce0f95e9177b363213",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/38635277919"
             }
           ]
         },

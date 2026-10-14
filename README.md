@@ -186,7 +186,7 @@ The delivery target is this repository on GitHub with its verification workflow 
 
 Next prompt:
 
-> Build Step 30: Implement the offline QuickBooks JournalEntry read-adapter contract in Plan/09-integrations-and-pilot/STEP_30_PLAN.md. Keep the local ledger authoritative and all live connections deferred. Test pagination, stable IDs, duplicate retries, rate limits, interrupted resume, mapping and reconciliation with synthetic fixtures. Verify, independently review, demonstrate, commit, push and check exact CI. Report the evidence and stop.
+> Build Step 30 using Plan/09-integrations-and-pilot/STEP_30_PLAN.md. Implement only the offline QuickBooks JournalEntry read adapter with synthetic fixtures. Keep live connections deferred. Verify, review, demonstrate, commit, push, check exact CI, report, and stop.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 

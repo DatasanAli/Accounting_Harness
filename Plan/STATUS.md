@@ -2,11 +2,11 @@
 
 Updated: 2026-10-14.
 
-**Implemented:** Steps 01–11 and offline/local slices 12a–29b. Step 29b local
-verification and independent review passed; upload/exact CI are pending; see [verification](09-integrations-and-pilot/STEP_29B_VERIFICATION.md).
+**Delivered:** Steps 01–11 and offline/local slices 12a–29b. Step 29b local
+verification, independent review, upload and exact CI passed; see [verification](09-integrations-and-pilot/STEP_29B_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
 **Next:** [Step 30 offline read adapter](09-integrations-and-pilot/STEP_30_PLAN.md),
-after Step 29b delivery and a new user request.
+when the user requests the next delivery.
 
 The current request authorizes Step 29b only. Verify/review/commit/push/check exact
 CI, report, and stop. Live provider/external-account connections and actual
@@ -28,8 +28,8 @@ Native preparer evidence/proposal followed by separate reviewer approval produce
 one 125.00 USD journal; stable actors, fresh-process restart, revocation and entity
 switching were observed. Historical records and report/package digests remain
 unchanged in preservation tests. **802 tests and 41 demonstrations passed**, with foundation/JS/diff checks.
-Independent review has no remaining Important or Critical findings. Upload/exact
-CI evidence is pending in
+Independent review has no remaining Important or Critical findings. Verified
+implementation commit and exact CI evidence are in
 [Step 29b verification](09-integrations-and-pilot/STEP_29B_VERIFICATION.md).
 A foundation check is not application proof.
 
@@ -85,7 +85,7 @@ retained in the verification record and Git history.
 | 27 | [Captured flexible-budget variance](08-service-management/STEP_27_VERIFICATION.md) | [b5b6b02](https://github.com/DatasanAli/Accounting_Harness/commit/b5b6b02c15290b7e446a4a34a5eb881c39451c5b) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37848793541) |
 | 28 | [Contribution and captured indicators](08-service-management/STEP_28_VERIFICATION.md) | [b7f4a3a](https://github.com/DatasanAli/Accounting_Harness/commit/b7f4a3a93ab651b1e60444c4e2904a9e7f373469) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480) |
 | 29a | [Local identities and entity grants](09-integrations-and-pilot/STEP_29A_VERIFICATION.md) | [c480771](https://github.com/DatasanAli/Accounting_Harness/commit/c48077187bf96b0383f28f877292de7b9110e1b5) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426) |
-| 29b | [Authenticated application and UI](09-integrations-and-pilot/STEP_29B_VERIFICATION.md) | 802 tests / 41 demos / browser / review passed | Upload pending |
+| 29b | [Authenticated application and UI](09-integrations-and-pilot/STEP_29B_VERIFICATION.md) | [81a1d02](https://github.com/DatasanAli/Accounting_Harness/commit/81a1d021b4edd4aa3fc4bbce0f95e9177b363213) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/38635277919) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

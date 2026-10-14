@@ -1,7 +1,7 @@
 # Step 29b verification: authenticated application and UI
 
 Date: 2026-10-14. Scope: Step 29b only, with temporary synthetic workspaces.
-Local verification and independent review passed. GitHub delivery is pending until recorded below.
+Local verification, independent review, GitHub upload and exact-SHA CI passed.
 
 ## Delivered behavior
 
@@ -95,7 +95,7 @@ Re-review identified stale status-poll interruption, pending-run recovery and
 other-user cancellation controls. Fixes and regression tests are included;
 final independent re-review found no Important or Critical issues and independently reran all 26 authentication tests successfully.
 
-Commit/push/exact GitHub CI: pending. Step 29a prerequisite was checked against
+Implementation commit [81a1d02](https://github.com/DatasanAli/Accounting_Harness/commit/81a1d021b4edd4aa3fc4bbce0f95e9177b363213) was pushed to origin/main; local and remote SHA were compared. Its [exact-SHA GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/38635277919) completed successfully, including all tests and demonstrations. This evidence update changes documentation only. Step 29a prerequisite was checked against
 origin/main and successful [exact-SHA CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426)
 for c48077187bf96b0383f28f877292de7b9110e1b5 before this delivery.
 
