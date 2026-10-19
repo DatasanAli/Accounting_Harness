@@ -2,8 +2,8 @@
 
 Updated: 2026-10-19.
 
-**Implemented:** Steps 01–11 and offline/local slices 12a–30. Step 30 local
-verification and independent review passed; upload/exact CI are pending; see [verification](09-integrations-and-pilot/STEP_30_VERIFICATION.md).
+**Delivered:** Steps 01–11 and offline/local slices 12a–30. Step 30 local
+verification, independent review, upload and exact CI (attempt 2) passed; see [verification](09-integrations-and-pilot/STEP_30_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
 **Next:** [Step 31a owner and prepaid cash entries](09-integrations-and-pilot/STEP_31A_PLAN.md),
 when the user requests the next delivery.
@@ -96,7 +96,7 @@ retained in the verification record and Git history.
 | 28 | [Contribution and captured indicators](08-service-management/STEP_28_VERIFICATION.md) | [b7f4a3a](https://github.com/DatasanAli/Accounting_Harness/commit/b7f4a3a93ab651b1e60444c4e2904a9e7f373469) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480) |
 | 29a | [Local identities and entity grants](09-integrations-and-pilot/STEP_29A_VERIFICATION.md) | [c480771](https://github.com/DatasanAli/Accounting_Harness/commit/c48077187bf96b0383f28f877292de7b9110e1b5) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426) |
 | 29b | [Authenticated application and UI](09-integrations-and-pilot/STEP_29B_VERIFICATION.md) | [81a1d02](https://github.com/DatasanAli/Accounting_Harness/commit/81a1d021b4edd4aa3fc4bbce0f95e9177b363213) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/38635277919) |
-| 30 | [Offline QuickBooks journal read](09-integrations-and-pilot/STEP_30_VERIFICATION.md) | 824 tests / 42 demos / browser / review passed | Upload pending |
+| 30 | [Offline QuickBooks journal read](09-integrations-and-pilot/STEP_30_VERIFICATION.md) | [c022dfa](https://github.com/DatasanAli/Accounting_Harness/commit/c022dfa54b0d5a9042e5faecbf70cf33cd92beca) | [Passed (attempt 2)](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39278821004) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

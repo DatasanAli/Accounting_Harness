@@ -2,7 +2,8 @@
 
 Date: 2026-10-19. Scope: Step 30 only, as an **offline contract simulation** with
 synthetic fixtures. No credentials, OAuth, realm discovery, network call or remote
-write exists in this slice. Real sandbox compatibility remains a deferred live gate.
+write exists in this slice. Real sandbox compatibility remains a deferred live gate. Local verification, independent
+review, GitHub upload and exact-SHA CI (attempt 2) passed.
 
 ## Delivered behavior
 
@@ -121,7 +122,15 @@ each fix, with **no remaining Critical or Important findings**. A remaining Mino
 (unchecked Amount on non-journal-detail lines) was also fixed and tested. Cosmetic
 and live-gate notes are listed under limits.
 
-Implementation commit, push and exact-SHA CI evidence: pending (recorded after upload).
+Implementation commit [c022dfa](https://github.com/DatasanAli/Accounting_Harness/commit/c022dfa54b0d5a9042e5faecbf70cf33cd92beca) was pushed to origin/main; local and remote
+SHA were compared. Its [exact-SHA GitHub CI run](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39278821004) concluded **success on
+attempt 2**: the log shows `Ran 824 tests ... OK`, every demonstration including
+`demo-sandbox-read` (600.00 / 600.00) and job cleanup about 2.5 minutes after start.
+Attempt 1 ran every step successfully in 3m21s but was marked *cancelled: exceeded
+5m*. That happened during GitHub's open incident "Degraded availability for GitHub
+Actions, GitHub Pages and Webhooks" (from 15:49 UTC on 2026-10-19). Job and
+check-run records lagged as `queued` during that incident; the run conclusion was
+used as the exact-SHA result. This evidence update changes documentation only.
 
 Rollback uses a new revert commit. The staging file is separate. Leaving or
 removing `qbo-staging.sqlite3` cannot change local journals, approvals or reports.

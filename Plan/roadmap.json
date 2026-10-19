@@ -416,7 +416,9 @@
         {
           "id": "30",
           "title": "One sandbox read adapter",
-          "status": "complete"
+          "status": "complete",
+          "commit": "c022dfa54b0d5a9042e5faecbf70cf33cd92beca",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39278821004"
         },
         {
           "id": "31",
