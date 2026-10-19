@@ -24,7 +24,7 @@ READ = frozenset({'read_evidence', 'read_drafts', 'read_reports', 'read_audit'})
 PREPARE = frozenset({'register_evidence', 'prepare_proposal', 'revise_proposal',
     'import_bank_csv', 'classify_bank', 'match_bank', 'withdraw_bank_match',
     'record_timing', 'withdraw_timing', 'manage_scenarios', 'manage_time',
-    'manage_allocations', 'start_run', 'cancel_run'})
+    'manage_allocations', 'start_run', 'cancel_run', 'stage_external'})
 REVIEW = frozenset({'reject_proposal', 'approve_post', 'confirm_reconciliation',
                     'confirm_close', 'authorize_export'})
 ROLE_OPERATIONS = MappingProxyType({'preparer': READ | PREPARE,

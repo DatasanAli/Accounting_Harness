@@ -18,7 +18,8 @@ const views = {
   payables: ['Vendor bills', 'Reviewed vendor expenses and the amount still payable.'],
   bank: ['Bank statements', 'Immutable statement rows, exact balances and a separate import audit.'],
   runs: ['Agent runs', 'See what was requested, what happened, and where the agent stopped.'],
-  providers: ['Providers', 'Choose how proposals are prepared. You control every request.']
+  providers: ['Providers', 'Choose how proposals are prepared. You control every request.'],
+  integrations: ['Integrations', 'Offline contract simulation of one QuickBooks JournalEntry read into a separate staging mirror.']
 };
 const sampleNames = {'rent-standard': 'January office rent', 'software-standard': 'Software subscription',
   'ambiguity-1': 'Ambiguous expense', 'missing-1': 'Missing receipt details', 'hostile-1': 'Document instruction test'};
@@ -2385,6 +2386,43 @@ function applyPermissions() {
   });
 }
 new MutationObserver(applyPermissions).observe(document.body, {childList: true, subtree: true});
+// Offline QuickBooks read: a separate staging mirror; the local ledger stays authoritative.
+let qboBusy = false;
+$('qbo-load').addEventListener('click', async () => {
+  if (qboBusy) return; qboBusy = true;
+  try { renderQbo((await request('/api/external-reads')).batches); }
+  catch (error) { notify(error.message, 'error'); } finally { qboBusy = false; }
+});
+$('qbo-read-form').addEventListener('submit', async event => {
+  event.preventDefault(); if (qboBusy) return; qboBusy = true;
+  const submit = event.target.querySelector('button'); submit.disabled = true;
+  try {
+    const report = await request($('qbo-read-form').getAttribute('action'), {batch_id: new FormData(event.target).get('batch_id')});
+    $('qbo-result').textContent = 'Offline contract simulation · batch ' + report.batch_id + ' · ' + human(report.status) + '. No external or local-ledger writes.';
+    renderQbo([report]);
+  } catch (error) { notify(error.message + (error.uncertain ? ' Resume the same batch ID to recover its recorded checkpoint.' : ''), 'error'); }
+  finally { qboBusy = false; submit.disabled = false; }
+});
+function renderQbo(reports) {
+  const node = $('qbo-batches'); node.replaceChildren();
+  if (!reports.length) node.append(empty('No staged batches', 'Start an offline read to stage synthetic QuickBooks journals.'));
+  for (const report of reports) {
+    const card = add(el('article', null, 'card'), el('h3', report.label + ' · batch ' + report.batch_id), el('p', report.ownership, 'callout'),
+      metadata([['Status', human(report.status)], ['Totals', report.totals_basis], ['Connector', report.connector_id + ' · ' + report.environment + ' realm ' + report.realm_id],
+        ['Query window', report.window.start + ' to ' + report.window.end], ['Account map', report.account_map.version],
+        ['Page limits', report.page_size + ' rows × ' + report.max_pages + ' pages'], ['Accepted records', String(report.accepted_count)],
+        ['Next cursor', report.next_position ?? 'None'], ['Next attempt not before', report.next_attempt_at ?? 'None'], ['Started by', report.started_by]]),
+      table(['QuickBooks ID', 'SyncToken', 'Date', 'Status', 'Amount · USD'], report.accepted.map(r => [r.remote_id, r.sync_token, r.txn_date, r.status, r.total_amount ?? 'Excluded'])),
+      table(['Local account', 'QuickBooks account ID', 'Debit · USD', 'Credit · USD'], report.accounts.map(r => [r.local_account, r.remote_account_id, r.debit_amount, r.credit_amount]),
+        report.totals_basis, ['Total', '', report.total_debits, report.total_credits]),
+      table(['Page', 'Start', 'Rows', 'Checkpoint SHA-256'], report.pages.map(p => [String(p.page_number), String(p.position), String(p.row_count), p.checkpoint_digest])));
+    for (const item of report.exceptions) card.append(el('p', human(item.kind) + (item.remote_id ? ' · ' + item.remote_id : '') + ': ' + item.reason, 'callout'));
+    card.append(el('p', report.local_effects, 'action-hint'));
+    digest(card, 'Staged report SHA-256', report.report_digest);
+    card.append(jsonDetails('Complete staged batch report', report));
+    node.append(card);
+  }
+}
 function lockWorkspace() {
   scopeGeneration++;
   document.body.classList.add('locked');
@@ -2393,6 +2431,7 @@ function lockWorkspace() {
   pendingReconciliation = pendingBankFee = pendingBankAction = bankFileContent = null;
   projectReport = pendingAttribution = projectTimeReport = projectCostInputs = pendingProjectCost = null;
   budgetInputs = pendingBudget = indicatorInputs = indicatorPending = null;
+  $('qbo-result').textContent = '';
   try { Object.keys(sessionStorage).filter(key => key.startsWith('accounting-')).forEach(key => sessionStorage.removeItem(key)); } catch {}
   document.querySelectorAll('.view .stack, .view pre, .view select').forEach(node => node.replaceChildren());
   document.querySelectorAll('input, textarea').forEach(node => { if (node.type === 'checkbox') node.checked = false; else node.value = ''; });

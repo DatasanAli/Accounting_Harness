@@ -1,14 +1,14 @@
 # Current status
 
-Updated: 2026-10-14.
+Updated: 2026-10-19.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–29b. Step 29b local
-verification, independent review, upload and exact CI passed; see [verification](09-integrations-and-pilot/STEP_29B_VERIFICATION.md).
+**Implemented:** Steps 01–11 and offline/local slices 12a–30. Step 30 local
+verification and independent review passed; upload/exact CI are pending; see [verification](09-integrations-and-pilot/STEP_30_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Next:** [Step 30 offline read adapter](09-integrations-and-pilot/STEP_30_PLAN.md),
+**Next:** [Step 31a owner and prepaid cash entries](09-integrations-and-pilot/STEP_31A_PLAN.md),
 when the user requests the next delivery.
 
-The current request authorizes Step 29b only. Verify/review/commit/push/check exact
+The current request authorizes Step 30 only. Verify/review/commit/push/check exact
 CI, report, and stop. Live provider/external-account connections and actual
 real-data pilot acceptance remain deferred, never passed by inference. See the
 [working plan](LOCALHOST_APP_PLAN.md) and [exact next prompt](NEXT_STEP.md).
@@ -33,6 +33,16 @@ implementation commit and exact CI evidence are in
 [Step 29b verification](09-integrations-and-pilot/STEP_29B_VERIFICATION.md).
 A foundation check is not application proof.
 
+Step 30 adds an **offline contract simulation** of one QuickBooks Online
+JournalEntry read: bounded sandbox queries through an injected deterministic
+simulator into a separate `qbo-staging.sqlite3` mirror. The local ledger stays
+authoritative; staged journals never post. Two synthetic pages reconcile three IDs
+at 600.00 USD per side with unchanged local books. Strict mapping/page refusals,
+unsupported findings, atomic checkpoints, versions/conflicts, 429/transport resume,
+caps and authenticated start/read permissions are tested. **824 tests and 42
+demonstrations passed**; a native browser check passed. Live sandbox OAuth/compatibility
+remains deferred. See [Step 30 verification](09-integrations-and-pilot/STEP_30_VERIFICATION.md).
+
 The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
 schema 1 and expense/revenue-accrual schema 1. Step 22 adds close schema 1. Old expense captures remain v1;
 new combined captures identify v2 even when empty. Account extensions are audited; old baseline contexts, approvals and captured reports
@@ -43,8 +53,8 @@ proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
 Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. Credentials, sessions, fixed entity roles and authenticated application/UI
-enforcement are implemented. Integration contracts and verified recovery remain
-planned. New human actions carry authenticated stable user IDs. The [Phase09 plan](09-integrations-and-pilot/README.md)
+enforcement are implemented. An offline QuickBooks journal-read contract into a
+separate staging mirror is implemented; export and verified recovery remain planned. New human actions carry authenticated stable user IDs. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
 
 ## Delivery evidence
@@ -86,6 +96,7 @@ retained in the verification record and Git history.
 | 28 | [Contribution and captured indicators](08-service-management/STEP_28_VERIFICATION.md) | [b7f4a3a](https://github.com/DatasanAli/Accounting_Harness/commit/b7f4a3a93ab651b1e60444c4e2904a9e7f373469) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480) |
 | 29a | [Local identities and entity grants](09-integrations-and-pilot/STEP_29A_VERIFICATION.md) | [c480771](https://github.com/DatasanAli/Accounting_Harness/commit/c48077187bf96b0383f28f877292de7b9110e1b5) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426) |
 | 29b | [Authenticated application and UI](09-integrations-and-pilot/STEP_29B_VERIFICATION.md) | [81a1d02](https://github.com/DatasanAli/Accounting_Harness/commit/81a1d021b4edd4aa3fc4bbce0f95e9177b363213) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/38635277919) |
+| 30 | [Offline QuickBooks journal read](09-integrations-and-pilot/STEP_30_VERIFICATION.md) | 824 tests / 42 demos / browser / review passed | Upload pending |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

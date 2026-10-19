@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "29",
-  "next_step": "30",
+  "current_step": "30",
+  "next_step": "31",
   "phases": [
     {
       "id": "01",
@@ -416,17 +416,17 @@
         {
           "id": "30",
           "title": "One sandbox read adapter",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "31",
           "title": "Review workbench",
-          "status": "planned",
+          "status": "ready",
           "substeps": [
             {
               "id": "31a",
               "title": "Reviewed owner and prepaid cash entries",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "31b",

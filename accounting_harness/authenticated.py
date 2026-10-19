@@ -15,7 +15,7 @@ READ_METHODS = {
     'project_time': 'read_reports', 'project_cost_inputs': 'read_reports',
     'project_cost': 'read_reports', 'indicator_inputs': 'read_reports',
     'indicators': 'read_reports', 'variance': 'read_reports',
-    'budget_inputs': 'read_reports', 'budget': 'read_reports',
+    'budget_inputs': 'read_reports', 'budget': 'read_reports', 'external_reads': 'read_reports',
 }
 PREPARATIONS = {
     'prepare_expense_accrual': 'expense-accrual-proposals',
@@ -39,7 +39,7 @@ ACTION_OPERATIONS = {
     'bank-unmatch': 'withdraw_bank_match', 'bank-statements': 'import_bank_csv',
     'sources': 'register_evidence', 'operation-sources': 'register_evidence',
     'run': 'start_run', 'cancel': 'cancel_run', 'reject': 'reject_proposal',
-    'approve-post': 'approve_post',
+    'approve-post': 'approve_post', 'qbo-read': 'stage_external',
 }
 # Fixed activations with an audit record, including the three pre-existing controls.
 IMPLICIT_ACTIVATIONS = {'expense-accrual-proposals': '2050', 'revenue-accrual-proposals': '1150',
@@ -104,6 +104,8 @@ class AuthenticatedWorkspace:
             raise AccessDenied()
         if method == 'action' and action == 'run':
             return self._run(token, entity_id, data)
+        if method == 'action' and action == 'qbo-read':
+            return self._qbo_read(token, entity_id, data)
         def perform(principal):
             workspace = self._workspace(principal)
             if method == 'action':
@@ -118,6 +120,13 @@ class AuthenticatedWorkspace:
                 return workspace.action(action, data)
             return getattr(workspace, method)(*args)
         return self.access.perform(token, entity_id, operation, perform)
+
+    def _qbo_read(self, token, entity, data):
+        # Authorize briefly; transport calls happen outside the identity lock and
+        # every staging commit rechecks current authority (revocation stops writes).
+        workspace = self.access.perform(token, entity, 'stage_external', self._workspace)
+        workspace.authority_guard = lambda: self._guard(token, entity, 'stage_external')
+        return workspace.action('qbo-read', data)
 
     def _run(self, token, entity, data):
         from accounting_harness.workspace import fields

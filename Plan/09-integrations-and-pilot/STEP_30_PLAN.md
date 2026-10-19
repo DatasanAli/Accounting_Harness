@@ -2,6 +2,8 @@
 
 > **For agentic workers:** Use subagent-driven-development or executing-plans after verified Step 29b.
 
+**Status:** implemented as an offline contract simulation; see [verification](STEP_30_VERIFICATION.md). Real sandbox verification remains deferred.
+
 **Goal:** Import a paginated synthetic QuickBooks Online JournalEntry batch into a
 separate, reconciled staging mirror with safe retries and interrupted resume.
 
@@ -94,18 +96,18 @@ compatibility. Recheck version details before enabling a real sandbox connection
 **Files:** Focused QBO mapping/transport and staging service/tests, synthetic
 fixtures and CLI/workspace/HTTP/static integration. Root owns docs/CI/browser.
 
-- [ ] RED: import two synthetic pages, reconcile three remote IDs and 600.00 per
+- [x] RED: import two synthetic pages, reconcile three remote IDs and 600.00 per
   side, with exact local ledger/approval/report bytes unchanged.
-- [ ] Build strict exact mapping and immutable scoped observations/checkpoints.
+- [x] Build strict exact mapping and immutable scoped observations/checkpoints.
   Reject wrong realm/entity/currency/map, malformed pages, duplicate fields,
   precision errors, unsupported lines and account-name guessing.
-- [ ] Interrupt before/after page commit; restart and retry yield the same mirror,
+- [x] Interrupt before/after page commit; restart and retry yield the same mirror,
   totals and history. A same-version content conflict cannot overwrite evidence.
-- [ ] Exercise 429/Retry-After, transport failure, repeated cursor, row/page caps,
+- [x] Exercise 429/Retry-After, transport failure, repeated cursor, row/page caps,
   changing versions and incomplete reports with deterministic clocks/fixtures.
-- [ ] Verify authenticated read/start/resume permissions, cross-entity denial,
+- [x] Verify authenticated read/start/resume permissions, cross-entity denial,
   write rollback, concurrent same-page retry and pure captured reports.
-- [ ] Add a small integration status view and `demo-sandbox-read`; all labels say
+- [x] Add a small integration status view and `demo-sandbox-read`; all labels say
   offline simulation and no external or local-ledger writes are performed.
-- [ ] Run focused then guarded suite/foundation/all demos/JS/diff, independent
+- [x] Run focused then guarded suite/foundation/all demos/JS/diff, independent
   review, commit/push/exact CI. Keep real sandbox verification deferred.

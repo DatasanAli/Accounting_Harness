@@ -101,3 +101,5 @@ jobs:
         run: python3 -m accounting_harness demo-access
       - name: Demonstrate authenticated preparer and reviewer boundaries
         run: python3 -m accounting_harness demo-authenticated-workspace
+      - name: Demonstrate offline QuickBooks journal read into a separate staging mirror
+        run: python3 -m accounting_harness demo-sandbox-read

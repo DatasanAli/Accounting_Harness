@@ -205,6 +205,10 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             return BudgetService(ledger).get(version_id)
 
+    def external_reads(self):
+        from accounting_harness.qbo_read import FILE, staged_batches
+        return staged_batches(self.root / FILE, self.catalog.entity_id)
+
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
                      note='No model calls. Fixed fictional examples.'),
@@ -525,6 +529,12 @@ class Workspace:
                           for r in report.rows]))
 
     def action(self, action, data):
+        if action == 'qbo-read':
+            from accounting_harness.qbo_read import FILE, SimulatedQBO, read_batch
+            fields(data, dict(batch_id=str))
+            # Offline contract simulation: server-owned connector, simulator and separate staging file.
+            return read_batch(self.root / FILE, entity_id=self.catalog.entity_id, account_codes={a.code for a in self.catalog.list_accounts()},
+                batch_id=data['batch_id'], actor_id=(self.actor_id or 'local-operator'), transport=SimulatedQBO(), authority=self.authority_guard)
         if action == 'indicators':
             from accounting_harness.indicators import IndicatorService
             with self.storage() as (_,ledger,_,_,_):

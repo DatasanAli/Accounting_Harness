@@ -42,6 +42,7 @@ they neither send data to another service nor authorize external writes.
 | `/api/bank-matches` | `bank_matches` | `read_reports` |
 | `/api/bank-reconciliation` | `bank_reconciliation` | `read_reports` |
 | `/api/bank-statements?bank_account_id=…&statement_id=…` | `bank_statement_detail` | `read_evidence` |
+| `/api/external-reads` (Step 30) | `external_reads` | `read_reports` |
 
 `providers` is a direct facade read (`read_audit`) also included in `state`.
 `state` aggregates evidence, drafts, journals, audit, reports and provider config;
@@ -82,6 +83,7 @@ the current fixed roles all share those read capabilities.
 | `/api/cancel` | `cancel_run` |
 | `/api/reject` | `reject_proposal` |
 | `/api/approve-post` | `approve_post` |
+| `/api/qbo-read` (Step 30) | `stage_external` |
 
 `bank-timing` with role `withdraw` uses `withdraw_timing`. Direct convenience
 methods below dispatch through exactly the same action mapping, never directly
@@ -141,6 +143,12 @@ only an account code from 2000, 1100, 2100, 2050, 1150 and 5300.
   pending confirmations and form inputs, then reloads. Responses and report bodies
   and background status polls are discarded if the scope generation changed. Pending run recovery metadata in sessionStorage is bound to user and entity, validated only after login; logout/entity change clears it. No credentials are stored there. Current grants are polled every
   15 seconds without extending idle life; a denied request clears state immediately.
+- Step 30 `qbo-read` (preparer/owner `stage_external`) accepts only `batch_id`.
+  It authorizes briefly, calls the offline simulator outside the identity lock,
+  and rechecks authority around each write to the separate `qbo-staging.sqlite3`
+  mirror. Staging writes never touch ledger, source or run files (Workspace
+  construction keeps its existing startup behavior). `external_reads` never
+  creates the mirror. See [Step 30 verification](STEP_30_VERIFICATION.md).
 
 ## Transport boundary
 

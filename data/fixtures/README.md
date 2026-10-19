@@ -92,3 +92,7 @@ its original import receipt. Reformatting quotes or line endings changes the
 statement's source digest and conflicts under that ID. An unchanged canonical
 bank transaction can appear in another overlapping statement; different bank
 transaction IDs remain distinct even when their amounts and descriptions match.
+
+## QuickBooks JournalEntry simulation
+
+[qbo-journal-entries.json](qbo-journal-entries.json) holds three fictional QuickBooks Online JournalEntry query rows (100.00, 200.00 and 300.00 USD) for the Step 30 offline contract simulation. Amounts are JSON numbers, parsed from their exact lexical form, never through floats. The in-process simulator serves them under the fixed sandbox-query contract. QuickBooks account IDs 35, 57, 61 and 79 map only through the versioned server account map to local 1000, 5000, 5100 and 4000. These rows are not observed remote data and never post to the local ledger.

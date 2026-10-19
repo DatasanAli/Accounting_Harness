@@ -1,10 +1,11 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 29b implements authenticated facade/HTTP/UI enforcement, stable human
-actors and initiator-bound runs. 802 tests/41 demos and browser checks passed; independent review has no remaining
-Important or Critical findings. GitHub delivery and exact CI passed; evidence is recorded in [verification](STEP_29B_VERIFICATION.md). The next requested
-implementation is Step 30's offline read adapter. The current request stops after
-29b; live connections and actual pilot acceptance remain deferred.
+Status: Step 30 implements the offline QuickBooks JournalEntry read contract into a
+separate staging mirror (offline contract simulation; the local ledger stays
+authoritative). 824 tests/42 demos and a browser check passed; independent review has no remaining
+Important or Critical findings. Upload/exact CI are pending; see [verification](STEP_30_VERIFICATION.md). The next requested
+implementation is Step 31a. The current request stops after Step 30; live
+connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 

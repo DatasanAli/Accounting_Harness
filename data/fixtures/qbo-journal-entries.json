@@ -1,0 +1,38 @@
+{
+  "description": "Fictional QuickBooks Online JournalEntry query rows for the offline Step 30 contract simulation. Not observed remote data.",
+  "journal_entries": [
+    {
+      "Id": "101", "SyncToken": "0", "domain": "QBO", "sparse": false, "TxnDate": "2026-01-05",
+      "DocNumber": "JE-101", "PrivateNote": "Synthetic rent journal", "CurrencyRef": {"value": "USD", "name": "United States Dollar"},
+      "MetaData": {"CreateTime": "2026-01-05T09:00:00-08:00", "LastUpdatedTime": "2026-01-05T09:00:00-08:00"},
+      "Line": [
+        {"Id": "0", "Description": "Fictional January rent", "Amount": 100.00, "DetailType": "JournalEntryLineDetail",
+         "JournalEntryLineDetail": {"PostingType": "Debit", "AccountRef": {"value": "57", "name": "Rent or Lease"}}},
+        {"Id": "1", "Description": "Fictional January rent", "Amount": 100.00, "DetailType": "JournalEntryLineDetail",
+         "JournalEntryLineDetail": {"PostingType": "Credit", "AccountRef": {"value": "35", "name": "Checking"}}}
+      ]
+    },
+    {
+      "Id": "102", "SyncToken": "0", "domain": "QBO", "sparse": false, "TxnDate": "2026-01-12",
+      "DocNumber": "JE-102", "PrivateNote": "Synthetic service receipt", "CurrencyRef": {"value": "USD", "name": "United States Dollar"},
+      "MetaData": {"CreateTime": "2026-01-12T09:00:00-08:00", "LastUpdatedTime": "2026-01-12T09:00:00-08:00"},
+      "Line": [
+        {"Id": "0", "Description": "Fictional completed service", "Amount": 200.00, "DetailType": "JournalEntryLineDetail",
+         "JournalEntryLineDetail": {"PostingType": "Debit", "AccountRef": {"value": "35", "name": "Checking"}}},
+        {"Id": "1", "Description": "Fictional completed service", "Amount": 200.00, "DetailType": "JournalEntryLineDetail",
+         "JournalEntryLineDetail": {"PostingType": "Credit", "AccountRef": {"value": "79", "name": "Services"}}}
+      ]
+    },
+    {
+      "Id": "103", "SyncToken": "0", "domain": "QBO", "sparse": false, "TxnDate": "2026-01-20",
+      "DocNumber": "JE-103", "PrivateNote": "Synthetic software journal", "CurrencyRef": {"value": "USD", "name": "United States Dollar"},
+      "MetaData": {"CreateTime": "2026-01-20T09:00:00-08:00", "LastUpdatedTime": "2026-01-20T09:00:00-08:00"},
+      "Line": [
+        {"Id": "0", "Description": "Fictional software subscription", "Amount": 300.00, "DetailType": "JournalEntryLineDetail",
+         "JournalEntryLineDetail": {"PostingType": "Debit", "AccountRef": {"value": "61", "name": "Software"}}},
+        {"Id": "1", "Description": "Fictional software subscription", "Amount": 300.00, "DetailType": "JournalEntryLineDetail",
+         "JournalEntryLineDetail": {"PostingType": "Credit", "AccountRef": {"value": "35", "name": "Checking"}}}
+      ]
+    }
+  ]
+}

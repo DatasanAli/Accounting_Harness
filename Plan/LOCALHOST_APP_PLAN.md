@@ -42,8 +42,8 @@ Steps 13 onward may proceed offline under the user's new direction. The deferred
 live evaluation remains a requirement for claiming model readiness and for a
 real-data pilot. The numbered accounting roadmap remains intact; lettered
 substeps record independently reviewable deliveries without renumbering history.
-The earlier 2026-10-08 request expanded the roadmap. The current 2026-10-14
-request authorizes Step 29b only. Follow the current one-step delivery cadence:
+The earlier 2026-10-08 request expanded the roadmap. The current 2026-10-19
+request authorizes Step 30 only. Follow the current one-step delivery cadence:
 verify, review, commit/push/check exact CI, report, and stop. Live connections and
 actual pilot acceptance remain deferred.
 
@@ -153,3 +153,5 @@ linked reversals, not deletion or a database reset.
 - Step 29a: local 776 tests/40 demos, hidden interactive passphrase setup, distinct entities, fixed-role denials, revocation/logout and fresh-process session persistence. Original mapped books remain byte-identical; final-code restart preserves all prior reports/scenarios/exports. Independent spec/quality review approved with no findings. Commit `c480771` matches origin/main and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426); HTTP enforcement remains 29b. See [verification](09-integrations-and-pilot/STEP_29A_VERIFICATION.md).
 
 - Step 29b: 802 tests/41 demos, authenticated native preparation and separate reviewer posting, denial/revocation, fresh-process restart, entity clearing and 390px identity/logout passed. Independent review has no remaining Important or Critical findings. Implementation commit [81a1d02](https://github.com/DatasanAli/Accounting_Harness/commit/81a1d021b4edd4aa3fc4bbce0f95e9177b363213) was pushed and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/38635277919); see [verification](09-integrations-and-pilot/STEP_29B_VERIFICATION.md). The current request stops after this delivery.
+
+- Step 30: 824 tests/42 demos. Offline contract simulation of a paginated QuickBooks JournalEntry read into a separate staging mirror: two synthetic pages reconcile three IDs at 600.00 USD per side, local ledger/evidence/runs bytes unchanged. Native browser: preparer start/resume, reviewer read-only view and a 403 for a direct reviewer POST. Independent review Important finding fixed (unsupported records skipped strict checks); re-review recorded in the verification. Upload/exact CI pending; see [verification](09-integrations-and-pilot/STEP_30_VERIFICATION.md). Live sandbox connection remains deferred.

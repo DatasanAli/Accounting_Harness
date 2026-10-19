@@ -41,6 +41,7 @@
       <button class="nav-item" data-view="bank"><span aria-hidden="true">▤</span>Bank statements</button>
       <button class="nav-item" data-view="runs"><span aria-hidden="true">↗</span>Agent runs</button>
       <button class="nav-item" data-view="providers"><span aria-hidden="true">⌘</span>Providers</button>
+      <button class="nav-item" data-view="integrations"><span aria-hidden="true">⇄</span>Integrations</button>
     </nav>
     <div class="sidebar-note"><span class="status-dot" aria-hidden="true"></span>Authenticated local access<p>Fictional books. Real accounting rules.</p></div>
     <div class="operator"><div><strong id="signed-in-user"></strong><small id="signed-in-role"></small></div></div>
@@ -601,6 +602,21 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
           </form>
         </details>
         <div id="prepaid-report" class="stack"></div>
+      </section>
+      <section id="view-integrations" class="view" aria-labelledby="integrations-heading" hidden>
+        <div class="section-heading"><h2 id="integrations-heading">QuickBooks journal read</h2><span class="muted">Offline contract simulation · staging mirror only</span></div>
+        <section class="card setup-card">
+          <h3>Offline contract simulation</h3>
+          <p class="callout">A deterministic local simulator stands in for the QuickBooks sandbox. No credentials, OAuth, network request, external write or local-ledger write is performed. The local ledger remains the authoritative book; staged journals never post or become local actuals.</p>
+          <p>The server fixes the sandbox realm, account-ID map, January query window and page limits. Enter a new batch ID to start, or an existing one to resume from its recorded checkpoint.</p>
+          <form id="qbo-read-form" action="/api/qbo-read" class="receipt-form">
+            <label>Batch ID <input name="batch_id" required maxlength="80" pattern="[A-Za-z0-9_\-]{1,80}" value="january-read"></label>
+            <button class="button" type="submit">Start or resume offline read</button>
+          </form>
+          <button id="qbo-load" class="button secondary" type="button">Load staged batches</button>
+          <p id="qbo-result" role="status"></p>
+        </section>
+        <div id="qbo-batches" class="stack"></div>
       </section>
       <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><div id="run-list" class="stack"></div></section>
       <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --access-db PATH --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>
