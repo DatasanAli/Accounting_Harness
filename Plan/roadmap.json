@@ -428,7 +428,9 @@
             {
               "id": "31a",
               "title": "Reviewed owner and prepaid cash entries",
-              "status": "complete"
+              "status": "complete",
+              "commit": "68c450bf99bd173b63afbe54acc019f78602d4e8",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39453521635"
             },
             {
               "id": "31b",

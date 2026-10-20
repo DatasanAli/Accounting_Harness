@@ -3,7 +3,7 @@
 Status: Step 31a implements reviewed owner contribution, owner drawing and prepaid
 insurance purchase entries (`nonoperating-cash-v1`) with native forms and separate
 approval. 833 tests/43 demos and a browser reference flow passed; independent review has no remaining
-Important or Critical findings. Upload/exact CI are pending; see [verification](STEP_31A_VERIFICATION.md). The next requested
+Important or Critical findings. GitHub delivery and exact CI passed; evidence is recorded in [verification](STEP_31A_VERIFICATION.md). The next requested
 implementation is Step 31b. The current request stops after Step 31a; live
 connections and actual pilot acceptance remain deferred.
 

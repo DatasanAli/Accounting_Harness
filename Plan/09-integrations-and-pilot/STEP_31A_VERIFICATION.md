@@ -2,6 +2,7 @@
 
 Date: 2026-10-20. Scope: Step 31a only, with temporary synthetic workspaces and
 fictional evidence. No model calls, live connections or real financial data.
+Local verification, independent review, GitHub upload and exact-SHA CI passed.
 
 ## Delivered behavior
 
@@ -124,7 +125,10 @@ fact, as `original_source_id`. There is no money impact (one coverage per purcha
 principal checked). The UI fills the cash source; tightening it belongs to a
 future prepaid change.
 
-Implementation commit, push and exact-SHA CI evidence: pending (recorded after upload).
+Implementation commit [68c450b](https://github.com/DatasanAli/Accounting_Harness/commit/68c450bf99bd173b63afbe54acc019f78602d4e8) was pushed to origin/main; local and remote
+SHA were compared. Its [exact-SHA GitHub CI run](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39453521635) passed on the first attempt
+(job 3m10s; `Ran 833 tests ... OK` and every demonstration, including
+`demo-owner-prepaid-cash`). This evidence update changes documentation only.
 
 Rollback uses a new revert commit. Opening a workspace with this version migrates
 its review schema to 12. Older code rejects schema 12, so reverting the code
