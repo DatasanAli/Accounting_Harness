@@ -435,7 +435,9 @@
             {
               "id": "31b",
               "title": "Bounded operational agent proposals",
-              "status": "complete"
+              "status": "complete",
+              "commit": "a0a9d86666ed39a19ad577692cb0d685cf24f433",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39463094489"
             },
             {
               "id": "31c",

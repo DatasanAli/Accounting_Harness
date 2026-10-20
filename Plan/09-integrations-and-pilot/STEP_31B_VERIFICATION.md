@@ -2,7 +2,8 @@
 
 Date: 2026-10-20. Scope: Step 31b only, with temporary synthetic workspaces and
 fictional evidence. No live Ollama/OpenAI call, model download, live connection or
-real financial data. Local verification and independent review passed.
+real financial data. Local verification, independent review, GitHub upload and
+exact-SHA CI passed.
 
 ## Delivered behavior
 
@@ -181,7 +182,10 @@ A re-review reran every probe against the fixed tree and confirmed all six fixes
 with no regressions and **no remaining Critical or Important issues**. Its cosmetic
 nit (a non-reviewable draft card still said "awaits separate human review") is fixed.
 
-GitHub delivery and exact-SHA CI are pending at the time of this record.
+Implementation commit [a0a9d86](https://github.com/DatasanAli/Accounting_Harness/commit/a0a9d86666ed39a19ad577692cb0d685cf24f433) was pushed to origin/main; local and remote
+SHA were compared. Its [exact-SHA GitHub CI run](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39463094489) passed on the first attempt
+(job 3m46s; `Ran 842 tests ... OK` and every demonstration, including
+`demo-operational-agent` printing 31/31). This evidence update changes documentation only.
 
 Rollback uses a new revert commit. The run log is a separate new file and no
 ledger, review or source schema changed. Reverting leaves `agent-runs.sqlite3`
