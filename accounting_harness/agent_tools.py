@@ -57,8 +57,8 @@ def _check(schema, value, path='$'):
                 raise ToolError(f'{path}.{key}: unsupported field')
             _check(field, item, f'{path}.{key}')
     elif expected is list:
-        if len(value) < schema.get('minItems', 0):
-            raise ToolError(f'{path}: too few items')
+        if not schema.get('minItems', 0) <= len(value) <= schema.get('maxItems', len(value)):
+            raise ToolError(f'{path}: item count outside bounds')
         for index, item in enumerate(value):
             _check(schema['items'], item, f'{path}[{index}]')
     elif expected is str:
@@ -66,8 +66,8 @@ def _check(schema, value, path='$'):
             raise ToolError(f'{path}: requires nonblank unpadded text')
         if 'pattern' in schema and not re.fullmatch(schema['pattern'], value):
             raise ToolError(f'{path}: invalid format')
-    elif value < schema.get('minimum', 0):
-        raise ToolError(f'{path}: value below minimum')
+    elif not schema.get('minimum', 0) <= value <= schema.get('maximum', value):
+        raise ToolError(f'{path}: value outside bounds')
 
 
 class AgentTools:

@@ -133,6 +133,7 @@ python3 -m accounting_harness demo-access
 python3 -m accounting_harness demo-authenticated-workspace
 python3 -m accounting_harness demo-sandbox-read
 python3 -m accounting_harness demo-owner-prepaid-cash
+python3 -m accounting_harness demo-operational-agent
 ```
 
 The adjusted-month demonstration uses a distinct January 1 insurance-purchase variant; the original January 3 fixture stays unchanged. It labels trusted owner/purchase fixture entries separately from the eight reviewed operations.
@@ -168,7 +169,7 @@ python3 scripts/verify_foundation.py
 python3 scripts/run_tests.py
 ```
 
-The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 833 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all 43 demonstrations.
+The foundation check validates plan links, roadmap numbering, and the reference month's accounting identities. The application suite has 842 tests covering money, catalog construction/loading, journal validation, ledger admission/snapshots/trial balances, SQLite restart/rollback/concurrency/constraints/retries, linked reversals/migration/correction rollback, source identity/digest/rollback/concurrency/schema safety, CLI behavior, and the test runner's failure handling. CI runs both checks and all 43 demonstrations.
 
 Money uses nonnegative integer cents. Parsing requires unsigned decimal strings with exactly two fractional digits; floats, booleans, unsupported currency, and silent rounding are rejected. Leading zeros are accepted and formatting normalizes them. Accounts and catalogs are immutable; catalog loading rejects malformed fields and duplicate codes/JSON keys. Inactive accounts remain visible when listed but cannot be resolved for posting use. Durable synthetic posting and authenticated reviewer approval are implemented. SQLite line cents must fit a positive signed 64-bit integer; larger line amounts are rejected before writes. Report totals use Python integers.
 
@@ -188,7 +189,7 @@ The delivery target is this repository on GitHub with its verification workflow 
 
 Next prompt:
 
-> Build Step 31b using Plan/09-integrations-and-pilot/STEP_31B_PLAN.md. Implement only the versioned bounded operational agent read/propose tools and offline adapter contracts for already supported operations, keeping human approval outside the run. Keep live provider calls deferred. Verify, review, demonstrate, commit, push, check exact CI, report, and stop.
+> Build Step 31c using Plan/09-integrations-and-pilot/STEP_31C_PLAN.md. Implement only the coherent authenticated workbench navigation, role-aware workflow handoffs and keyboard/accessibility review over the delivered services, without new accounting policies or live connections. Verify, review, demonstrate, commit, push, check exact CI, report, and stop.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 

@@ -105,3 +105,5 @@ jobs:
         run: python3 -m accounting_harness demo-sandbox-read
       - name: Demonstrate reviewed owner contribution, drawing and prepaid purchase cash entries
         run: python3 -m accounting_harness demo-owner-prepaid-cash
+      - name: Demonstrate bounded offline operational agent contract cases
+        run: python3 -m accounting_harness demo-operational-agent

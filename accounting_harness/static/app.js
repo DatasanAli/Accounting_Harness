@@ -233,7 +233,7 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
-  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderFinancialReports(); renderClose(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderProviders();
+  renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderFinancialReports(); renderClose(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderAgentRuns(); renderProviders();
 }
 function renderSources() {
   if (!state.sources.some(source => source.source_id === selectedSource)) selectedSource = state.sources[0]?.source_id || '';
@@ -2535,6 +2535,82 @@ $('activate-account-form').addEventListener('submit', async event => {
   event.preventDefault();
   try { await request('/api/activate-account', {account: $('activate-account-choice').value}); await refresh(); notify('Fixed account activated with your authenticated audit identity.'); }
   catch (error) { notify(error.message, 'error'); }
+});
+// Bounded operational agent runs (operational-v1). The server validates the selection,
+// binds the run's toolset and rebuilds every journal; this view only selects and displays.
+function renderAgentRuns() {
+  const workflow = $('agent-workflow'), provider = $('agent-provider');
+  // A fresh ID per run; resubmitting an existing ID resumes that run's recorded checkpoint.
+  if (!$('agent-run-id').value) $('agent-run-id').value = 'agent-' + crypto.randomUUID().slice(0, 8);
+  const chosenWorkflow = workflow.value, chosenProvider = provider.value;
+  workflow.replaceChildren(...Object.keys(state.agent_workflows).map(name => new Option(human(name), name)));
+  if (chosenWorkflow in state.agent_workflows) workflow.value = chosenWorkflow;
+  provider.replaceChildren(...state.providers.filter(p => p.available).map(p =>
+    new Option(p.id === 'offline' ? 'Offline reference playback · not a model' : p.name + ' · ' + p.model, p.id)));
+  if ([...provider.options].some(option => option.value === chosenProvider)) provider.value = chosenProvider;
+  const checked = new Set([...document.querySelectorAll('#agent-sources input:checked')].map(input => input.value));
+  const sources = $('agent-sources'); sources.replaceChildren(el('legend', 'Evidence the agent may read'));
+  state.sources.filter(source => source.document.schema_version === 2 && source.state !== 'registered_pending_enrollment').forEach(source => {
+    const input = Object.assign(document.createElement('input'), {type: 'checkbox', name: 'source_ids', value: source.source_id, checked: checked.has(source.source_id)});
+    sources.append(add(el('label'), input, document.createTextNode(' ' + source.source_id + ' · ' + human(source.document.kind) + ' · ' + source.document.amount)));
+  });
+  $('agent-target-options').replaceChildren(...[...state.payables.bills.map(b => b.bill_id), ...state.receivables.invoices.map(i => i.invoice_id),
+    ...state.advances.advances.map(a => a.advance_id)].map(id => new Option(id)));
+  const spec = state.agent_workflows[workflow.value];
+  $('agent-operator').hidden = !spec?.operator.length;
+  $('agent-roles').textContent = spec ? 'Roles: ' + Object.entries(spec.roles).map(([role, kind]) => human(role) + ' ← ' + human(kind.replace(/^[@#]/, ''))).join('; ') : '';
+  const node = $('agent-run-list'); node.replaceChildren();
+  if (!state.agent_runs.length) { node.append(empty('No operational agent runs yet', 'Select a workflow and its registered inputs above.')); return; }
+  [...state.agent_runs].reverse().forEach(run => {
+    const card = el('article', null, 'card');
+    card.append(add(el('div', null, 'card-heading'), el('h3', 'Agent run · ' + run.run_id), status(run.state)));
+    const body = el('div', null, 'run-body'), review = run.review;
+    add(body, metadata([['Workflow', human(run.workflow)], ['Contract', run.contract], ['Provider', run.provider.provider_version],
+      ['Model', run.provider.model], ['Prompt version', run.provider.prompt_version], ['Selected inputs', [...run.sources, ...run.targets].join(', ')],
+      ['Tool calls', String(run.tool_calls)], ['Initiated by', run.initiator_id || 'local operator']]), el('p', 'Outcome: ' + human(run.reason), 'draft-reason'));
+    if (review?.kind === 'draft') {
+      body.append(el('p', 'Draft ' + review.draft_id + ' · revision ' + review.revision + ' · ' + review.policy_version + (review.valid ? ' awaits separate human review.' : ' has findings and cannot be approved.') + ' Server-calculated lines:', 'action-hint'),
+        journalLines(review.lines.map(([account, side, amount]) => ({account, side, amount})), 'Service-built proposal lines'));
+      if (!review.valid) review.findings.forEach(finding => body.append(el('p', 'Not reviewable · ' + finding.code + ': ' + finding.message, 'callout')));
+      if (run.draft_now && (run.draft_now.revision !== review.revision || run.draft_now.status !== 'awaiting_approval'))
+        body.append(el('p', 'Draft now: revision ' + run.draft_now.revision + ' · ' + human(run.draft_now.status) + '. The handoff names revision ' + review.revision + '.', 'action-hint'));
+    } else if (review?.kind === 'handoff') {
+      review.findings.forEach(finding => body.append(el('p', 'Handoff finding · ' + human(finding.code) + ': ' + finding.detail, 'callout')));
+      if (review.unverified_explanation) {
+        const note = add(el('blockquote', null, 'callout'), el('strong', review.unverified_explanation.label), el('p', review.unverified_explanation.text),
+          el('p', 'Cited inputs: ' + (review.unverified_explanation.citations.join(', ') || 'none')));
+        body.append(note);
+      }
+    }
+    if (run.last_result?.finding) body.append(el('p', 'Refused: ' + run.last_result.finding.detail, 'callout'));
+    body.append(jsonDetails('Recorded checkpoint trail', run.trace));
+    if (!settled.has(run.state) && run.initiator_id === identity.user_id && can('agent-cancel')) {
+      body.append(actionButton('agent-cancel', 'Cancel run', () => cancelAgentRun(run.run_id), 'button danger small'));
+    }
+    card.append(body); node.append(card);
+  });
+}
+async function cancelAgentRun(runId) {
+  try { const result = await request('/api/agent-cancel', {run_id: runId}); notify('Run outcome: ' + human(result.state) + '.'); }
+  catch (error) { notify('Cancellation outcome is uncertain: ' + error.message + ' Refresh before continuing.', 'error'); }
+  await refresh();
+}
+$('agent-workflow').addEventListener('change', () => { if (state) renderAgentRuns(); });
+$('agent-run-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const form = new FormData(event.currentTarget), workflow = form.get('workflow');
+  const payload = {run_id: form.get('run_id'), workflow, provider: form.get('provider'), source_ids: form.getAll('source_ids'),
+    target_ids: String(form.get('target_ids') || '').split(',').map(value => value.trim()).filter(Boolean),
+    operator: state.agent_workflows[workflow]?.operator.length ? {bank_account_id: form.get('bank_account_id'), reason: form.get('reason')} : {}};
+  busy = true; render();
+  try {
+    const result = await request('/api/agent-proposals', payload, 1200000);
+    $('agent-run-id').value = '';
+    await refresh();
+    notify('Agent run ' + result.run_id + ': ' + human(result.state) + ' · ' + human(result.reason) + '. Any draft still needs separate human review.');
+  } catch (error) { await refresh(); notify(error.message + ' Resubmit the same run ID to resume its recorded checkpoint.', 'error'); }
+  finally { busy = false; if (state) render(); }
 });
 // Detect expiry/revocation even while the user is looking at a retained report.
 setInterval(async () => {

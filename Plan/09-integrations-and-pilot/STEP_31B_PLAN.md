@@ -2,6 +2,8 @@
 
 > **For agentic workers:** Use subagent-driven-development or executing-plans after verified Step 31a.
 
+**Status:** implemented; see [verification](STEP_31B_VERIFICATION.md).
+
 **Goal:** Let a configured local or frontier model read supported accounting state
 and prepare supported operational drafts through deterministic existing services.
 
@@ -84,17 +86,17 @@ from live model accuracy, which remains unmeasured.
 **Files:** Existing tools/runs/provider modules or one focused operational adapter,
 contract fixtures/tests, workspace/HTTP/CLI/static. Root owns docs/CI/browser.
 
-- [ ] RED: offline operational runs prepare valid typed drafts via each delivered
+- [x] RED: offline operational runs prepare valid typed drafts via each delivered
   service, hand off for exact human review and produce zero posted journals.
-- [ ] Implement fixed task/tool schemas and service dispatch, with scoped selected
+- [x] Implement fixed task/tool schemas and service dispatch, with scoped selected
   sources and current deterministic calculation; reject arbitrary lines/authority.
-- [ ] Test source prompt injection, forged tool names/actor/entity, invented refs,
+- [x] Test source prompt injection, forged tool names/actor/entity, invented refs,
   revoked grants and missing support; all stop safely with attributable findings.
-- [ ] Exercise durable duplicate-call recovery, budgets/cancel/restart, unchanged
+- [x] Exercise durable duplicate-call recovery, budgets/cancel/restart, unchanged
   old run contracts and no raw traces/secrets in stored/public output.
-- [ ] Add Ollama/frontier operational response adapters with mocked transports and
+- [x] Add Ollama/frontier operational response adapters with mocked transports and
   strict parse/schema errors; preserve startup opt-in and no-live-call defaults.
-- [ ] Add workflow/source selection and proposal handoff UI plus
+- [x] Add workflow/source selection and proposal handoff UI plus
   `demo-operational-agent`; publish exact offline evaluation results and limits.
-- [ ] Run focused then guarded suite/foundation/all demos/JS/diff, browser,
+- [x] Run focused then guarded suite/foundation/all demos/JS/diff, browser,
   independent review, commit/push/exact CI before final workbench integration.

@@ -127,8 +127,8 @@ class SQLiteRunEngine:
                                       ledger_path=str(Path(ledger_path).resolve()),
                                       registry_path=str(Path(registry_path).resolve()),
                                       ledger_context=store.ledger._context, policy_version=store.policy_version,
-                                      tool_schema_digest=digest(AgentTools.schemas()),
-                                      allowed_tools=sorted(AgentTools.schemas())))
+                                      tool_schema_digest=digest(self._tool_contract()),
+                                      allowed_tools=sorted(self._tool_contract())))
         self.db = sqlite3.connect(path, timeout=busy_timeout_ms / 1000, isolation_level=None)
         try:
             self.db.execute('PRAGMA foreign_keys=ON')
@@ -138,6 +138,11 @@ class SQLiteRunEngine:
         except BaseException:
             self.close()
             raise
+
+    @staticmethod
+    def _tool_contract():
+        # Bound into the run log scope; subclasses use a separate file and contract.
+        return AgentTools.schemas()
 
     @contextmanager
     def _transaction(self):
@@ -197,7 +202,7 @@ class SQLiteRunEngine:
             raise TypeError('unsupported provider type')
         return provider.identity
 
-    def start(self, run_id, *, task_id, provider, actor_id, limits, initiator_id=None):
+    def start(self, run_id, *, task_id, provider, actor_id, limits, initiator_id=None, contract=None):
         for value, name in ((run_id, 'run ID'), (task_id, 'task ID'), (actor_id, 'actor ID')):
             _validate_text(value, name)
         if type(limits) is not RunLimits:
@@ -207,6 +212,8 @@ class SQLiteRunEngine:
         if initiator_id is not None:
             _validate_text(initiator_id, 'initiator ID')
             config['initiator_id'] = initiator_id
+        if contract is not None:
+            config['contract'] = contract  # Immutable per-run toolset; resumes never expand it.
         with self._transaction():
             row = self.db.execute('SELECT config_json FROM runs WHERE run_id=?', (run_id,)).fetchone()
             if row:

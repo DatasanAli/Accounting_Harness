@@ -435,12 +435,12 @@
             {
               "id": "31b",
               "title": "Bounded operational agent proposals",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "31c",
               "title": "Integrated authenticated workbench",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         },

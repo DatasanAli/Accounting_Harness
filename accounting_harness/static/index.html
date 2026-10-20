@@ -645,7 +645,27 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
         </section>
         <div id="qbo-batches" class="stack"></div>
       </section>
-      <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><div id="run-list" class="stack"></div></section>
+      <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div>
+        <section class="card setup-card" aria-labelledby="agent-run-heading">
+          <h3 id="agent-run-heading">Bounded operational proposal · operational-v1</h3>
+          <p class="callout">Choose one supported workflow and the registered inputs the agent may read. It can only read those inputs, then prepare one draft through the existing service or hand off to review. The server calculates every account and amount. The agent cannot approve, post, activate accounts, register evidence, close periods or change permissions. Offline playback is a deterministic reference script, not a model; live model accuracy is unmeasured.</p>
+          <form id="agent-run-form" action="/api/agent-proposals" class="receipt-form">
+            <label>Workflow <select name="workflow" id="agent-workflow" required></select></label>
+            <label>Provider <select name="provider" id="agent-provider" required></select></label>
+            <label>Run ID <input name="run_id" id="agent-run-id" required maxlength="80" pattern="[A-Za-z0-9_\-]{1,80}"></label>
+            <fieldset id="agent-sources"><legend>Evidence the agent may read</legend></fieldset>
+            <label>Target ID (one bill, invoice, advance or bank transaction, when the workflow needs one) <input name="target_ids" id="agent-targets" list="agent-target-options" autocomplete="off"></label>
+            <datalist id="agent-target-options"></datalist>
+            <fieldset id="agent-operator" hidden><legend>Your operator classification (bank fee only)</legend>
+              <label>Bank account ID <input name="bank_account_id" maxlength="200"></label>
+              <label>Operator fee reason <input name="reason" maxlength="1000"></label>
+            </fieldset>
+            <p id="agent-roles" class="action-hint"></p>
+            <button class="button" type="submit">Start bounded run</button>
+          </form>
+        </section>
+        <div id="agent-run-list" class="stack"></div>
+        <div id="run-list" class="stack"></div></section>
       <section id="view-providers" class="view" aria-labelledby="providers-heading" hidden><div class="section-heading"><h2 id="providers-heading">Provider connections</h2><span class="muted">Connections are never tested automatically.</span></div><div id="provider-list" class="provider-grid"></div><section class="card setup-card"><h3>Start locally, choose deliberately</h3><p>The offline demo plays fixed fictional responses and makes no model calls. Select a provider on a receipt and explicitly run it to request a proposal.</p><p>For an installed local Ollama model, restart the server with:</p><pre>python3 -m accounting_harness serve --access-db PATH --enable-providers --ollama-model MODEL_NAME</pre><p>For OpenAI, configure <code>OPENAI_API_KEY</code> in your local environment, then restart with <code>--enable-providers</code>. Keys stay out of this browser. API calls may be billable.</p><p class="callout">Live model accuracy, compatibility, latency, and billing remain unverified until the separate live evaluation. An available provider only means startup configuration allows requests.</p></section></section>
       <footer>Accounting Harness <span>Evidence preserved. Decisions recorded. Books kept exact.</span></footer>
     </main>

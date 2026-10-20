@@ -96,3 +96,18 @@ transaction IDs remain distinct even when their amounts and descriptions match.
 ## QuickBooks JournalEntry simulation
 
 [qbo-journal-entries.json](qbo-journal-entries.json) holds three fictional QuickBooks Online JournalEntry query rows (100.00, 200.00 and 300.00 USD) for the Step 30 offline contract simulation. Amounts are JSON numbers, parsed from their exact lexical form, never through floats. The in-process simulator serves them under the fixed sandbox-query contract. QuickBooks account IDs 35, 57, 61 and 79 map only through the versioned server account map to local 1000, 5000, 5100 and 4000. These rows are not observed remote data and never post to the local ledger.
+
+## Operational agent contract cases
+
+[operational-agent-cases.json](operational-agent-cases.json) holds 31 original synthetic
+cases for the Step 31b `operational-v1` contract: one reference case for each of the 13
+delivered workflows (plus a drawing), handoffs (fresh inactive AP/accrual accounts,
+missing, conflicting and duplicate evidence, a hostile-text handoff), protocol refusals
+(forged approval tool, journal lines, actor/entity fields, invented references and
+citations, malformed output, a tool outside the run) and provider faults (timeouts,
+retry and budget exhaustion). Each case states its expected outcome, policy and journal
+lines independently of the code. Documents omit `entity_id`, which the evaluator adds;
+`$posted:journal:<case>` and `$posted:target:<case>` name results of earlier simulated
+human approvals. Cases use deterministic reference playback or scripted frames, never a
+model: they test application enforcement, not model accuracy. Hostile text is test data
+and grants no permissions.

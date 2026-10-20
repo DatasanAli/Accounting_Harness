@@ -30,6 +30,20 @@ from accounting_harness.domain.money import Money
 from accounting_harness.operations import cash_expense_proposal, earned_cash_proposal
 
 
+def trial_balance_view(ledger, as_of='2026-01-31'):
+    """Deterministic trial balance with its snapshot identity; shared by state and agent reads."""
+    report = ledger.trial_balance(as_of)
+    snapshot = [ledger._entry_payload(e) for e in report.snapshot.entries]
+    catalog = asdict(report.snapshot.catalog)
+    identity = [ledger._context, snapshot]
+    if report.snapshot.catalog != ledger._empty.catalog:
+        identity.append(catalog)
+    return report, snapshot, dict(as_of=report.as_of.isoformat(), policy=report.policy,
+        snapshot_digest=digest(identity), catalog=catalog, included_entry_ids=list(report.included_entry_ids),
+        total_debits=str(report.total_debits), total_credits=str(report.total_credits),
+        rows=[dict(account=r.account, name=r.name, debit=str(r.debit), credit=str(r.credit)) for r in report.rows])
+
+
 def fields(data, expected):
     if type(data) is not dict or set(data) != set(expected):
         raise ValueError('request must contain exactly: ' + ', '.join(expected))
@@ -54,6 +68,7 @@ class Workspace:
         # its server-owned mapping BEFORE calling it (construction opens stores).
         self.actor_id = actor_id
         self.authority_guard = None
+        self.run_key = None  # Set only on an agent run's private copy; one stable key per tool call.
         self.root = Path(directory).resolve()
         if (self.root / 'ledger.sqlite3').exists():
             from accounting_harness.access import stored_entity_context
@@ -269,6 +284,10 @@ class Workspace:
         receipt['recorded_at'] = enrollment.recorded_at.isoformat() if enrollment.recorded_at else None
         return dict(state=enrollment.state, registration=registration, enrollment=receipt)
 
+    def _retry_key(self, prefix, data):
+        # Human requests keep data-derived keys; agent calls never share them.
+        return self.run_key or prefix + digest(data)
+
     @staticmethod
     def _draft_services(store, app, draft_id):
         row = store.db.execute('''SELECT policy_version FROM draft_revisions
@@ -323,7 +342,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = ExpenseAccrualService(ledger, registry)
             draft = service.propose(**data, actor_id=(self.actor_id or 'expense-accrual-template'),
-                idempotency_key='web-expense-accrual:' + digest(data))
+                idempotency_key=self._retry_key('web-expense-accrual:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -332,7 +351,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = RevenueAccrualService(ledger, registry)
             draft = service.propose(**data, actor_id=(self.actor_id or 'local-operator'),
-                idempotency_key='web-revenue-accrual:' + digest(data))
+                idempotency_key=self._retry_key('web-revenue-accrual:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -340,7 +359,7 @@ class Workspace:
         fields(data, dict(coverage_source_id=str, allocation_month=str, expected_revision=int))
         with self.storage() as (registry, ledger, _, _, _):
             draft = PrepaidService(ledger, registry).propose(**data, actor_id=(self.actor_id or 'local-operator'),
-                idempotency_key='web-prepaid:' + digest(data))
+                idempotency_key=self._retry_key('web-prepaid:', data))
             if isinstance(draft, dict):
                 return draft
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
@@ -352,7 +371,7 @@ class Workspace:
             service = BankFeeService(ledger, registry)
             document = bank_evidence(ledger, data['bank_account_id'], data['transaction_id'])
             fee_operation(document, data['classification'], data['reason'])
-            key = 'web-bank-fee:' + digest(data)
+            key = self._retry_key('web-bank-fee:', data)
             # Exact saved retries precede fresh matched/candidate checks, including after posting.
             retry = service.db.execute("SELECT 1 FROM review_requests WHERE operation='save' AND key=?", (key,)).fetchone()
             if not retry:
@@ -380,7 +399,7 @@ class Workspace:
             if store.validate(proposal, evidence):
                 raise ValueError('cash evidence must be valid and enrolled before preparation')
             draft = store.save('cash-' + identity, proposal, evidence=evidence, expected_revision=0,
-                actor_id=(self.actor_id or 'cash-template'), idempotency_key='cash-' + identity,
+                actor_id=(self.actor_id or 'cash-template'), idempotency_key=self.run_key or 'cash-' + identity,
                 reason='Deterministic synthetic cash proposal; human review required', require_unused_evidence=True)
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
@@ -390,7 +409,7 @@ class Workspace:
         fields(data, dict(cash_source_id=str, basis_source_id=str, expected_revision=int))
         with self.storage() as (registry, ledger, _, _, _):
             draft = prepare(SQLiteReviewStore(ledger, registry, policy_version=POLICY), **data,
-                actor_id=(self.actor_id or 'local-operator'), idempotency_key='web-nonoperating-cash:' + digest(data))
+                actor_id=(self.actor_id or 'local-operator'), idempotency_key=self._retry_key('web-nonoperating-cash:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -399,7 +418,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = AdvancesService(ledger, registry)
             draft = service.propose_advance(**data, expected_revision=0, actor_id=(self.actor_id or 'advance-template'),
-                idempotency_key='web-advance:' + digest(data))
+                idempotency_key=self._retry_key('web-advance:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -408,7 +427,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = ReceivablesService(ledger, registry)
             draft = service.propose_invoice(**data, expected_revision=0, actor_id=(self.actor_id or 'invoice-template'),
-                idempotency_key='web-invoice:' + digest(data))
+                idempotency_key=self._retry_key('web-invoice:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -417,7 +436,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = PayablesService(ledger, registry)
             draft = service.propose_bill(**data, expected_revision=0, actor_id=(self.actor_id or 'bill-template'),
-                idempotency_key='web-bill:' + digest(data))
+                idempotency_key=self._retry_key('web-bill:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -426,7 +445,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = PayablesService(ledger, registry)
             draft = service.propose_payment(**data, expected_revision=0, actor_id=(self.actor_id or 'bill-payment-template'),
-                idempotency_key='web-bill-payment:' + digest(data))
+                idempotency_key=self._retry_key('web-bill-payment:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -435,7 +454,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = ReceivablesService(ledger, registry)
             draft = service.propose_collection(**data, expected_revision=0, actor_id=(self.actor_id or 'invoice-collection-template'),
-                idempotency_key='web-invoice-collection:' + digest(data))
+                idempotency_key=self._retry_key('web-invoice-collection:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -444,7 +463,7 @@ class Workspace:
         with self.storage() as (registry, ledger, _, _, _):
             service = AdvancesService(ledger, registry)
             draft = service.propose_earning(**data, expected_revision=0, actor_id=(self.actor_id or 'advance-earning-template'),
-                idempotency_key='web-advance-earning:' + digest(data))
+                idempotency_key=self._retry_key('web-advance-earning:', data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -518,29 +537,28 @@ class Workspace:
             for payment in payables['payments']:
                 payment['allocated_amount'] = str(Money(payment['allocated_cents']))
                 payment['trace_json'] = json.dumps(payment, indent=2, sort_keys=True)
-            report = ledger.trial_balance('2026-01-31')
-            snapshot = [ledger._entry_payload(e) for e in report.snapshot.entries]
+            report, snapshot, trial_balance = trial_balance_view(ledger)
             journals = [dict(payload, lines=[dict(account=line.account, side=line.side,
                         amount=str(line.amount)) for line in entry.lines])
                         for payload, entry in zip(snapshot, report.snapshot.entries)]
-            catalog = asdict(report.snapshot.catalog)
-            report_identity = [ledger._context, snapshot]
-            if report.snapshot.catalog != ledger._empty.catalog:
-                report_identity.append(catalog)
+            from accounting_harness.operational_agent import WORKFLOWS, OPERATOR, list_runs
             return dict(entity_id=self.catalog.entity_id, period='January 2026', currency='USD',
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
+                agent_runs=list_runs(self, store), agent_workflows={name: dict(roles=spec[1], operator=list(OPERATOR.get(name, ())))
+                                                                     for name, spec in WORKFLOWS.items()},
                 period_close=(json.loads(row[0]) if (row := ledger._connection.execute('SELECT result_json FROM period_closes').fetchone()) else None),
                 bank_fee_account_activation=self._account_activation(ledger),
                 bank_statements=BankStatementService(ledger).list_statements(),
                 journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid, expense_accruals=expense_accruals, revenue_accruals=revenue_accruals, accruals=accruals,
-                trial_balance=dict(as_of=report.as_of.isoformat(), policy=report.policy,
-                    snapshot_digest=digest(report_identity), catalog=catalog,
-                    included_entry_ids=list(report.included_entry_ids),
-                    total_debits=str(report.total_debits), total_credits=str(report.total_credits),
-                    rows=[dict(account=r.account, name=r.name, debit=str(r.debit), credit=str(r.credit))
-                          for r in report.rows]))
+                trial_balance=trial_balance)
 
     def action(self, action, data):
+        if action in ('agent-proposals', 'agent-cancel'):
+            from accounting_harness.operational_agent import cancel_run, continue_run, start_run
+            if action == 'agent-cancel':
+                return cancel_run(self, data)
+            adapter = start_run(self, data)  # Validates the whole request before using its run ID.
+            return continue_run(self, data['run_id'], adapter)
         if action == 'qbo-read':
             from accounting_harness.qbo_read import FILE, SimulatedQBO, read_batch
             fields(data, dict(batch_id=str))

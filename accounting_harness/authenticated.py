@@ -41,6 +41,7 @@ ACTION_OPERATIONS = {
     'sources': 'register_evidence', 'operation-sources': 'register_evidence',
     'run': 'start_run', 'cancel': 'cancel_run', 'reject': 'reject_proposal',
     'approve-post': 'approve_post', 'qbo-read': 'stage_external',
+    'agent-proposals': 'start_run', 'agent-cancel': 'cancel_run',
 }
 # Fixed activations with an audit record, including the three pre-existing controls.
 IMPLICIT_ACTIVATIONS = {'expense-accrual-proposals': '2050', 'revenue-accrual-proposals': '1150',
@@ -107,6 +108,8 @@ class AuthenticatedWorkspace:
             return self._run(token, entity_id, data)
         if method == 'action' and action == 'qbo-read':
             return self._qbo_read(token, entity_id, data)
+        if method == 'action' and action == 'agent-proposals':
+            return self._agent_run(token, entity_id, data)
         def perform(principal):
             workspace = self._workspace(principal)
             if method == 'action':
@@ -128,6 +131,17 @@ class AuthenticatedWorkspace:
         workspace = self.access.perform(token, entity, 'stage_external', self._workspace)
         workspace.authority_guard = lambda: self._guard(token, entity, 'stage_external')
         return workspace.action('qbo-read', data)
+
+    def _agent_run(self, token, entity, data):
+        from accounting_harness.operational_agent import continue_run, start_run
+        # Validate and bind the run under the identity lock; provider calls happen
+        # outside it, and every run transaction and tool effect rechecks authority.
+        def begin(principal):
+            workspace = self._workspace(principal)
+            return workspace, start_run(workspace, data)
+        workspace, adapter = self.access.perform(token, entity, 'start_run', begin)
+        workspace.authority_guard = lambda: self._guard(token, entity, 'start_run')
+        return continue_run(workspace, data['run_id'], adapter)
 
     def _run(self, token, entity, data):
         from accounting_harness.workspace import fields

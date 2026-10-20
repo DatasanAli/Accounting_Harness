@@ -1,11 +1,12 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 31a implements reviewed owner contribution, owner drawing and prepaid
-insurance purchase entries (`nonoperating-cash-v1`) with native forms and separate
-approval. 833 tests/43 demos and a browser reference flow passed; independent review has no remaining
-Important or Critical findings. GitHub delivery and exact CI passed; evidence is recorded in [verification](STEP_31A_VERIFICATION.md). The next requested
-implementation is Step 31b. The current request stops after Step 31a; live
-connections and actual pilot acceptance remain deferred.
+Status: Step 31b implements versioned bounded operational agent read/propose tools
+(`operational-v1`) and offline Ollama/OpenAI tool-call adapter contracts for the 13
+delivered operations; human approval stays outside the run. 842 tests/44 demos, 31/31
+offline contract cases and a browser preparer/reviewer flow passed. Evidence is
+recorded in [verification](STEP_31B_VERIFICATION.md). The next requested
+implementation is Step 31c. The current request stops after Step 31b; live provider
+calls, live connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 

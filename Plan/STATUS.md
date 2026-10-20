@@ -2,13 +2,13 @@
 
 Updated: 2026-10-20.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–31a. Step 31a local
-verification, independent review, upload and exact CI passed; see [verification](09-integrations-and-pilot/STEP_31A_VERIFICATION.md).
+**Delivered:** Steps 01–11 and offline/local slices 12a–31b. Step 31b local
+verification and independent review passed; see [verification](09-integrations-and-pilot/STEP_31B_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Next:** [Step 31b bounded operational agent proposals](09-integrations-and-pilot/STEP_31B_PLAN.md),
+**Next:** [Step 31c coherent authenticated workbench](09-integrations-and-pilot/STEP_31C_PLAN.md),
 when the user requests the next delivery.
 
-The current request authorizes Step 31a only. Verify/review/commit/push/check exact
+The current request authorizes Step 31b only. Verify/review/commit/push/check exact
 CI, report, and stop. Live provider/external-account connections and actual
 real-data pilot acceptance remain deferred, never passed by inference. See the
 [working plan](LOCALHOST_APP_PLAN.md) and [exact next prompt](NEXT_STEP.md).
@@ -52,13 +52,24 @@ Drawings 200.00 and Prepaid 1,200.00. The existing coverage/consumption then giv
 policy's intent seal. **833 tests and 43 demonstrations passed**; a native browser
 reference flow passed. See [Step 31a verification](09-integrations-and-pilot/STEP_31A_VERIFICATION.md).
 
+Step 31b adds versioned `operational-v1` agent runs. A preparer selects one of the 13
+delivered workflows and its registered inputs; per-run strict schemas expose only
+read, propose (role assignment through the existing service) and handoff tools.
+Approval, posting, account activation, evidence enrollment and closing stay human.
+31/31 offline contract cases (fixture/reference playback, not model accuracy) gave
+exact drafts for every workflow, handoffs (including fresh inactive 2000/2050) and
+protocol/provider refusals with 0 journals posted by any run. Strict OpenAI/Ollama
+tool-call adapters are tested with mocked transports. **842 tests and 44
+demonstrations passed**; a native browser preparer/reviewer flow passed. See
+[Step 31b verification](09-integrations-and-pilot/STEP_31B_VERIFICATION.md).
+
 The Step 20c implementation uses ledger schema 6, review schema 11 (12 since Step 31a), prepaid
 schema 1 and expense/revenue-accrual schema 1. Step 22 adds close schema 1. Old expense captures remain v1;
 new combined captures identify v2 even when empty. Account extensions are audited; old baseline contexts, approvals and captured reports
 remain immutable. Provider choices exist for offline fixtures, Ollama and OpenAI;
-real calls require explicit startup configuration and remain unverified. Existing
-agent adapters initially cover receipt expenses; broader bounded operational
-proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
+real calls require explicit startup configuration and remain unverified. Receipt-expense
+adapters keep their original contract; bounded operational proposals for the delivered
+operations are versioned separately in [31b](09-integrations-and-pilot/STEP_31B_VERIFICATION.md), with live model accuracy unmeasured.
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
 Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. Reviewed owner contribution, drawing and prepaid-purchase entry paths are implemented. Credentials, sessions, fixed entity roles and authenticated application/UI
