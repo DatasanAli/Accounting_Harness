@@ -18,6 +18,7 @@ APPLICATION_ID = 0x41485352  # AHSR: Accounting Harness Source Registry, not a l
 _FIELDS = frozenset(("schema_version", "synthetic", "entity_id", "document_id", "kind",
                      "document_date", "currency", "amount", "counterparty", "description"))
 _TYPED_FIELDS = {
+    'nonoperating_cash_basis': {'event_id', 'counterparty_id', 'classification'},
     'close_calculation': {'calculation_json', 'calculation_digest'},
     'revenue_accrual_basis': {'event_id', 'counterparty_id', 'cutoff_date', 'status'},
     'expense_accrual_basis': {'event_id', 'counterparty_id', 'cutoff_date', 'status'},
@@ -102,8 +103,11 @@ def _content(document: object, entity_id: str) -> tuple[str, str]:
         if document['direction'] not in ('in', 'out'):
             raise ValueError('cash direction must be in or out')
         if document['purpose'] not in ('earned_service', 'incurred_expense', 'owner_contribution',
-                                      'owner_draw', 'transfer', 'customer_advance', 'settlement', 'unclassified'):
+                                      'owner_draw', 'transfer', 'customer_advance', 'settlement', 'unclassified',
+                                      'prepaid_insurance'):
             raise ValueError('unsupported cash purpose')
+    if kind == 'nonoperating_cash_basis' and document['classification'] not in ('owner_contribution', 'owner_draw', 'prepaid_insurance'):
+        raise ValueError('classification must be owner_contribution, owner_draw or prepaid_insurance')
     if kind == 'incurred_expense':
         if document['expense_account'] not in ('5000', '5100'):
             raise ValueError('expense account must be 5000 or 5100')

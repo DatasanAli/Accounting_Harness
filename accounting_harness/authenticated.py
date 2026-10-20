@@ -21,6 +21,7 @@ PREPARATIONS = {
     'prepare_expense_accrual': 'expense-accrual-proposals',
     'prepare_revenue_accrual': 'revenue-accrual-proposals', 'prepare_prepaid': 'prepaid-proposals',
     'prepare_bank_fee': 'bank-fee-proposals', 'prepare_cash': 'cash-proposals',
+    'prepare_nonoperating_cash': 'nonoperating-cash-proposals',
     'prepare_advance': 'advance-proposals', 'prepare_invoice': 'invoice-proposals',
     'prepare_bill': 'bill-proposals', 'prepare_bill_payment': 'bill-payment-proposals',
     'prepare_collection': 'invoice-collection-proposals', 'prepare_earning': 'advance-earning-proposals',

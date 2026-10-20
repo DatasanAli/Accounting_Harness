@@ -428,12 +428,12 @@
             {
               "id": "31a",
               "title": "Reviewed owner and prepaid cash entries",
-              "status": "ready"
+              "status": "complete"
             },
             {
               "id": "31b",
               "title": "Bounded operational agent proposals",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "31c",

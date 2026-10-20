@@ -1,10 +1,10 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 30 implements the offline QuickBooks JournalEntry read contract into a
-separate staging mirror (offline contract simulation; the local ledger stays
-authoritative). 824 tests/42 demos and a browser check passed; independent review has no remaining
-Important or Critical findings. GitHub delivery and exact CI (attempt 2) passed; evidence is recorded in [verification](STEP_30_VERIFICATION.md). The next requested
-implementation is Step 31a. The current request stops after Step 30; live
+Status: Step 31a implements reviewed owner contribution, owner drawing and prepaid
+insurance purchase entries (`nonoperating-cash-v1`) with native forms and separate
+approval. 833 tests/43 demos and a browser reference flow passed; independent review has no remaining
+Important or Critical findings. Upload/exact CI are pending; see [verification](STEP_31A_VERIFICATION.md). The next requested
+implementation is Step 31b. The current request stops after Step 31a; live
 connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.

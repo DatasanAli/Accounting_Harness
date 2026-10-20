@@ -343,7 +343,7 @@ class RevenueAccrualTests(unittest.TestCase):
                     else:workspace.register_operation_source(dict(document=dict(self.document,schema_version=2,document_id='new',kind='revenue_accrual_basis',document_date='2026-01-31',event_id='new',counterparty_id='customer',cutoff_date='2026-01-31',status='unbilled_uncollected')))
                 self.assertEqual(capture(),before)
                 state=workspace.state();after=capture()
-                self.assertEqual(after[0],(6,));self.assertEqual(after[2]['review_schema'],[(11,)])
+                self.assertEqual(after[0],(6,));self.assertEqual(after[2]['review_schema'],[(12,)])
                 for table,rows in before[2].items():
                     if table!='review_schema':self.assertEqual(after[2][table],rows,table)
                 with workspace.storage() as (registry,ledger,_,_,_):

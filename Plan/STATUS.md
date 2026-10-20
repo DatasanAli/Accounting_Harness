@@ -1,14 +1,14 @@
 # Current status
 
-Updated: 2026-10-19.
+Updated: 2026-10-20.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–30. Step 30 local
-verification, independent review, upload and exact CI (attempt 2) passed; see [verification](09-integrations-and-pilot/STEP_30_VERIFICATION.md).
+**Implemented:** Steps 01–11 and offline/local slices 12a–31a. Step 31a local
+verification and independent review passed; upload/exact CI are pending; see [verification](09-integrations-and-pilot/STEP_31A_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Next:** [Step 31a owner and prepaid cash entries](09-integrations-and-pilot/STEP_31A_PLAN.md),
+**Next:** [Step 31b bounded operational agent proposals](09-integrations-and-pilot/STEP_31B_PLAN.md),
 when the user requests the next delivery.
 
-The current request authorizes Step 30 only. Verify/review/commit/push/check exact
+The current request authorizes Step 31a only. Verify/review/commit/push/check exact
 CI, report, and stop. Live provider/external-account connections and actual
 real-data pilot acceptance remain deferred, never passed by inference. See the
 [working plan](LOCALHOST_APP_PLAN.md) and [exact next prompt](NEXT_STEP.md).
@@ -43,7 +43,16 @@ caps and authenticated start/read permissions are tested. **824 tests and 42
 demonstrations passed**; a native browser check passed. Live sandbox OAuth/compatibility
 remains deferred. See [Step 30 verification](09-integrations-and-pilot/STEP_30_VERIFICATION.md).
 
-The Step 20c implementation uses ledger schema 6, review schema 11, prepaid
+Step 31a adds reviewed `nonoperating-cash-v1` owner contribution, owner drawing and
+prepaid insurance purchase entries from a typed cash movement plus a separate
+explicit classification fact. Preparing 10,000.00 / 200.00 / 1,200.00 creates no
+journals. Three separate approvals give Cash 8,600.00, Capital 10,000.00 credit,
+Drawings 200.00 and Prepaid 1,200.00. The existing coverage/consumption then gives
+100.00 expense and 1,100.00 remaining with Cash unchanged. Review schema 12 adds the
+policy's intent seal. **833 tests and 43 demonstrations passed**; a native browser
+reference flow passed. See [Step 31a verification](09-integrations-and-pilot/STEP_31A_VERIFICATION.md).
+
+The Step 20c implementation uses ledger schema 6, review schema 11 (12 since Step 31a), prepaid
 schema 1 and expense/revenue-accrual schema 1. Step 22 adds close schema 1. Old expense captures remain v1;
 new combined captures identify v2 even when empty. Account extensions are audited; old baseline contexts, approvals and captured reports
 remain immutable. Provider choices exist for offline fixtures, Ollama and OpenAI;
@@ -52,7 +61,7 @@ agent adapters initially cover receipt expenses; broader bounded operational
 proposals are planned in [31b](09-integrations-and-pilot/STEP_31B_PLAN.md).
 
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
-Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. Credentials, sessions, fixed entity roles and authenticated application/UI
+Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. Reviewed owner contribution, drawing and prepaid-purchase entry paths are implemented. Credentials, sessions, fixed entity roles and authenticated application/UI
 enforcement are implemented. An offline QuickBooks journal-read contract into a
 separate staging mirror is implemented; export and verified recovery remain planned. New human actions carry authenticated stable user IDs. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
@@ -96,6 +105,7 @@ retained in the verification record and Git history.
 | 28 | [Contribution and captured indicators](08-service-management/STEP_28_VERIFICATION.md) | [b7f4a3a](https://github.com/DatasanAli/Accounting_Harness/commit/b7f4a3a93ab651b1e60444c4e2904a9e7f373469) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37851117480) |
 | 29a | [Local identities and entity grants](09-integrations-and-pilot/STEP_29A_VERIFICATION.md) | [c480771](https://github.com/DatasanAli/Accounting_Harness/commit/c48077187bf96b0383f28f877292de7b9110e1b5) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/37853022426) |
 | 29b | [Authenticated application and UI](09-integrations-and-pilot/STEP_29B_VERIFICATION.md) | [81a1d02](https://github.com/DatasanAli/Accounting_Harness/commit/81a1d021b4edd4aa3fc4bbce0f95e9177b363213) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/38635277919) |
+| 31a | [Reviewed owner and prepaid cash entries](09-integrations-and-pilot/STEP_31A_VERIFICATION.md) | 833 tests / 43 demos / browser / review passed | Upload pending |
 | 30 | [Offline QuickBooks journal read](09-integrations-and-pilot/STEP_30_VERIFICATION.md) | [c022dfa](https://github.com/DatasanAli/Accounting_Harness/commit/c022dfa54b0d5a9042e5faecbf70cf33cd92beca) | [Passed (attempt 2)](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39278821004) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),

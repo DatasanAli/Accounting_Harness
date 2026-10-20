@@ -86,7 +86,7 @@ def economic_claims(records):
     """
     roles = {'bank_fee': 'cash_movement', 'cash_movement': 'cash_movement', 'incurred_expense': 'expense_recognition',
              'service_completion': 'service_revenue_recognition',
-             'advance_completion': 'service_revenue_recognition'}
+             'advance_completion': 'service_revenue_recognition', 'nonoperating_cash_basis': 'nonoperating_cash_recognition'}
     claims = []
     for record in records:
         document = json.loads(record.canonical_content)

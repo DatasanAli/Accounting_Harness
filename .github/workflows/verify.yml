@@ -103,3 +103,5 @@ jobs:
         run: python3 -m accounting_harness demo-authenticated-workspace
       - name: Demonstrate offline QuickBooks journal read into a separate staging mirror
         run: python3 -m accounting_harness demo-sandbox-read
+      - name: Demonstrate reviewed owner contribution, drawing and prepaid purchase cash entries
+        run: python3 -m accounting_harness demo-owner-prepaid-cash

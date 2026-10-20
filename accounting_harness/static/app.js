@@ -338,7 +338,8 @@ function renderCashChoices() {
     ['prepayment-source-select', ['customer_prepayment']], ['advance-cash-select', ['cash_movement']],
     ['invoice-source-select', ['customer_invoice']], ['completion-source-select', ['service_completion']],
     ['bill-source-select', ['vendor_bill']], ['incurrence-source-select', ['incurred_expense']],
-    ['collection-cash-select', ['cash_movement']], ['payment-cash-select', ['cash_movement']]]) {
+    ['collection-cash-select', ['cash_movement']], ['payment-cash-select', ['cash_movement']],
+    ['nonoperating-cash-select', ['cash_movement']], ['nonoperating-basis-select', ['nonoperating_cash_basis']]]) {
     const select = $(id);
     const prior = select.value;
     select.replaceChildren(el('option', 'Choose registered evidence'));
@@ -346,7 +347,8 @@ function renderCashChoices() {
     state.sources.filter(source => kinds.includes(source.document.kind) &&
       (id !== 'advance-cash-select' || (source.document.direction === 'in' && source.document.purpose === 'customer_advance')) &&
       (id !== 'collection-cash-select' || (source.document.direction === 'in' && source.document.purpose === 'settlement')) &&
-      (id !== 'payment-cash-select' || (source.document.direction === 'out' && source.document.purpose === 'settlement'))).forEach(source => {
+      (id !== 'payment-cash-select' || (source.document.direction === 'out' && source.document.purpose === 'settlement')) &&
+      (id !== 'nonoperating-cash-select' || ['owner_contribution', 'owner_draw', 'prepaid_insurance'].includes(source.document.purpose))).forEach(source => {
       const option = el('option', source.source_id + ' · ' + money(source.document.amount));
       option.value = source.source_id;
       option.disabled = source.state === 'registered_pending_enrollment';
@@ -1534,6 +1536,51 @@ setInterval(() => {
 showView(activeView);
 initializeIdentity();
 
+$('nonoperating-evidence-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const input = Object.fromEntries(new FormData(event.currentTarget));
+  // The selected classification fixes cash direction/purpose; the server rebuilds the journal from both facts.
+  const common = {schema_version: 2, synthetic: true, entity_id: state.entity_id, currency: 'USD', event_id: input.event_id,
+    counterparty_id: input.counterparty_id, counterparty: input.counterparty, document_date: input.document_date, amount: input.amount};
+  const cash = {...common, document_id: input.cash_source_id, kind: 'cash_movement', description: input.cash_description,
+    direction: input.classification === 'owner_contribution' ? 'in' : 'out', purpose: input.classification};
+  const basis = {...common, document_id: input.basis_source_id, kind: 'nonoperating_cash_basis', classification: input.classification,
+    description: input.basis_description};
+  if (cash.document_id === basis.document_id) { notify('Use distinct document IDs for the cash and classification facts.', 'error'); return; }
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/operation-sources', {document: cash});
+    await request('/api/operation-sources', {document: basis});
+    await refresh();
+    $('nonoperating-cash-select').value = cash.document_id; $('nonoperating-basis-select').value = basis.document_id;
+    $('nonoperating-proposal-panel').open = true;
+    notify('Both fictional facts are registered. Prepare the entry draft below, then review the exact journal.');
+  } catch (error) {
+    await refresh();
+    notify(error.message + ' One document may already be registered. Resubmit the same IDs and unchanged facts to finish.', 'error');
+  } finally { busy = false; if (state) renderCashChoices(); }
+});
+$('nonoperating-proposal-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy || !state) return;
+  const payload = Object.fromEntries(new FormData(event.currentTarget));
+  payload.expected_revision = Number(payload.expected_revision);
+  busy = true; renderCashChoices();
+  try {
+    await request('/api/nonoperating-cash-proposals', payload);
+    await refresh(); showView('review', true);
+    notify('Entry draft recorded. Inspect the cash and classification facts and the journal before approving.');
+  } catch (error) {
+    await refresh(); notify(error.message + ' Retry the same request to recover an existing draft, or use the current revision to correct it.', 'error');
+  } finally { busy = false; if (state) render(); }
+});
+$('prepaid-original-journal').addEventListener('change', () => {
+  // Convenience only: the server re-validates the purchase journal and its retained source.
+  const journal = state?.journals.find(j => j.id === $('prepaid-original-journal').value);
+  const cash = journal && state.sources.find(s => journal.source_ids.includes(s.source_id) && s.document.kind === 'cash_movement');
+  if (cash) $('prepaid-coverage-form').elements.namedItem('original_source_id').value = cash.source_id;
+});
 $('prepaid-coverage-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (busy || !state) return;
@@ -1562,6 +1609,9 @@ $('prepaid-proposal-form').addEventListener('submit', async event => {
   finally { busy = false; render(); }
 });
 function renderPrepaid() {
+  $('prepaid-purchase-journals').replaceChildren(...state.journals.filter(j => j.lines.length === 2
+    && j.lines.some(l => l.account === '1200' && l.side === 'debit') && j.lines.some(l => l.account === '1000' && l.side === 'credit'))
+    .map(j => { const option = el('option', j.description); option.value = j.id; return option; }));
   const node = $('prepaid-report'); node.replaceChildren();
   const report = state.prepaid;
   node.append(add(el('div', null, 'card'), el('h3', 'Remaining insurance asset'),

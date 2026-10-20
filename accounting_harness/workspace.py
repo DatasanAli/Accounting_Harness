@@ -289,6 +289,9 @@ class Workspace:
             return fees.store, fees.app
         if row[0] == 'review-v1':
             return store, app
+        if row[0] == 'nonoperating-cash-v1':
+            nonoperating = SQLiteReviewStore(store.ledger, store.registry, policy_version='nonoperating-cash-v1')
+            return nonoperating, ReviewApplication(nonoperating)
         if row[0] == 'advance-v1':
             advances = AdvancesService(store.ledger, store.registry)
             return advances.store, advances.app
@@ -379,6 +382,15 @@ class Workspace:
             draft = store.save('cash-' + identity, proposal, evidence=evidence, expected_revision=0,
                 actor_id=(self.actor_id or 'cash-template'), idempotency_key='cash-' + identity,
                 reason='Deterministic synthetic cash proposal; human review required', require_unused_evidence=True)
+            return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
+                        policy_version=draft.policy_version, state=draft.state)
+
+    def prepare_nonoperating_cash(self, data):
+        from accounting_harness.nonoperating_cash import POLICY, prepare
+        fields(data, dict(cash_source_id=str, basis_source_id=str, expected_revision=int))
+        with self.storage() as (registry, ledger, _, _, _):
+            draft = prepare(SQLiteReviewStore(ledger, registry, policy_version=POLICY), **data,
+                actor_id=(self.actor_id or 'local-operator'), idempotency_key='web-nonoperating-cash:' + digest(data))
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
@@ -604,6 +616,8 @@ class Workspace:
             return self.prepare_bill_payment(data)
         if action == 'cash-proposals':
             return self.prepare_cash(data)
+        if action == 'nonoperating-cash-proposals':
+            return self.prepare_nonoperating_cash(data)
         schemas = {
             'run': dict(source_id=str, provider=str, run_id=str),
             'cancel': dict(run_id=str),

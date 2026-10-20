@@ -2,6 +2,8 @@
 
 > **For agentic workers:** Use subagent-driven-development or executing-plans after verified Step 30.
 
+**Status:** implemented; see [verification](STEP_31A_VERIFICATION.md).
+
 **Goal:** Enter the reference month's owner contribution, owner drawing and
 prepaid insurance purchase through explicit evidence and human review in the UI.
 
@@ -57,16 +59,16 @@ consumption produces Expense 100.00/Prepaid1,100.00 with Cash unchanged.
 **Files:** Focused policy/source/review hooks/tests, workspace/HTTP/CLI/static.
 Parent owns docs/CI/browser and delivery.
 
-- [ ] RED: separately evidenced contribution/drawing/purchase produce exactly the
+- [x] RED: separately evidenced contribution/drawing/purchase produce exactly the
   table above after explicit approvals, with no prior journal side effects.
-- [ ] Reject mismatched direction/purpose/classification/facts, unsupported control
+- [x] Reject mismatched direction/purpose/classification/facts, unsupported control
   accounts, forged amount/intent, new-ID duplicates and cross-policy cash reuse.
-- [ ] Preserve old source/review/run contracts, final seal and period lock guards;
+- [x] Preserve old source/review/run contracts, final seal and period lock guards;
   test rejected revisions, exact concurrent retry and posting rollback.
-- [ ] Feed the reviewed purchase into existing coverage/consumption; assert 100.00
+- [x] Feed the reviewed purchase into existing coverage/consumption; assert 100.00
   expense/1,100.00 remaining, unchanged cash and reversal dependency refusal.
-- [ ] Verify statement/closing/cash-flow classifications use delivered policies
+- [x] Verify statement/closing/cash-flow classifications use delivered policies
   and captured history stays unchanged; no subsidiary guard is broadened.
-- [ ] Add native evidence/proposal forms and `demo-owner-prepaid-cash`. Run focused
+- [x] Add native evidence/proposal forms and `demo-owner-prepaid-cash`. Run focused
   then guarded suite/foundation/all demos/JS/diff; browser, independent review,
   commit/push/exact CI before operational agent tools.
