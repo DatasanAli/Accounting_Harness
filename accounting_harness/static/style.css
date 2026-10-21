@@ -33,3 +33,52 @@ body:not(.locked) #login-panel { display: none; }
   .sidebar-note { margin: 12px; padding-top: 0; flex-shrink: 0; }
   .workspace-label { margin-top: 24px; }
 }
+
+/* Task navigation uses native disclosure and links, including browser history. */
+.nav-group { margin: 0 0 7px; min-width: 0; }
+.nav-group > summary { color: #d9e7dd; padding: 12px 8px; font-size: 12px; line-height: 1.5; }
+.nav-item { text-decoration: none; font-size: 12px; padding: 10px; }
+.nav-group .nav-item > span:first-child { display: none; }
+.task-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; overflow: visible; }
+.task-links a { font-size: 12px; color: var(--green); background: var(--soft); border-radius: 7px; padding: 10px 12px; text-decoration-thickness: 1px; }
+.topbar { position: sticky; top: 0; z-index: 2; height: auto; min-height: 78px; gap: 14px; padding: 14px 28px; flex-wrap: wrap; }
+.topbar > div { flex-wrap: wrap; gap: 8px 18px; min-width: 0; }
+.topbar a { color: var(--green); }
+.topbar span, .topbar strong { overflow-wrap: anywhere; }
+.permission-note { border-left: 3px solid #bfa15b; padding: 10px 12px; background: #fff7e8; color: #695023; font-size: 12px; }
+.view, .stack, .card, fieldset, .table-scroll, .shell, main, .metric, .metadata > div { min-width: 0; }
+.card-heading h3, .detail-heading, .source-copy, .source-amount, .metric strong, .metric .money { overflow-wrap: anywhere; white-space: normal; }
+input, select, textarea { max-width: 100%; min-width: 0; }
+pre { max-width: 100%; overflow: auto; }
+.trace-link { display: inline-block; margin: 6px 10px 6px 0; color: var(--green); font-size: 12px; overflow-wrap: anywhere; }
+.document-description p, .draft-body p, .ledger-body p, .run-body p, .setup-card p, h3 { overflow-wrap: anywhere; }
+[data-request-busy="true"] { cursor: progress; }
+@media (max-width: 850px) {
+  .sidebar { padding: 16px; }
+  #task-navigation { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); overflow: visible; margin-top: 14px; }
+  .nav-group > summary { padding: 10px 4px; }
+  .nav-group .nav-item { white-space: normal; width: 100%; }
+  .entity-choice { margin: 10px 0; }
+  .sidebar .operator { display: none; }
+  #logout { margin: 0; }
+}
+@media (max-width: 650px) {
+  .topbar { padding: 12px 16px; font-size: 11px; }
+  .topbar > div { gap: 7px 12px; }
+  .task-links { margin-top: 12px; }
+  .task-links a { flex: 1 1 135px; }
+  .metadata { grid-template-columns: 1fr; }
+  .detail-heading { flex-wrap: wrap; gap: 12px; }
+  .source-option { gap: 8px; padding: 12px 6px; }
+  .source-amount { max-width: 45%; }
+  .metric .money { font-size: 20px; }
+  .login-panel { margin: 24px 12px; padding: 22px; }
+}
+.workflow-directory { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(240px,100%),1fr)); gap: 10px; }
+.task-workflow { margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.task-workflow summary { font-size: 12px; }
+.task-workflow > div { display: grid; gap: 7px; padding-top: 12px; }
+/* Constrain the track as well as its children when exact report references are long. */
+.stack { grid-template-columns: minmax(0, 1fr); }
+/* Snapshot notes also occur directly in report stacks, outside a card. */
+.action-hint, .stack > p { overflow-wrap: anywhere; min-width: 0; }

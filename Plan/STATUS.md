@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-20.
+Updated: 2026-10-21.
 
 **Delivered:** Steps 01–11 and offline/local slices 12a–31b. Step 31b local
 verification, independent review, upload and exact CI passed; see [verification](09-integrations-and-pilot/STEP_31B_VERIFICATION.md).
@@ -8,10 +8,12 @@ Step 12 provider adapters/offline evaluation are implemented; live evaluation is
 **Next:** [Step 31c coherent authenticated workbench](09-integrations-and-pilot/STEP_31C_PLAN.md),
 when the user requests the next delivery.
 
-The current request authorizes Step 31b only. Verify/review/commit/push/check exact
+The current request authorizes Step 31c only. Verify/review/commit/push/check exact
 CI, report, and stop. Live provider/external-account connections and actual
 real-data pilot acceptance remain deferred, never passed by inference. See the
 [working plan](LOCALHOST_APP_PLAN.md) and [exact next prompt](NEXT_STEP.md).
+
+Step 31c is locally implemented and independently reviewed (860 tests/45 demos passed); [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md) records keyboard, exact-value, viewport and restart evidence. GitHub delivery remains pending.
 
 ## Verified application boundary
 
@@ -140,12 +142,12 @@ purchase by its Jan1 coverage start. Step20d explicitly uses a new synthetic Jan
 purchase variant, preserving original fixture/history bytes and identical
 January 31 totals; early cutoff results are intentionally different.
 
-Four Minor issues are queued for final whole-work review: receipt list/tuple
-validation consistency (saved proposals normalize before posting), shared
-revenue-validation errors using an expense label, and an in-flight project capture
-replacing attribution preview context (server binding remains protected), and
-indicator month controls retaining cached inputs after an edit or failed reload.
-The two UI findings are assigned to Step 31c. Prior payable seal and
+Two accounting-code Minor issues remain queued for final whole-work review:
+receipt list/tuple validation consistency (saved proposals normalize before
+posting), and shared revenue-validation errors using an expense label.
+Step 31c resolved the two UI findings: project capture can no longer replace
+attribution context during preview, and indicator month edits/failed reloads
+invalidate cached inputs. Prior payable seal and
 migration findings were resolved in16c. A copied-workspace run-path limitation was
 reproduced in19a and has an explicit verified-relocation plan in
 [33a](09-integrations-and-pilot/STEP_33A_PLAN.md); file copying alone is not recovery.

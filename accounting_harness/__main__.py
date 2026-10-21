@@ -266,6 +266,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-authenticated-workspace", help="demonstrate separate authenticated preparation and approval")
     commands.add_parser("demo-owner-prepaid-cash", help="review evidenced owner contribution, drawing and prepaid purchase cash entries")
     commands.add_parser("demo-operational-agent", help="run bounded offline operational agent contract cases")
+    commands.add_parser("demo-workbench", help="demonstrate authenticated workbench presentation and HTTP route contracts")
     commands.add_parser("demo-sandbox-read", help="offline contract simulation of a paginated QuickBooks journal read into staging")
     web = commands.add_parser("serve", help="open a persistent fictional accounting workspace on localhost")
     web.add_argument("--workspace", help="optional existing registered workspace path")
@@ -280,7 +281,10 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'demo-operational-agent':
+        if args.command == 'demo-workbench':
+            from accounting_harness.workbench_demo import demo_workbench
+            demo_workbench()
+        elif args.command == 'demo-operational-agent':
             from accounting_harness.operational_agent import demo_operational_agent
             demo_operational_agent()
         elif args.command == 'demo-owner-prepaid-cash':

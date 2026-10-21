@@ -107,3 +107,5 @@ jobs:
         run: python3 -m accounting_harness demo-owner-prepaid-cash
       - name: Demonstrate bounded offline operational agent contract cases
         run: python3 -m accounting_harness demo-operational-agent
+      - name: Demonstrate authenticated workbench presentation and route contracts
+        run: python3 -m accounting_harness demo-workbench

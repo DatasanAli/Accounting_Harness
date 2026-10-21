@@ -51,6 +51,10 @@ let busy = false;
 let runBusy = false;
 let refreshBusy = false;
 let runStarted = 0;
+let submittedForm = null;
+document.addEventListener('submit', event => { submittedForm = event.target; }, true);
+document.addEventListener('invalid', event => { event.target.setAttribute('aria-invalid', 'true'); }, true);
+document.addEventListener('input', event => { event.target.removeAttribute('aria-invalid'); }, true);
 
 // Only navigation, selections and the recovery request are stored, never tokens or evidence.
 function recall(key, fallback) {
@@ -82,9 +86,10 @@ function button(text, handler, className = 'button secondary') {
 function human(value) { return String(value || 'Unknown').replaceAll('_', ' '); }
 function money(value) {
   // Format canonical decimal strings without ever converting money to a JS number.
-  if (typeof value !== 'string' || !/^\d+\.\d{2}$/.test(value)) return 'Not supplied';
-  const [whole, cents] = value.split('.');
-  return '$' + whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + cents;
+  if (typeof value !== 'string' || !/^-?\d+\.\d{2}$/.test(value)) return 'Not supplied';
+  const negative = value.startsWith('-');
+  const [whole, cents] = (negative ? value.slice(1) : value).split('.');
+  return (negative ? '-$' : '$') + whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + cents;
 }
 function status(value) {
   const kind = ['failed', 'rejected', 'exhausted'].includes(value) ? ' bad'
@@ -143,10 +148,20 @@ function notify(text, kind = '') {
   message.textContent = text;
   message.hidden = false;
   message.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+  if (kind === 'error') {
+    submittedForm?.setAttribute('aria-describedby', 'message');
+    message.focus();
+  }
 }
-function showView(name, focus = false) {
+function showView(name, focus = false, route = true) {
   activeView = views[name] ? name : 'evidence';
   remember('view', activeView);
+  if (route && location.hash.split('/')[0] !== '#' + activeView) location.hash = '#' + activeView;
+  // A navigation never carries human confirmation into another revision or history visit.
+  document.querySelectorAll('.view').forEach(node => {
+    node.querySelectorAll('input[type="checkbox"][data-revision]').forEach(input => { input.checked = false; });
+    node.querySelectorAll('[data-approve]').forEach(button => { button.disabled = true; });
+  });
   $('page-title').textContent = views[activeView][0];
   $('page-description').textContent = views[activeView][1];
   document.querySelectorAll('.view').forEach(node => { node.hidden = node.id !== 'view-' + activeView; });
@@ -171,7 +186,14 @@ async function request(path, payload, timeout = 15000) {
     const response = await fetch(path, options);
     const result = await response.json();
     if (generation !== scopeGeneration) throw new Error('Entity selection changed; request discarded.');
-    if (response.status === 403) { lockWorkspace(); location.reload(); }
+    if (response.status === 403) {
+      // A denied action does not discard a valid user's entered data. Expired or
+      // changed grants still clear every protected capture before reauthentication.
+      let current = null;
+      try { current = await sessionRequest('/api/session'); } catch {}
+      if (generation !== scopeGeneration) throw new Error('Entity selection changed; request discarded.');
+      if (!current || JSON.stringify(current) !== JSON.stringify(identity)) { lockWorkspace(); location.reload(); }
+    }
     if (!response.ok) {
       const error = new Error(result.error || 'The workspace could not complete this request.');
       error.uncertain = response.status >= 500;
@@ -221,10 +243,18 @@ async function refresh() {
     return false;
   } finally { refreshBusy = false; $('refresh').disabled = false; }
 }
+function providerContext(providers) {
+  const live = providers.filter(provider => provider.id !== 'offline' && provider.available).map(provider => provider.id);
+  return live.length ? 'Offline + ' + live.join(', ') + ' enabled · live accuracy unmeasured' : 'Offline only · fixture playback';
+}
 function render() {
   if (!state) return;
   $('entity-label').textContent = 'Synthetic service business · ' + state.entity_id;
   $('period-label').textContent = state.period + ' · ' + state.currency;
+  $('context-identity').textContent = 'Signed in: ' + identity.username;
+  const role = identity.entities.find(grant => grant.entity_id === identity.entity_id)?.role;
+  $('context-role').textContent = 'Role: ' + human(role);
+  $('context-provider').textContent = providerContext(state.providers);
   const reviewCount = state.drafts.filter(draft => !['posted', 'rejected'].includes(draft.status)).length;
   $('metric-sources').textContent = state.sources.length;
   $('metric-review').textContent = reviewCount;
@@ -254,11 +284,28 @@ function renderSources() {
   });
   renderSourceDetail();
 }
+function traceLink(text, view, target) {
+  const link = el('a', text, 'trace-link'); link.href = '#' + view + (target ? '/' + target : ''); return link;
+}
+function sourceSummary(source) {
+  const fact = source.document;
+  const node = add(el('section', null, 'document-description'), el('h4', 'Evidence · ' + source.source_id),
+    metadata([['Kind', human(fact.kind || 'receipt expense')], ['Counterparty', fact.counterparty || 'Not supplied'],
+      ['Amount · ' + (fact.currency || 'USD'), money(fact.amount)], ['Document date', fact.document_date],
+      ['Enrollment', human(source.state)], ['Event / contract', fact.event_id || fact.contract_id || 'Not supplied'],
+      ...Object.entries(fact).filter(([key, value]) => typeof value === 'string' &&
+        ['direction', 'purpose', 'classification', 'status', 'contract_id', 'due_date', 'completion_date', 'incurred_date', 'cutoff_date', 'expense_account', 'coverage_start', 'coverage_end', 'original_journal_id', 'original_source_id'].includes(key))
+        .map(([key, value]) => [human(key), human(value)])]),
+    el('p', fact.description));
+  node.append(jsonDetails('Exact registered evidence facts', fact)); return node;
+}
 function renderSourceDetail() {
   const node = $('source-detail'); node.replaceChildren();
   const source = state.sources.find(item => item.source_id === selectedSource);
   if (!source) { node.append(empty('No receipts registered', 'This workspace needs its fictional evidence fixtures.')); return; }
   const document = source.document;
+  const related = state.drafts.filter(draft => Object.hasOwn(draft.evidence, source.source_id));
+  for (const draft of related) node.append(traceLink('Open ' + human(draft.status) + ' draft · revision ' + draft.revision, 'review', 'draft-' + draft.draft_id));
   add(node, add(el('div', null, 'detail-heading'), add(el('div'), el('span', 'FICTIONAL EVIDENCE', 'tag'),
     el('h3', sampleNames[source.sample_id] || source.source_id)), el('strong', money(document.amount), 'money')),
     metadata([['Counterparty', document.counterparty], ['Document date', document.document_date],
@@ -267,7 +314,7 @@ function renderSourceDetail() {
     add(el('div', null, 'document-description'), el('h4', 'Source description'), el('p', document.description)));
   digest(node, 'Evidence SHA-256 · retained with the proposal', source.content_digest);
   if (document.schema_version === 2) {
-    add(node, el('h4', 'Typed fictional facts'), el('pre', JSON.stringify(document, null, 2)),
+    add(node, sourceSummary(source),
       el('p', 'Use the matching proposal form below to pair this evidence with its separate recognition fact.', 'action-hint'));
     return;
   }
@@ -389,6 +436,9 @@ function renderCashChoices() {
     advances.append(option);
   }
   advances.value = selectedAdvance;
+  for (const form of ['nonoperating-evidence-form', 'nonoperating-proposal-form', 'prepaid-coverage-form', 'prepaid-proposal-form', 'expense-accrual-facts-form', 'expense-accrual-proposal-form', 'revenue-accrual-facts-form', 'revenue-accrual-proposal-form', 'agent-run-form']) {
+    $(form).querySelectorAll('button[type="submit"], button:not([type])').forEach(node => { node.disabled = busy; });
+  }
   $('prepare-earning').disabled = busy;
   $('register-earning-evidence').disabled = busy;
   $('prepare-collection').disabled = busy;
@@ -1140,19 +1190,25 @@ async function cancelRun(runId) {
 }
 async function draftAction(path, payload, success) {
   if (busy) return;
+  let completed = false;
   busy = true; render();
-  try { await request(path, payload); notify(success); await refresh(); }
+  try { await request(path, payload); notify(success); completed = await refresh(); }
   catch (error) { notify(error.message + ' Refresh and inspect the recorded decision before trying again.', 'error'); await refresh(); }
-  finally { busy = false; if (state) render(); }
+  finally {
+    busy = false;
+    if (state) { render(); if (completed) focusTarget('draft-' + payload.draft_id); }
+  }
 }
 function renderDrafts() {
-  const list = $('draft-list'); list.replaceChildren();
+  const list = $('draft-list');
+  const reasons = new Map([...list.querySelectorAll('textarea[data-revision]')].map(input => [input.id + ':' + input.dataset.revision, input.value]));
+  list.replaceChildren();
   if (!state.drafts.length) {
     list.append(empty('Every good entry starts with evidence', 'Prepare a proposal from a registered receipt. It will appear here for your review.',
       button('Choose a receipt →', () => showView('evidence', true), 'button'))); return;
   }
   [...state.drafts].sort((a, b) => ['posted', 'rejected'].includes(a.status) - ['posted', 'rejected'].includes(b.status)).forEach(draft => {
-    const card = el('article', null, 'card');
+    const card = el('article', null, 'card'); card.id = 'draft-' + draft.draft_id; card.tabIndex = -1;
     const source = state.sources.find(item => Object.hasOwn(draft.evidence, item.source_id));
     add(card, add(el('div', null, 'card-heading'), el('h3', source ? sampleNames[source.sample_id] || source.source_id : draft.draft_id), status(draft.status)));
     const body = el('div', null, 'draft-body');
@@ -1161,12 +1217,13 @@ function renderDrafts() {
       ['Effective date', draft.proposal.effective_date], ['Description', draft.proposal.description]]),
       el('p', draft.reason, 'draft-reason'), journalLines(draft.proposal.lines));
     if (draft.operation_intent) body.append(add(el('div', null, 'document-description'),
-      el('h4', 'Bound operation · review parties, dates, amount and evidence roles'),
-      el('pre', draft.operation_intent_json)));
+      el('h4', 'Bound operation · ' + human(draft.policy_version)),
+      metadata(Object.entries(draft.operation_intent).filter(([, value]) => typeof value === 'string').map(([key, value]) => [human(key), value])),
+      el('p', 'The server binds these source roles to this exact proposal. Inspect the readable evidence and journal lines, then expand its canonical audit if needed.'),
+      add(el('details'), el('summary', 'Exact bound operation audit'), el('pre', draft.operation_intent_json))));
     for (const id of Object.keys(draft.evidence)) {
       const fact = state.sources.find(item => item.source_id === id);
-      if (fact) body.append(add(el('div', null, 'document-description'), el('h4', 'Evidence · ' + id),
-        el('pre', JSON.stringify(fact.document, null, 2))));
+      if (fact) body.append(sourceSummary(fact), traceLink('Inspect original evidence · ' + id, 'evidence', 'source-' + encodeURIComponent(id)));
     }
     digest(body, 'Exact revision SHA-256 · your confirmation binds this digest', draft.content_digest);
     for (const [id, value] of Object.entries(draft.evidence)) digest(body, 'Evidence · ' + id, value);
@@ -1177,25 +1234,26 @@ function renderDrafts() {
     } else body.append(el('p', 'Deterministic validation passed. Classification still needs your judgment.', 'valid-note'));
     const decidable = !['posted', 'rejected'].includes(draft.status);
     if (decidable && draft.reviewable && can('approve-post')) {
-      const checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.disabled = busy;
+      const checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.checked = false; checkbox.disabled = busy; checkbox.dataset.revision = String(draft.revision);
       const confirmation = add(el('label', null, 'confirm'), checkbox,
-        el('span', 'I have reviewed the accounts, amounts, effective date, all evidence, and this exact revision. I authorize posting to the fictional ledger.'));
+        el('span', 'I reviewed revision ' + draft.revision + ' of ' + draft.draft_id + ', its accounts, amounts, date and evidence. I authorize this exact digest to post to the fictional ledger.'));
       const approve = button('Approve & post', () => {
         if (!checkbox.checked) return;
         draftAction('/api/approve-post', {draft_id: draft.draft_id, revision: draft.revision, confirmed_digest: draft.content_digest},
           'Approved and posted. The journal and human approval are recorded in the ledger audit trail.');
       }, 'button');
-      approve.disabled = true;
+      approve.dataset.approve = draft.draft_id; approve.disabled = true;
       checkbox.addEventListener('change', () => { approve.disabled = busy || !checkbox.checked; });
       add(body, confirmation, approve);
     } else if (decidable) body.append(el('p', draft.reviewable
-      ? 'A reviewer or owner must approve this proposal. Your preparer role cannot post it.'
+      ? 'A reviewer or owner must approve this proposal. Your current role cannot post it.'
       : 'This proposal cannot be approved. Review the findings; no journal has been posted.', 'findings'));
     if (decidable && can('reject')) {
       const form = el('form', null, 'reject-form');
       const id = 'reason-' + draft.draft_id;
       const label = el('label', 'Reject with a recorded reason', 'field-label'); label.htmlFor = id;
       const reason = el('textarea'); reason.id = id; reason.required = true; reason.maxLength = 1000;
+      reason.dataset.revision = String(draft.revision); reason.value = reasons.get(id + ':' + draft.revision) || '';
       reason.placeholder = 'Explain why this draft should not be posted…'; reason.disabled = busy;
       const reject = el('button', 'Reject draft', 'button danger small'); reject.type = 'submit'; reject.disabled = busy;
       add(form, label, reason, add(el('div', null, 'actions'), reject));
@@ -1207,7 +1265,8 @@ function renderDrafts() {
       reason.addEventListener('input', () => reason.setCustomValidity(''));
       body.append(form);
     }
-    if (draft.audit) body.append(auditTrail(draft));
+    if (draft.status === 'rejected') body.append(el('p', 'Rejected: no journal was posted for this revision. Correct the registered evidence selection through its supported preparation form and supply the current revision when required.', 'callout'));
+    if (draft.audit) body.append(auditTrail(draft), traceLink('Inspect resulting journal', 'ledger', 'journal-' + draft.audit.journal_id), traceLink('Capture statements from the recorded books', 'reports', 'financial-report-form'));
     body.append(jsonDetails('Revision history', draft.history));
     card.append(body); list.append(card);
   });
@@ -1488,11 +1547,12 @@ function renderLedger() {
   if (!posted.length) node.append(empty('The ledger is ready for its first entry', 'Approve a reviewed proposal to record a journal. Agent runs alone never change the books.'));
   posted.forEach(draft => {
     const entry = state.journals.find(journal => journal.id === draft.audit.journal_id);
-    const journal = el('article', null, 'card');
+    const journal = el('article', null, 'card'); journal.id = 'journal-' + draft.audit.journal_id; journal.tabIndex = -1;
     journal.append(add(el('div', null, 'card-heading'), el('h3', 'Posted journal · ' + draft.audit.journal_id), status('posted')));
     const content = el('div', null, 'ledger-body');
     if (entry) add(content, metadata([['Effective date', entry.effective_date], ['Description', entry.description]]), journalLines(entry.lines, 'Posted journal lines'));
-    content.append(auditTrail(draft));
+    content.append(auditTrail(draft), traceLink('Inspect approved revision ' + draft.revision, 'review', 'draft-' + draft.draft_id));
+    for (const id of Object.keys(draft.evidence)) content.append(traceLink('Original source · ' + id, 'evidence', 'source-' + encodeURIComponent(id)));
     for (const [id, value] of Object.entries(draft.evidence)) digest(content, 'Retained evidence · ' + id, value);
     journal.append(content); node.append(journal);
   });
@@ -1522,7 +1582,31 @@ function renderProviders() {
       el('p', provider.id === 'offline' ? 'Fixture playback · no model accuracy measured' : 'Live evaluation pending', 'action-hint')));
   });
 }
-document.querySelectorAll('[data-view]').forEach(node => node.addEventListener('click', () => showView(node.dataset.view, true)));
+function followRoute(focus = true) {
+  const [name, target] = location.hash.slice(1).split('/');
+  if (name === 'main') { if (focus) $('main').focus(); return; }
+  showView(name || activeView, focus, false);
+  const current = document.querySelector('.nav-item.active');
+  if (current?.closest('details')) current.closest('details').open = true;
+  if (target?.startsWith('source-') && target !== 'source-detail' && target !== 'source-list' && state) {
+    let id;
+    try { id = decodeURIComponent(target.slice(7)); }
+    catch { notify('This evidence link is malformed. Choose registered evidence from the list.', 'error'); return; }
+    if (state.sources.some(source => source.source_id === id)) { selectedSource = id; renderSources(); focusTarget('source-detail'); }
+  } else if (target) focusTarget(target);
+}
+function focusTarget(id) {
+  let node = $(id); if (!node || node.closest('.view')?.hidden) return;
+  if (node.dataset.authorized === 'false' && node.previousElementSibling?.classList.contains('permission-note')) node = node.previousElementSibling;
+  for (let parent = node; parent; parent = parent.parentElement) if (parent.tagName === 'DETAILS') parent.open = true;
+  node.tabIndex = -1; node.focus(); node.scrollIntoView({block:'start'});
+}
+window.addEventListener('hashchange', () => followRoute());
+// Clicking a current hash still opens its closed panel and moves keyboard focus.
+document.addEventListener('click', event => {
+  const link = event.target.closest('a[href^="#"]');
+  if (link && link.hash === location.hash) followRoute();
+});
 document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); showView('evidence', true); });
 $('refresh').addEventListener('click', async () => {
   if (await refresh()) notify(pendingRun ? 'State refreshed. The retained run still needs recovery or cancellation.' : 'Workspace refreshed from its recorded state.');
@@ -1533,7 +1617,7 @@ setInterval(() => {
     node.textContent = 'Preparing proposal… ' + Math.floor((Date.now() - runStarted) / 1000) + ' seconds · bounded provider request';
   });
 }, 1000);
-showView(activeView);
+followRoute(false);
 initializeIdentity();
 
 $('nonoperating-evidence-form').addEventListener('submit', async event => {
@@ -1747,7 +1831,7 @@ function renderRevenueAccruals() {
 $('report-export-form').addEventListener('submit', async event => {
   event.preventDefault();
   const button = $('download-reports');
-  button.disabled = true;
+  if (button.disabled) return; button.disabled = true;
   $('report-export-status').textContent = 'Capturing linked reports…';
   try {
     const kind = $('report-export-format').value;
@@ -1772,6 +1856,7 @@ $('report-export-form').addEventListener('submit', async event => {
 });
 
 let projectReport = null;
+let projectCaptureBusy = false;
 let pendingAttribution = null;
 let attributionUncertain = false;
 let attributionBusy = false;
@@ -1859,7 +1944,7 @@ function renderProjectReport() {
   card.append(jsonDetails('Captured books, project identities, current revision IDs and policy',report.capture)); node.append(card);
 }
 $('project-create-form').addEventListener('submit', async event => {
-  event.preventDefault(); const submit = $('create-project'); submit.disabled = true;
+  event.preventDefault(); const submit = $('create-project'); if (submit.disabled) return; submit.disabled = true;
   try {
     const values = Object.fromEntries(new FormData(event.target));
     const result = await request('/api/projects', {...values, customer_id: values.customer_id || null, entity_id: state.entity_id});
@@ -1869,8 +1954,10 @@ $('project-create-form').addEventListener('submit', async event => {
   finally { submit.disabled = false; }
 });
 $('project-capture-form').addEventListener('submit', async event => {
-  event.preventDefault(); if (pendingAttribution) { notify('Finish or edit the pending attribution review before capturing again.', 'error'); return; }
+  event.preventDefault(); if (projectCaptureBusy) return; if (pendingAttribution) { notify('Finish or edit the pending attribution review before capturing again.', 'error'); return; }
+  projectCaptureBusy = true;
   $('capture-projects').disabled = true;
+  $('project-assignment-fields').disabled = true;
   try {
     projectReport = await request('/api/project-dimensions?as_of=' + encodeURIComponent($('project-cutoff').value));
     const select = $('project-source'); select.replaceChildren();
@@ -1878,12 +1965,12 @@ $('project-capture-form').addEventListener('submit', async event => {
     $('project-assignment-fields').disabled = projectReport.sources.length === 0;
     selectProjectSource(); renderProjectReport(); notify('Project actuals captured. Attribution and books share the displayed snapshot.');
   } catch (error) { notify(error.message, 'error'); }
-  finally { $('capture-projects').disabled = false; }
+  finally { projectCaptureBusy = false; $('capture-projects').disabled = false; $('project-assignment-fields').disabled = !projectReport?.sources.length || !!pendingAttribution; }
 });
 $('project-source').addEventListener('change', selectProjectSource);
 $('add-project-allocation').addEventListener('click', () => addProjectAllocation());
 $('project-assignment-form').addEventListener('submit', event => {
-  event.preventDefault(); const source = projectSelectedSource(); if (!source || pendingAttribution) return;
+  event.preventDefault(); const source = projectSelectedSource(); if (projectCaptureBusy || !source || pendingAttribution) return;
   try {
     const allocations = Array.from($('project-allocation-rows').children).map(row => {
       const value = name => row.querySelector('[name="' + name + '"]').value;
@@ -2270,8 +2357,15 @@ function setIndicatorBusy(value) {
   }
   $('review-indicators').disabled = value || Boolean(indicatorPending) || !indicatorInputs;
 }
+function invalidateIndicatorInputs() {
+  indicatorInputs = null;
+  $('indicator-prior').value = '';
+  $('indicator-versions').replaceChildren();
+  setIndicatorBusy(indicatorBusy);
+}
+$('indicator-month').addEventListener('input', invalidateIndicatorInputs);
 $('indicator-inputs-form').addEventListener('submit',async event => {
-  event.preventDefault(); if (indicatorBusy || indicatorPending) return; setIndicatorBusy(true);
+  event.preventDefault(); if (indicatorBusy || indicatorPending) return; invalidateIndicatorInputs(); setIndicatorBusy(true);
   try {
     indicatorInputs = await request('/api/indicator-inputs?month=' + encodeURIComponent($('indicator-month').value));
     renderIndicatorVersions(); notify('Saved scenarios loaded. Enter explicit assumptions or select a prior version.');
@@ -2432,7 +2526,13 @@ function actionButton(action, ...args) {
 function applyPermissions() {
   document.querySelectorAll('[data-action], form[action^="/api/"]').forEach(node => {
     const action = node.dataset.action || node.getAttribute('action').slice(5);
-    node.dataset.authorized = String(can(action));
+    const allowed = can(action);
+    node.dataset.authorized = String(allowed);
+    if (node.tagName === 'FORM' && !node.previousElementSibling?.classList.contains('permission-note')) {
+      const note = el('p', 'Your role can inspect this workflow. The “' + human(action) + '” action requires another authorized role. Ask an owner to review entity grants.', 'permission-note');
+      note.dataset.permissionFor = action; node.before(note);
+    }
+    if (node.tagName === 'FORM' && node.previousElementSibling?.dataset.permissionFor === action) node.previousElementSibling.hidden = allowed;
   });
 }
 new MutationObserver(applyPermissions).observe(document.body, {childList: true, subtree: true});
@@ -2507,9 +2607,9 @@ async function initializeIdentity() {
     $('signed-in-user').textContent = identity.username;
     $('signed-in-role').textContent = identity.entities.find(g => g.entity_id === identity.entity_id).role;
     $('entity-choice').replaceChildren(...identity.entities.map(g => { const option = el('option', g.entity_id + ' · ' + g.role); option.value = g.entity_id; option.selected = g.entity_id === identity.entity_id; return option; }));
-    if (await refresh()) { document.body.classList.remove('locked'); applyPermissions(); }
+    if (await refresh()) { document.body.classList.remove('locked'); applyPermissions(); followRoute(false); }
   } catch {
-    identity = null;
+    lockWorkspace();
     try { loginChallenge = await sessionRequest('/api/login-challenge'); } catch (error) { $('login-message').textContent = error.message; }
   }
 }
@@ -2533,8 +2633,11 @@ $('entity-choice').addEventListener('change', async event => {
 });
 $('activate-account-form').addEventListener('submit', async event => {
   event.preventDefault();
+  const submit = event.currentTarget.querySelector('button');
+  if (submit.disabled) return; submit.disabled = true;
   try { await request('/api/activate-account', {account: $('activate-account-choice').value}); await refresh(); notify('Fixed account activated with your authenticated audit identity.'); }
   catch (error) { notify(error.message, 'error'); }
+  finally { submit.disabled = false; }
 });
 // Bounded operational agent runs (operational-v1). The server validates the selection,
 // binds the run's toolset and rebuilds every journal; this view only selects and displays.

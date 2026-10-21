@@ -91,4 +91,4 @@ Every phase contains implementation guidance, per-step tests, a manual demonstra
 
 The initial harness prepares, reviews and records supported bookkeeping activity. Payment execution, tax filing/calculation, payroll processing, manufacturing, inventory, complex revenue contracts, and external customer/vendor messaging are deferred. The [source map](SOURCE_MAP.md) and [extension backlog](10-deferred-extensions/README.md) preserve the broader textbook coverage.
 
-**Next action:** use the exact prompt and acceptance criteria in [NEXT_STEP.md](NEXT_STEP.md). The current request covers Step 31b only; stop after its verified delivery and wait for the next request.
+**Next action:** use the exact prompt and acceptance criteria in [NEXT_STEP.md](NEXT_STEP.md). The current request covers Step 31c only; stop after its verified delivery and wait for the next request.

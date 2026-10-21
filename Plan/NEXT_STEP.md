@@ -3,8 +3,7 @@
 Step 31b implements versioned bounded operational agent read/propose tools
 (`operational-v1`) and offline adapter contracts for the 13 delivered operations.
 See its [verification record](09-integrations-and-pilot/STEP_31B_VERIFICATION.md)
-for local, browser, review and GitHub evidence. The current request ends after
-Step 31b; wait for the user.
+for local, browser, review and GitHub evidence. The current request implements Step 31c; its local behavior, browser and review evidence are in [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md). Complete its delivery/CI before advancing this prompt.
 
 ## Exact next implementation prompt
 

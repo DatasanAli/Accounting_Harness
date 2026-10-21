@@ -62,3 +62,5 @@ focused UI/HTTP contract checks. Root owns browser rehearsal, docs and CI.
 - [ ] Add `demo-workbench` for authenticated presentation/route contracts, run
   focused then guarded suite/foundation/all demos/JS/diff, independent review,
   commit/push/exact CI before the offline journal export contract.
+
+Implementation and browser/review evidence: [Step 31c verification](STEP_31C_VERIFICATION.md). Delivery/CI status is recorded there.
