@@ -7,7 +7,7 @@ The user authorized autonomous completion on 2026-10-21 of the remaining numbere
 | 32: separately authorized offline journal export | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_32_VERIFICATION.md) |
 | 33a: coherent backup and verified relocation | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_33A_VERIFICATION.md) |
 | 33b: redacted operational visibility | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_33B_VERIFICATION.md) |
-| 34: authenticated synthetic release rehearsal | Locally verified; final upload/CI pending | [Acceptance](09-integrations-and-pilot/STEP_34_VERIFICATION.md) |
+| 34: authenticated synthetic release rehearsal | Delivered; exact CI passed | [Acceptance](09-integrations-and-pilot/STEP_34_VERIFICATION.md) |
 | Cross-phase adversarial review and fixes | Complete; all five findings fixed and re-reviewed | [Final review](09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) |
 
 The optional Phase 10 backlog is outside this campaign. Live model evaluation, real sandbox connections and actual real-data pilot acceptance remain deferred. No offline result satisfies those gates.
@@ -15,6 +15,8 @@ The optional Phase 10 backlog is outside this campaign. Live model evaluation, r
 Preserve unrelated `.cognee-dataset`, `.vscode/`, and `CLAUDE.md` files. Keep local evidence, databases, backups and credentials out of commits.
 
 CI budget: increased the job timeout from five to ten minutes. Step 31c already took 4m02s in GitHub (860 tests); the remaining recovery and acceptance checks add work. This is a job ceiling, not a relaxed test assertion.
+
+The authorized numbered offline campaign is complete. Commit [`0a7b181`](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b181424ce1944cc894897c8d727725bba8fc6) was pushed and matched `origin/main`; [exact GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662) passed.
 
 ## Final adversarial review scope
 

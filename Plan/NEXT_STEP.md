@@ -1,7 +1,11 @@
-# Active delivery: final upload and exact CI
+# Offline campaign complete
 
-Steps 32, 33a and 33b are delivered with exact-commit CI. Step 34 and the final adversarial fixes passed local verification: **931 tests, 49 demonstrations**, authenticated native-browser trace/reports and fresh two-entity recovery. No review findings remain open.
+Steps 32, 33a, 33b and 34 are delivered. The final independent adversarial review identified five Minor findings; all were corrected and re-reviewed. Final checks passed: **931 tests, all 49 demonstrations**, authenticated native-browser trace/reports and fresh two-entity recovery.
 
-Finish the Step 34 commit, push and exact GitHub CI, then record delivery. See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md), [final review](09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) and the [authorized campaign](AUTONOMOUS_DELIVERY.md).
+Commit [`0a7b181`](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b181424ce1944cc894897c8d727725bba8fc6) was pushed and matched `origin/main`; [exact GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662) passed.
 
-Live providers, real sandbox import/export, model accuracy and actual real-data pilot acceptance remain deferred. Optional Phase 10 is outside this campaign.
+See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md), [final review](09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) and the [completed campaign](AUTONOMOUS_DELIVERY.md). No further numbered offline implementation remains. Optional Phase 10 is outside this campaign.
+
+Live model evaluation, real sandbox import/export and actual real-data pilot acceptance remain deferred. A possible separately requested next prompt is:
+
+> Plan the deferred live-provider and sandbox verification gates. List the required configuration, policy decisions and acceptance evidence before making any external calls.

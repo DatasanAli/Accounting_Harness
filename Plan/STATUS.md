@@ -2,13 +2,13 @@
 
 Updated: 2026-10-21.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–33. Step 31c local
+**Delivered:** Steps 01–11 and offline/local slices 12a–34. Step 31c local
 verification, native browser rehearsal, independent review, upload and exact CI
 passed; see [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a is also delivered: 899 tests/47 demos, restored browser and independent re-review passed; commit `ea85484` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628). [Recovery evidence](09-integrations-and-pilot/STEP_33A_VERIFICATION.md). Step 33b is delivered: 922 tests/48 demos, read-only native browser and independent re-review passed; commit `8e451a9` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408) verified. [Status evidence](09-integrations-and-pilot/STEP_33B_VERIFICATION.md). Step 34 and final adversarial fixes passed locally: 931 tests/49 demos, native browser and fresh recovery. Final upload and exact CI are pending; see [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md).
+**Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a is also delivered: 899 tests/47 demos, restored browser and independent re-review passed; commit `ea85484` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628). [Recovery evidence](09-integrations-and-pilot/STEP_33A_VERIFICATION.md). Step 33b is delivered: 922 tests/48 demos, read-only native browser and independent re-review passed; commit `8e451a9` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408) verified. [Status evidence](09-integrations-and-pilot/STEP_33B_VERIFICATION.md). Step 34 and final adversarial fixes are delivered: 931 tests/49 demos, native browser and fresh recovery. Commit [`0a7b181`](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b181424ce1944cc894897c8d727725bba8fc6) was pushed and matched `origin/main`; [exact GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662) passed. See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md).
 
-The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). The remaining offline implementation and adversarial review are locally verified; finish final upload and exact CI. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
+The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). The remaining numbered offline implementation and adversarial review are complete. No further numbered offline step remains. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 
 ## Verified application boundary
 
@@ -129,6 +129,7 @@ retained in the verification record and Git history.
 | 32 | [Offline authorized export](09-integrations-and-pilot/STEP_32_VERIFICATION.md) | `9bc2e49` | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) |
 | 33a | [Verified group recovery](09-integrations-and-pilot/STEP_33A_VERIFICATION.md) | `ea85484` | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628) |
 | 33b | [Redacted operational status](09-integrations-and-pilot/STEP_33B_VERIFICATION.md) | `8e451a9` | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408) |
+| 34 | [Synthetic acceptance and final adversarial fixes](09-integrations-and-pilot/STEP_34_VERIFICATION.md) | [0a7b181](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b181424ce1944cc894897c8d727725bba8fc6) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

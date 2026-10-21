@@ -194,7 +194,7 @@ The delivery target is this repository on GitHub with its verification workflow 
 4. Update the plan and next-step prompt, commit, and push to GitHub.
 5. Verify the remote commit and CI result and record the evidence. Normally stop for the next request; the current campaign explicitly authorizes continuing through the remaining offline steps.
 
-The [Step 34 synthetic acceptance](Plan/09-integrations-and-pilot/STEP_34_VERIFICATION.md) and [adversarial review/fixes](Plan/09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) passed locally; final upload and exact CI are pending. Live gates remain deferred.
+The [Step 34 synthetic acceptance](Plan/09-integrations-and-pilot/STEP_34_VERIFICATION.md) and [adversarial review/fixes](Plan/09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) are delivered with exact-commit CI. The authorized numbered offline campaign is complete. Live gates remain deferred.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 

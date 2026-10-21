@@ -1,6 +1,6 @@
 # Step 34 synthetic release acceptance
 
-Verified locally on 2026-10-21: **931 tests and all 49 CI demonstrations passed**. Authenticated native-browser preparation/review, exact reports, verified recovery and final independent adversarial review passed. Commit, upload and exact GitHub CI are pending. This is offline synthetic acceptance; live providers, real sandbox compatibility and actual real-data pilot acceptance remain deferred.
+Verified locally on 2026-10-21: **931 tests and all 49 CI demonstrations passed**. Authenticated native-browser preparation/review, exact reports, verified recovery and final independent adversarial review passed. Commit [`0a7b181`](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b181424ce1944cc894897c8d727725bba8fc6) was pushed and matched `origin/main`; [exact GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662) passed. This is offline synthetic acceptance; live providers, real sandbox compatibility and actual real-data pilot acceptance remain deferred.
 
 ## Authenticated reference month
 
@@ -46,9 +46,9 @@ See the [local synthetic runbook](LOCAL_SYNTHETIC_RUNBOOK.md) and [recovery runb
 
 - `python3 scripts/run_tests.py`: **931 passed in 141.661 seconds**; zero-test discovery guard retained.
 - All **49** demonstration commands from CI passed after the fix wave.
-- `python3 scripts/verify_foundation.py`: 134 Markdown files, 453 local links, 34 ordered steps and all reference accounting identities passed. `node --check accounting_harness/static/app.js` and `git diff --check` passed.
+- `python3 scripts/verify_foundation.py`: 134 Markdown files, 455 local links after the delivery update, 34 ordered steps and all reference accounting identities passed. `node --check accounting_harness/static/app.js` and `git diff --check` passed.
 - Three independent reviews challenged accounting/close, identity/agents/UI, and integration/recovery/reporting. Five Minor findings were corrected and independently rechecked; no findings remain open. See the [adversarial review record](ADVERSARIAL_REVIEW.md), including earlier consequential campaign fixes.
 
-Delivery: local verification complete; commit/upload/exact CI pending. Earlier deliveries have their own exact-SHA evidence: [32](STEP_32_VERIFICATION.md), [33a](STEP_33A_VERIFICATION.md), [33b](STEP_33B_VERIFICATION.md).
+Delivery: verified, uploaded and exact CI passed. Commit [`0a7b181`](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b181424ce1944cc894897c8d727725bba8fc6) was pushed and matched `origin/main`; [exact GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662) passed. Earlier deliveries have their own exact-SHA evidence: [32](STEP_32_VERIFICATION.md), [33a](STEP_33A_VERIFICATION.md), [33b](STEP_33B_VERIFICATION.md).
 
 Step 12 live model evaluation, Steps 30/32 real sandbox compatibility and actual Step 34 pilot acceptance remain deferred. Optional Phase 10 is outside this offline campaign.

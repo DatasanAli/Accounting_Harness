@@ -81,9 +81,9 @@ root owns final browser rehearsal, release record, final whole-work review and C
   record actual viewport/keyboard behavior and source→approval→journal trace.
 - [x] Run guarded full suite, foundation, every documented demo and JS/diff checks;
   perform one final whole-work independent review including all deferred findings.
-- [ ] Resolve reviewed blocking findings with one focused fix/re-review wave,
+- [x] Resolve reviewed blocking findings with one focused fix/re-review wave,
   commit/push and inspect exact remote CI. Publish exact evidence and live gates.
-- [ ] Mark the authorized offline objective achieved only when all preceding
+- [x] Mark the authorized offline objective achieved only when all preceding
   deliveries pass; leave Step 12 live evaluation,30/32 remote verification and
   actual Step 34 pilot acceptance explicitly deferred. Never invent user approval
   for live external actions or real-data policy choices.

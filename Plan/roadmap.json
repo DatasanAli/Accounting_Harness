@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "33",
-  "next_step": "34",
+  "current_step": "34",
+  "next_step": null,
   "phases": [
     {
       "id": "01",
@@ -481,7 +481,15 @@
         {
           "id": "34",
           "title": "Controlled pilot acceptance",
-          "status": "ready"
+          "status": "complete",
+          "commit": "0a7b181424ce1944cc894897c8d727725bba8fc6",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662",
+          "delivery_scope": "Offline authenticated synthetic acceptance and adversarial review; actual real-data pilot acceptance deferred",
+          "deferred_gates": [
+            "Live provider evaluation and model accuracy",
+            "Real sandbox import/export compatibility",
+            "Actual entity policies, operators and real-data pilot acceptance"
+          ]
         }
       ]
     }
