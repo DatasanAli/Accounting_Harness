@@ -1,12 +1,6 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 31c is delivered with exact CI: coherent authenticated workbench
-navigation, readable/exact review traces, role-aware handoffs and native keyboard
-review across the delivered services. 860 tests/45 demos, desktop/narrow viewport,
-restart and grant-revocation checks passed. Independent re-review has no remaining
-findings. See [verification](STEP_31C_VERIFICATION.md). Next is Step 32's approved
-offline export contract when requested. This request stops after Step 31c; live
-calls, connections and actual pilot acceptance remain deferred.
+Status: Step 32 is locally verified: separately authorized offline cash-expense export, persistent uncertain replay and exact readback. 879 tests/46 demos, native browser and independent re-review passed. Upload/exact CI is pending; see [verification](STEP_32_VERIFICATION.md). The autonomous campaign continues with 33a, 33b, 34 and final adversarial review/fixes. Live connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 
@@ -44,7 +38,7 @@ substeps when detailed Step 31 planning makes that necessary.
 
 ## Small build steps
 
-Build only one numbered step per request. Split a row further if it cannot be demonstrated and reviewed as one small change.
+Deliver each numbered step independently. The current campaign authorizes all remaining numbered offline steps without stopping between them. Split a row further if it cannot be demonstrated and reviewed as one small change.
 
 ### Step 29: Authenticated operator and entity access
 

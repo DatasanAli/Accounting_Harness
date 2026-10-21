@@ -645,7 +645,7 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
         <div id="prepaid-report" class="stack"></div>
       </section>
       <section id="view-integrations" class="view" aria-labelledby="integrations-heading" hidden>
-        <div class="section-heading"><h2 id="integrations-heading">QuickBooks journal read</h2><span class="muted">Offline contract simulation · staging mirror only</span></div><nav class="task-links" aria-label="integrations tasks"><a href="#integrations/qbo-read-form">Start or resume offline read</a><a href="#integrations/qbo-batches">Staged read checkpoints</a></nav>
+        <div class="section-heading"><h2 id="integrations-heading">QuickBooks journal contracts</h2><span class="muted">Offline contract simulation · staging mirror only</span></div><nav class="task-links" aria-label="integrations tasks"><a href="#integrations/qbo-read-form">Start or resume offline read</a><a href="#integrations/qbo-batches">Staged read checkpoints</a><a href="#integrations/qbo-export-preview-form">Preview journal export</a><a href="#integrations/qbo-exports">Export history</a></nav>
         <section class="card setup-card">
           <h3>Offline contract simulation</h3>
           <p class="callout">A deterministic local simulator stands in for the QuickBooks sandbox. No credentials, OAuth, network request, external write or local-ledger write is performed. The local ledger remains the authoritative book; staged journals never post or become local actuals.</p>
@@ -658,6 +658,18 @@ fictional-bank,payment-1,2026-01-06,-150.00,USD,payment-1,Fictional payment
           <p id="qbo-result" role="status"></p>
         </section>
         <div id="qbo-batches" class="stack"></div>
+        <section class="card setup-card">
+          <h3>Separately authorize a simulated journal export</h3>
+          <p class="callout">Offline only. Export one reviewed, unreversed USD cash expense (Cash 1000 and Rent 5000 or Software 5100). Posting approval does not authorize export. No funds move and local books remain unchanged.</p>
+          <form id="qbo-export-preview-form" action="/api/qbo-export-preview" class="receipt-form">
+            <label>Posted journal ID <input id="qbo-export-journal" name="journal_id" list="qbo-export-journals" required maxlength="1000"></label>
+            <datalist id="qbo-export-journals"></datalist>
+            <button class="button" type="submit">Preview exact export</button>
+          </form>
+          <button id="qbo-export-load" class="button secondary" type="button">Load export history</button>
+          <p id="qbo-export-result" role="status"></p>
+        </section>
+        <div id="qbo-exports" class="stack"></div>
       </section>
       <section id="view-runs" class="view" aria-labelledby="runs-heading" hidden><div class="section-heading"><h2 id="runs-heading">Agent run history</h2><span class="muted">Bounded requests. Recorded outcomes.</span></div><nav class="task-links" aria-label="runs tasks"><a href="#runs/agent-run-form">Prepare a bounded operational agent proposal</a><a href="#runs/agent-run-list">Operational checkpoints</a><a href="#runs/run-list">Receipt run checkpoints</a></nav>
         <section class="card setup-card" aria-labelledby="agent-run-heading">

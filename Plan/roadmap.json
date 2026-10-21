@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "31",
-  "next_step": "32",
+  "current_step": "32",
+  "next_step": "33",
   "phases": [
     {
       "id": "01",
@@ -451,17 +451,17 @@
         {
           "id": "32",
           "title": "One sandbox journal export",
-          "status": "ready"
+          "status": "complete"
         },
         {
           "id": "33",
           "title": "Recovery and operational visibility",
-          "status": "planned",
+          "status": "ready",
           "substeps": [
             {
               "id": "33a",
               "title": "Coherent backup and verified relocation",
-              "status": "planned"
+              "status": "ready"
             },
             {
               "id": "33b",

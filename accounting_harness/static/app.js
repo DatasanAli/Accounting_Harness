@@ -19,7 +19,7 @@ const views = {
   bank: ['Bank statements', 'Immutable statement rows, exact balances and a separate import audit.'],
   runs: ['Agent runs', 'See what was requested, what happened, and where the agent stopped.'],
   providers: ['Providers', 'Choose how proposals are prepared. You control every request.'],
-  integrations: ['Integrations', 'Offline contract simulation of one QuickBooks JournalEntry read into a separate staging mirror.']
+  integrations: ['Integrations', 'Offline journal read and separately authorized export with exact readback. Local books remain authoritative.']
 };
 const sampleNames = {'rent-standard': 'January office rent', 'software-standard': 'Software subscription',
   'ambiguity-1': 'Ambiguous expense', 'missing-1': 'Missing receipt details', 'hostile-1': 'Document instruction test'};
@@ -263,6 +263,8 @@ function render() {
   $('metric-balance').textContent = money(state.trial_balance.total_debits);
   $('balance-caption').textContent = state.trial_balance.total_debits === state.trial_balance.total_credits
     ? 'Balanced · USD per column' : 'Debit / credit mismatch · inspect ledger';
+  $('qbo-export-journals').replaceChildren(...state.journals.map(journal => { const option = el('option'); option.value = journal.id; return option; }));
+  renderExports(exportReports);
   renderSources(); renderCashChoices(); renderDrafts(); renderLedger(); renderFinancialReports(); renderClose(); renderPayables(); renderReceivables(); renderAdvances(); renderPrepaid(); renderExpenseAccruals(); renderRevenueAccruals(); renderBank(); renderRuns(); renderAgentRuns(); renderProviders();
 }
 function renderSources() {
@@ -2573,6 +2575,81 @@ function renderQbo(reports) {
     node.append(card);
   }
 }
+// Exact authorized export bytes stay on the server; browser confirmation is never retained.
+let exportBusy = false;
+let exportReports = [];
+$('qbo-export-journal').addEventListener('input', () => renderExports([]));
+$('qbo-export-preview-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (exportBusy) return;
+  exportBusy = true;
+  renderExports([]);
+  try {
+    const report = await request('/api/qbo-export-preview', {journal_id: new FormData(event.target).get('journal_id')});
+    renderExports([report]);
+  } catch (error) { notify(error.message, 'error'); }
+  finally { exportBusy = false; }
+});
+$('qbo-export-load').addEventListener('click', async () => {
+  if (exportBusy) return;
+  exportBusy = true;
+  renderExports([]);
+  try { renderExports((await request('/api/external-exports')).exports); }
+  catch (error) { notify(error.message, 'error'); }
+  finally { exportBusy = false; }
+});
+async function exportAction(action, data) {
+  if (exportBusy) return;
+  exportBusy = true;
+  try {
+    const report = await request('/api/' + action, data);
+    renderExports([report]);
+    $('qbo-export-result').textContent = 'Offline contract simulation · ' + human(report.status) + ' · ' + report.total_debits + ' USD per side. Local books unchanged.';
+  } catch (error) {
+    renderExports([]);
+    notify(error.message + ' Load export history to inspect the durable outcome. Retry only the same export identity.', 'error');
+  } finally { exportBusy = false; }
+}
+function renderExports(reports) {
+  exportReports = reports;
+  const node = $('qbo-exports'); node.replaceChildren();
+  for (const report of reports) {
+    const approval = report.binding.approval;
+    const card = add(el('article', null, 'card'), el('h3', 'Simulated export · ' + human(report.status)),
+      metadata([['Local journal', report.journal_id], ['Export / request ID', report.export_id],
+        ['Destination', report.connector.environment + ' realm ' + report.connector.realm_id], ['Account map', report.connector.account_map.version],
+        ['Effective date', report.binding.journal.effective_date], ['Debits / credits · USD', report.total_debits + ' / ' + report.total_credits],
+        ['Local approval', approval.approval_id], ['Approved by', approval.actor_id],
+        ['Simulated remote ID', report.remote_id || 'Unknown / not sent'], ['Attempts', String(report.attempts)],
+        ['Next send permitted', report.next_attempt_at || 'No scheduled wait']]),
+      traceLink('Review approved source and journal trace', 'review', 'draft-' + approval.draft_id));
+    for (const source of report.binding.journal.source_ids) card.append(traceLink('Evidence: ' + source, 'evidence', 'source-' + encodeURIComponent(source)));
+    card.append(table(['Remote account ID', 'Local account'], Object.entries(report.connector.account_map.accounts)),
+      el('h4', 'Complete authorized request'), el('pre', report.request.method + ' ' + report.request.url + '\n' + JSON.stringify(report.request.headers) + '\n' + report.request.body));
+    digest(card, 'Export preview SHA-256', report.preview_digest);
+    if (report.status === 'prepared' && can('qbo-export-authorize')) {
+      const checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.checked = false; checkbox.dataset.revision = report.preview_digest;
+      const authorize = actionButton('qbo-export-authorize', 'Authorize this exact simulated export', () => {
+        if (checkbox.checked) exportAction('qbo-export-authorize', {export_id: report.export_id, confirmed_digest: report.preview_digest, confirmed: true});
+      }, 'button');
+      authorize.disabled = true; authorize.dataset.approve = 'export';
+      checkbox.addEventListener('change', () => { authorize.disabled = !checkbox.checked; });
+      card.append(add(el('label', null, 'confirm'), checkbox, el('span', 'I separately authorize these exact bytes to this simulated sandbox destination.')), authorize);
+    }
+    if (['authorized', 'attempted', 'uncertain'].includes(report.status) && can('qbo-export-send')) {
+      const send = actionButton('qbo-export-send', 'Send / recover the same simulated request', () => exportAction('qbo-export-send', {export_id: report.export_id}), 'button');
+      send.disabled = (report.attempts >= 3 && !report.remote_id) || (!!report.next_attempt_at && Date.parse(report.next_attempt_at) > Date.now());
+      card.append(send);
+      if (send.disabled) card.append(el('p', 'Send is paused by the retry limit or next-attempt time. Reload history after the wait; unresolved outcomes require explicit reconciliation.', 'callout'));
+    }
+    if (report.remote_id && can('qbo-export-check')) card.append(actionButton('qbo-export-check', 'Check simulated readback and local divergence', () => exportAction('qbo-export-check', {export_id: report.export_id})));
+    for (const event of report.events.filter(event => event.detail.reason)) card.append(el('p', human(event.kind) + ': ' + event.detail.reason, 'callout'));
+    card.append(table(['Sequence', 'Status event', 'Actor', 'UTC time'], report.events.map(event => [String(event.sequence), human(event.kind), event.actor_id, event.recorded_at])),
+      add(el('details'), el('summary', 'Immutable authorization, attempts and readback evidence'), el('pre', report.audit_json)));
+    node.append(card);
+  }
+}
+
 function lockWorkspace() {
   scopeGeneration++;
   document.body.classList.add('locked');
@@ -2582,6 +2659,8 @@ function lockWorkspace() {
   projectReport = pendingAttribution = projectTimeReport = projectCostInputs = pendingProjectCost = null;
   budgetInputs = pendingBudget = indicatorInputs = indicatorPending = null;
   $('qbo-result').textContent = '';
+  $('qbo-export-result').textContent = '';
+  exportReports = [];
   try { Object.keys(sessionStorage).filter(key => key.startsWith('accounting-')).forEach(key => sessionStorage.removeItem(key)); } catch {}
   document.querySelectorAll('.view .stack, .view pre, .view select').forEach(node => node.replaceChildren());
   document.querySelectorAll('input, textarea').forEach(node => { if (node.type === 'checkbox') node.checked = false; else node.value = ''; });

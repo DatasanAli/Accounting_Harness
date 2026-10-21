@@ -43,8 +43,7 @@ live evaluation remains a requirement for claiming model readiness and for a
 real-data pilot. The numbered accounting roadmap remains intact; lettered
 substeps record independently reviewable deliveries without renumbering history.
 The earlier 2026-10-08 request expanded the roadmap. The current 2026-10-21
-request authorizes Step 31c only. Follow the current one-step delivery cadence:
-verify, review, commit/push/check exact CI, report, and stop. Live connections and
+2026-10-21 request authorizes autonomous Steps 32, 33a, 33b, 34 and final adversarial review with fixes. Verify, review, commit/push/check exact CI for each delivery and continue. See [campaign progress](AUTONOMOUS_DELIVERY.md). Live connections and
 actual pilot acceptance remain deferred.
 
 ## Step 12a implementation plan
@@ -161,3 +160,5 @@ linked reversals, not deletion or a database reset.
 - Step 31b: 842 tests/44 demos. Versioned `operational-v1` agent runs: the initiating preparer selects one of 13 delivered workflows and registered inputs; per-run strict schemas narrow every reference to that selection; propose dispatches only through the existing preparation services and hands off for separate human review. 31/31 offline contract cases (14 reference drafts across all workflows, 6 handoffs including fresh inactive 2000/2050, 7 protocol refusals, 4 provider faults) posted 0 journals. Native browser: preparer run → draft with 0 journals, missing-evidence handoff, reviewer-only approval → 1 journal. Review Important (model-chosen bank line) and five Minors fixed; re-review clean. Commit [a0a9d86](https://github.com/DatasanAli/Accounting_Harness/commit/a0a9d86666ed39a19ad577692cb0d685cf24f433) matches origin/main and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39463094489). Live model accuracy unmeasured.
 
 - Step 31c: coherent six-group authenticated task navigation, native history and role-aware handoffs, readable/exact source-to-post trace, keyboard confirmation and retained result focus, and both assigned stale-context fixes. Native 390px and desktop layouts, separate preparer/reviewer actions, process restart and session revocation were verified. 860 tests/45 demos passed. Commit [068729a](https://github.com/DatasanAli/Accounting_Harness/commit/068729a5c10afc5c670bf77c3a5cdfdd25f85a98) matches origin/main and [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39644580556). See [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md). Next: Step 32 offline export, only when requested.
+
+- Step 32: 879 tests/46 demos, native separate export authorization/readback, restart and role denial passed. Exact canonical audit display and sticky drift exceptions were regression-tested; independent re-review approved. Upload/exact CI pending. See [verification](09-integrations-and-pilot/STEP_32_VERIFICATION.md).

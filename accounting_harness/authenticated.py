@@ -15,7 +15,7 @@ READ_METHODS = {
     'project_time': 'read_reports', 'project_cost_inputs': 'read_reports',
     'project_cost': 'read_reports', 'indicator_inputs': 'read_reports',
     'indicators': 'read_reports', 'variance': 'read_reports',
-    'budget_inputs': 'read_reports', 'budget': 'read_reports', 'external_reads': 'read_reports',
+    'external_exports': 'read_reports', 'budget_inputs': 'read_reports', 'budget': 'read_reports', 'external_reads': 'read_reports',
 }
 PREPARATIONS = {
     'prepare_expense_accrual': 'expense-accrual-proposals',
@@ -41,6 +41,8 @@ ACTION_OPERATIONS = {
     'sources': 'register_evidence', 'operation-sources': 'register_evidence',
     'run': 'start_run', 'cancel': 'cancel_run', 'reject': 'reject_proposal',
     'approve-post': 'approve_post', 'qbo-read': 'stage_external',
+    'qbo-export-preview': 'read_reports', 'qbo-export-authorize': 'authorize_export',
+    'qbo-export-send': 'authorize_export', 'qbo-export-check': 'authorize_export',
     'agent-proposals': 'start_run', 'agent-cancel': 'cancel_run',
 }
 # Fixed activations with an audit record, including the three pre-existing controls.

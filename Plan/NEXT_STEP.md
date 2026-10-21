@@ -1,17 +1,7 @@
-# Next delivery: Step 32 approved offline journal export
+# Next delivery: Step 33a coherent recovery
 
-Step 31c is delivered: coherent authenticated task navigation, role-aware handoffs,
-keyboard review and exact source-to-post traces over the existing services.
-**860 tests and 45 demonstrations passed**, as did native browser/restart/narrow
-layout checks and independent review. [Verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md)
-records implementation commit `068729a` and its successful exact-SHA CI.
-The current request ends after Step 31c; wait for the user.
+Step 32 local verification passed: **879 tests and 46 demonstrations**, exact native export authorization/readback, restart, preparer denial and narrow layout checks. Independent review found and fixed the drift → timeout → false confirmation loophole; re-review approved. [Verification](09-integrations-and-pilot/STEP_32_VERIFICATION.md). Upload/exact CI is pending.
 
-## Exact next implementation prompt
+After verifying Step 32 on GitHub, continue autonomously with [Step 33a](09-integrations-and-pilot/STEP_33A_PLAN.md) under the [parent recovery contract](09-integrations-and-pilot/STEP_33_PLAN.md). Preserve all original files and historical run identities; enforce coherent maintenance backup and verified relocation. Then deliver Step 33b, Step 34 and final adversarial review/fixes as already authorized; see [campaign](AUTONOMOUS_DELIVERY.md).
 
-> Build Step 32 using Plan/09-integrations-and-pilot/STEP_32_PLAN.md. Implement only the approved offline journal-export contract with separate human authorization, durable retries and exact simulated readback. Keep live connections deferred. Verify, review, demonstrate, commit, push, check exact CI, report, and stop.
-
-Step 12 live provider evaluation, Step 30 live sandbox verification, Step 31b live
-operational model accuracy, live external-account import/export and actual real-data
-pilot acceptance remain deferred, not passed. Step 32 is an offline simulation and
-requires export authorization separate from ordinary local posting approval.
+Live provider evaluation, live sandbox import/export, operational model accuracy and actual real-data pilot acceptance remain deferred. No new permission prompt is needed for these approved offline deliveries.

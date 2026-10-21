@@ -224,6 +224,10 @@ class Workspace:
         from accounting_harness.qbo_read import FILE, staged_batches
         return staged_batches(self.root / FILE, self.catalog.entity_id)
 
+    def external_exports(self):
+        from accounting_harness.qbo_export import ExportService
+        return ExportService(self).history()
+
     def providers(self):
         return [dict(id='offline', name='Offline demo', model='Fixture playback', available=True,
                      note='No model calls. Fixed fictional examples.'),
@@ -559,6 +563,14 @@ class Workspace:
                 return cancel_run(self, data)
             adapter = start_run(self, data)  # Validates the whole request before using its run ID.
             return continue_run(self, data['run_id'], adapter)
+        if action in ('qbo-export-preview', 'qbo-export-authorize', 'qbo-export-send', 'qbo-export-check'):
+            from accounting_harness.qbo_export import ExportService
+            if self.run_key is not None:
+                raise ValueError('agent runs cannot authorize or send exports')
+            expected = (dict(journal_id=str) if action == 'qbo-export-preview' else
+                        dict(export_id=str, confirmed_digest=str, confirmed=bool) if action == 'qbo-export-authorize' else dict(export_id=str))
+            fields(data, expected)
+            return getattr(ExportService(self), action.removeprefix('qbo-export-'))(**data)
         if action == 'qbo-read':
             from accounting_harness.qbo_read import FILE, SimulatedQBO, read_batch
             fields(data, dict(batch_id=str))

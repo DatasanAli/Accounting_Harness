@@ -267,6 +267,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-owner-prepaid-cash", help="review evidenced owner contribution, drawing and prepaid purchase cash entries")
     commands.add_parser("demo-operational-agent", help="run bounded offline operational agent contract cases")
     commands.add_parser("demo-workbench", help="demonstrate authenticated workbench presentation and HTTP route contracts")
+    commands.add_parser("demo-sandbox-export", help="offline approved export with persistent simulated readback")
     commands.add_parser("demo-sandbox-read", help="offline contract simulation of a paginated QuickBooks journal read into staging")
     web = commands.add_parser("serve", help="open a persistent fictional accounting workspace on localhost")
     web.add_argument("--workspace", help="optional existing registered workspace path")
@@ -290,6 +291,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == 'demo-owner-prepaid-cash':
             from accounting_harness.nonoperating_cash import demo_owner_prepaid_cash
             demo_owner_prepaid_cash()
+        elif args.command == 'demo-sandbox-export':
+            from accounting_harness.qbo_export import demo_sandbox_export
+            demo_sandbox_export()
         elif args.command == 'demo-sandbox-read':
             from accounting_harness.qbo_read import demo_sandbox_read
             demo_sandbox_read()

@@ -10,7 +10,7 @@ permissions:
 jobs:
   foundation:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Verify plan and accounting reference example
@@ -109,3 +109,5 @@ jobs:
         run: python3 -m accounting_harness demo-operational-agent
       - name: Demonstrate authenticated workbench presentation and route contracts
         run: python3 -m accounting_harness demo-workbench
+      - name: Demonstrate separately authorized offline journal export and uncertain retry
+        run: python3 -m accounting_harness demo-sandbox-export

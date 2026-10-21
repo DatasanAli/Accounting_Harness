@@ -6,12 +6,9 @@ Updated: 2026-10-21.
 verification, native browser rehearsal, independent review, upload and exact CI
 passed; see [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Next:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_PLAN.md),
-when the user requests the next delivery.
+**Locally verified:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit/upload/exact CI pending. Next: Step 33a after GitHub verification.
 
-The current request ends after Step 31c. Report and stop. Live provider/external-account
-connections and actual real-data pilot acceptance remain deferred, never passed by
-inference. See the [working plan](LOCALHOST_APP_PLAN.md) and [exact next prompt](NEXT_STEP.md).
+The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). Continue through Steps 33a, 33b, 34 and adversarial review. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 
 ## Verified application boundary
 
