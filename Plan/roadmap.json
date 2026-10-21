@@ -463,12 +463,14 @@
             {
               "id": "33a",
               "title": "Coherent backup and verified relocation",
-              "status": "ready"
+              "status": "complete",
+              "commit": "ea8548448059dc3fc02b154e1d00ab0e2220f076",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628"
             },
             {
               "id": "33b",
               "title": "Redacted operational status",
-              "status": "planned"
+              "status": "ready"
             }
           ]
         },

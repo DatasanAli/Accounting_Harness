@@ -5,8 +5,8 @@ The user authorized autonomous completion on 2026-10-21 of the remaining numbere
 | Delivery | State | Evidence |
 |---|---|---|
 | 32: separately authorized offline journal export | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_32_VERIFICATION.md) |
-| 33a: coherent backup and verified relocation | Local verification complete; upload/CI pending | [Verification](09-integrations-and-pilot/STEP_33A_VERIFICATION.md) |
-| 33b: redacted operational visibility | Next | Pending |
+| 33a: coherent backup and verified relocation | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_33A_VERIFICATION.md) |
+| 33b: redacted operational visibility | In progress | Pending |
 | 34: authenticated synthetic release rehearsal | Pending | Pending |
 | Cross-phase adversarial review and fixes | Pending | Pending |
 

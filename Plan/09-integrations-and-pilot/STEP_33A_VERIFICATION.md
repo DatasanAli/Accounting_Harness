@@ -1,6 +1,6 @@
 # Step 33a verification: coherent group backup and recovery
 
-Local implementation, restored-browser rehearsal and independent re-review passed. The guarded suite passed; upload and exact CI are pending.
+Local implementation, restored-browser rehearsal and independent re-review passed. The guarded suite, upload and exact CI passed.
 
 ## Delivered behavior
 
@@ -32,4 +32,4 @@ Direct authenticated export-send and OpenAI-run requests returned HTTP 409, desp
 
 ## Delivery
 
-Commit, upload and exact GitHub CI pending. Next authorized delivery: Step 33b operational status, then Step 34 and final cross-phase adversarial review/fixes. Live gates remain deferred.
+Implementation commit `ea8548448059dc3fc02b154e1d00ab0e2220f076` was pushed to `origin/main`. [Exact-commit GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628) passed. Next authorized delivery: Step 33b operational status, then Step 34 and final cross-phase adversarial review/fixes. Live gates remain deferred.
