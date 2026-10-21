@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "32",
-  "next_step": "33",
+  "current_step": "33",
+  "next_step": "34",
   "phases": [
     {
       "id": "01",
@@ -458,7 +458,7 @@
         {
           "id": "33",
           "title": "Recovery and operational visibility",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "33a",
@@ -470,14 +470,18 @@
             {
               "id": "33b",
               "title": "Redacted operational status",
-              "status": "ready"
+              "status": "complete",
+              "commit": "8e451a978ad7167c0543f1b62130783aed9ada8d",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408"
             }
-          ]
+          ],
+          "commit": "8e451a978ad7167c0543f1b62130783aed9ada8d",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408"
         },
         {
           "id": "34",
           "title": "Controlled pilot acceptance",
-          "status": "planned"
+          "status": "ready"
         }
       ]
     }
