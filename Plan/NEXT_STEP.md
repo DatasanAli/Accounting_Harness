@@ -1,7 +1,7 @@
-# Active delivery: Step 33b operational status
+# Next delivery: Step 34 synthetic acceptance
 
-Step 33a provides coherent group recovery, immutable historical run identity, fresh-login activation and disabled restored transports. 899 tests/47 demonstrations, native restored-browser rehearsal, independent re-review and exact CI passed; [verification](09-integrations-and-pilot/STEP_33A_VERIFICATION.md) records final suite/upload/CI evidence.
+Step 33b local verification passed: **922 tests and 48 demonstrations**, native read-only status/record/recovery checks, and independent re-review. A keyboard skip-link refresh loophole was fixed and verified against unchanged stores. See [verification](09-integrations-and-pilot/STEP_33B_VERIFICATION.md) for upload and exact CI evidence.
 
-Continue autonomously with [Step 33b](09-integrations-and-pilot/STEP_33B_PLAN.md) under the [parent recovery contract](09-integrations-and-pilot/STEP_33_PLAN.md). Then deliver Step 34 and final adversarial review/fixes as already authorized; see [campaign](AUTONOMOUS_DELIVERY.md).
+Continue autonomously with [Step 34](09-integrations-and-pilot/STEP_34_PLAN.md), then the final cross-phase adversarial review and correction of findings under the [authorized campaign](AUTONOMOUS_DELIVERY.md). Use authenticated preparation and separate review for the complete reference month; retain exact report and recovery evidence.
 
-Live provider evaluation, real sandbox import/export, operational model quality and actual real-data pilot acceptance remain deferred.
+Live providers, real sandbox import/export, model accuracy and actual real-data pilot acceptance remain deferred.

@@ -43,3 +43,13 @@ python3 -m accounting_harness demo-recovery
 ```
 
 The synthetic drill reports observed data volume and backup/restore/validation elapsed milliseconds. These are measurements for this fixture and environment, not a recovery SLA. A corrupt or failed staged restore must not expose a partial ready workspace. Investigate the reported validation failure; do not bypass schema, context or manifest checks.
+
+## Inspect operational status
+
+Open `#operations` directly in the authenticated UI, or capture the same redacted metadata from a terminal:
+
+```sh
+python3 -m accounting_harness operations-status --access-db .local/access.sqlite3 --entity alpha --username owner
+```
+
+Use your configured entity and user. The command requires hidden passphrase entry and reads with that user's current grant. Status never enrolls evidence, retries work or sends notifications. Record links recheck authorization. Missing recovery receipts remain unavailable; a backup and a restore are distinct verified operations. See [Step 33b verification](STEP_33B_VERIFICATION.md).

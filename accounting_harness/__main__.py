@@ -267,6 +267,11 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-owner-prepaid-cash", help="review evidenced owner contribution, drawing and prepaid purchase cash entries")
     commands.add_parser("demo-operational-agent", help="run bounded offline operational agent contract cases")
     commands.add_parser("demo-workbench", help="demonstrate authenticated workbench presentation and HTTP route contracts")
+    commands.add_parser('demo-operations-status', help='redacted local alerts and read-only recovery status')
+    status_parser = commands.add_parser('operations-status', help='authenticated redacted status; prompts for password, no credential argv')
+    status_parser.add_argument('--access-db', required=True, type=Path)
+    status_parser.add_argument('--entity', required=True)
+    status_parser.add_argument('--username', required=True)
     commands.add_parser("demo-recovery", help="coherent synthetic backup, restore and interrupted-run drill")
     backup_parser = commands.add_parser('backup-workspace', help='coherent maintenance snapshot of every mapped entity')
     backup_parser.add_argument('--access-db', required=True, type=Path)
@@ -292,7 +297,20 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'demo-recovery':
+        if args.command == 'demo-operations-status':
+            from accounting_harness.operations_status_demo import demo_operations_status
+            demo_operations_status()
+        elif args.command == 'operations-status':
+            from accounting_harness.access_cli import _interactive_password
+            from accounting_harness.access import AccessStore
+            from accounting_harness.authenticated import AuthenticatedWorkspace
+            access = AccessStore(args.access_db)
+            token = access.login(args.username, _interactive_password(confirm=False))
+            try:
+                print(json.dumps(AuthenticatedWorkspace(access).call(token, args.entity, 'operations_status'), indent=2))
+            finally:
+                access.logout(token)
+        elif args.command == 'demo-recovery':
             from accounting_harness.recovery_demo import demo_recovery
             demo_recovery()
         elif args.command in ('backup-workspace', 'verify-backup', 'restore-workspace'):

@@ -310,6 +310,7 @@ const lockWorkspace = () => {identity=null;scopeGeneration++;};
         refresh = source[source.index('async function refresh()'):source.index('function render()')]
         script = '''
 const assert = require('node:assert/strict');
+const location={hash:'#evidence'}; let activeView='evidence';
 let refreshBusy=false, bankDetail=null, pendingRun=null, state=null;
 let identity={user_id:'user-a',entity_id:'alpha'};
 let saved={user_id:'user-a',entity_id:'alpha',request:{run_id:'original',source_id:'receipt',provider:'offline'}};

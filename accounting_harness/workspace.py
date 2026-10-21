@@ -483,6 +483,14 @@ class Workspace:
             return dict(draft_id=draft.draft_id, revision=draft.revision, content_digest=draft.content_digest,
                         policy_version=draft.policy_version, state=draft.state)
 
+    def operations_status(self):
+        from accounting_harness.operations_status import capture_status
+        return capture_status(self.root, self.catalog.entity_id)
+
+    def operations_status_detail(self, reference):
+        from accounting_harness.operations_status import status_detail
+        return status_detail(self.root, self.catalog.entity_id, reference)
+
     def state(self):
         with self.storage() as (registry, ledger, store, app, engine):
             sources = self._source_list(registry, ledger)

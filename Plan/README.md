@@ -81,7 +81,7 @@ Every phase contains implementation guidance, per-step tests, a manual demonstra
 
 ## Confirmed scope and starting assumptions
 
-**Confirmed:** accounting operations; read Volume 1 before Volume 2; small service-business bookkeeping first; small tested increments; GitHub upload after each completed step; wait for the next request between steps.
+**Confirmed:** accounting operations; read Volume 1 before Volume 2; small service-business bookkeeping first; small tested increments; GitHub upload after each completed step. The 2026-10-21 [autonomous campaign](AUTONOMOUS_DELIVERY.md) authorizes the remaining numbered offline deliveries and final adversarial review/fixes without stopping between them.
 
 **Starting assumptions:** local CLI, Python 3.12+, single fictional entity, USD, accrual bookkeeping, monthly periods, owner capital/drawings, human-approved posting, structured fictional inputs before document extraction. No provider or deployment platform has been selected.
 
@@ -91,4 +91,4 @@ Every phase contains implementation guidance, per-step tests, a manual demonstra
 
 The initial harness prepares, reviews and records supported bookkeeping activity. Payment execution, tax filing/calculation, payroll processing, manufacturing, inventory, complex revenue contracts, and external customer/vendor messaging are deferred. The [source map](SOURCE_MAP.md) and [extension backlog](10-deferred-extensions/README.md) preserve the broader textbook coverage.
 
-**Next action:** use the exact prompt and acceptance criteria in [NEXT_STEP.md](NEXT_STEP.md). The current request covers Step 31c only; stop after its verified delivery and wait for the next request.
+**Next action:** use the exact prompt and acceptance criteria in [NEXT_STEP.md](NEXT_STEP.md). Continue the authorized remaining offline campaign through Step 34 and final adversarial review/fixes. Live gates and the optional extension backlog remain deferred.

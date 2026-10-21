@@ -113,3 +113,5 @@ jobs:
         run: python3 -m accounting_harness demo-sandbox-export
       - name: Demonstrate coherent group backup and verified recovery
         run: python3 -m accounting_harness demo-recovery
+      - name: Demonstrate redacted local operational status
+        run: python3 -m accounting_harness demo-operations-status

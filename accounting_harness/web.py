@@ -25,6 +25,8 @@ GET_ROUTES = {
     '/api/budget': ('budget', ('version_id',)), '/api/budget-inputs': ('budget_inputs', ('month',)),
     '/api/variance': ('variance', ('version_id',)), '/api/indicators': ('indicators', ('version_id',)),
     '/api/indicator-inputs': ('indicator_inputs', ('month',)),
+    '/api/operations-status': ('operations_status', ()),
+    '/api/operations-status-detail': ('operations_status_detail', ('reference',)),
     '/api/external-reads': ('external_reads', ()),
     '/api/external-exports': ('external_exports', ()),
     '/api/project-cost': ('project_cost', ('version_id',)),

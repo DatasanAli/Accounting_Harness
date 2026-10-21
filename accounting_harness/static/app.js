@@ -2,6 +2,7 @@
 
 const $ = id => document.getElementById(id);
 const views = {
+  operations: ['Operational status', 'Captured local alerts, safe record references and verified recovery checkpoints.'],
   indicators: ['Contribution & indicators', 'Version single-service assumptions beside captured financial and operational inputs.'],
   budgets: ['Budgets', 'Version explicit operating assumptions and cash dates without changing recorded actuals.'],
   projects: ['Projects', 'Attribute recorded revenue and expense to projects with an exact bridge to the books.'],
@@ -211,6 +212,8 @@ async function request(path, payload, timeout = 15000) {
   } finally { clearTimeout(timer); }
 }
 async function refresh() {
+  const [route, reference] = location.hash.slice(1).split('/');
+  if (route === 'operations' || ((!route || route === 'main') && activeView === 'operations')) return loadOperations(route === 'operations' ? reference : undefined);
   if (refreshBusy) return false;
   refreshBusy = true;
   $('refresh').disabled = true;
@@ -1587,8 +1590,10 @@ function renderProviders() {
 }
 function followRoute(focus = true) {
   const [name, target] = location.hash.slice(1).split('/');
-  if (name === 'main') { if (focus) $('main').focus(); return; }
+  if (name === 'main') { showView(activeView, false, false); if (focus) $('main').focus(); return; }
   showView(name || activeView, focus, false);
+  if (activeView === 'operations') { if (identity) loadOperations(target); return; }
+  if (identity && !state) { refresh().then(ok => { if (ok) followRoute(focus); }); return; }
   const current = document.querySelector('.nav-item.active');
   if (current?.closest('details')) current.closest('details').open = true;
   if (target?.startsWith('source-') && target !== 'source-detail' && target !== 'source-list' && state) {
@@ -2661,8 +2666,53 @@ function renderExports(reports) {
   }
 }
 
+// Status reads use only the redacted endpoints, including refresh and scoped links.
+let operationsGeneration = 0;
+function operationRecord(row, link = true) {
+  const card = el('article', null, 'card');
+  card.append(el('h3', human(row.code)), metadata([
+    ['Record kind', human(row.kind)], ['Recorded UTC', row.recorded_at || 'Unavailable'],
+    ['Elapsed milliseconds', row.elapsed_ms ?? 'Unavailable'], ['Idle milliseconds', row.idle_ms ?? 'Unavailable'],
+    ['Uncertain external outcome', row.uncertain ? 'Yes' : 'No recorded uncertainty']]));
+  card.append(el('p', row.next_action, 'action-hint'));
+  digest(card, 'Scoped record reference', row.reference);
+  if (link) { const anchor = el('a', 'Inspect this authorized record', 'trace-link'); anchor.href = row.href; card.append(anchor); }
+  return card;
+}
+async function loadOperations(reference) {
+  const generation = ++operationsGeneration;
+  const node = $('operations-capture'), detail = $('operations-detail');
+  node.replaceChildren(el('p', 'Capturing local status…')); detail.replaceChildren();
+  try {
+    const capture = await request('/api/operations-status');
+    if (generation !== operationsGeneration || !identity) return false;
+    node.replaceChildren(el('p', 'Captured UTC: ' + capture.captured_at + ' · collection interval: ' + capture.collection_ms + ' ms'));
+    const stamp = el('article', null, 'card'); digest(stamp, 'Capture digest', capture.capture_digest); node.append(stamp);
+    for (const [name, category] of Object.entries(capture.categories)) {
+      const section = el('section'); section.append(el('h3', human(name) + ' · ' + human(category.availability)),
+        el('p', category.count === null ? 'Count unavailable' : category.count + ' recorded status items'));
+      if (!category.rows.length) section.append(el('p', 'No recorded local alerts in this category.'));
+      category.rows.forEach(row => section.append(operationRecord(row))); node.append(section);
+    }
+    if (reference) {
+      if (!/^status-[0-9a-f]{64}$/.test(reference)) throw new Error('Status reference unavailable');
+      const result = await request('/api/operations-status-detail?reference=' + encodeURIComponent(reference));
+      if (generation !== operationsGeneration || !identity) return false;
+      detail.append(el('h2', 'Current authorized record'), el('p', 'Rechecked UTC: ' + result.captured_at), operationRecord(result.record, false));
+      focusTarget('operations-detail');
+    }
+    return true;
+  } catch (error) {
+    if (generation !== operationsGeneration || !identity) return false;
+    detail.replaceChildren(el('p', 'Status or record unavailable. Refresh this view or ask the workspace administrator to inspect local metadata.', 'action-hint'));
+    return false;
+  }
+}
+$('operations-load').addEventListener('click', () => loadOperations(location.hash.split('/')[1]));
+
 function lockWorkspace() {
   scopeGeneration++;
+  operationsGeneration++;
   document.body.classList.add('locked');
   state = null; identity = null; selectedSource = ''; pendingRun = null;
   financialReport = cashFlowReport = closePreview = pendingClose = bankDetail = bankMatchView = reconciliationView = null;

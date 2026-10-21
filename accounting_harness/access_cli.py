@@ -33,13 +33,13 @@ def add_access_commands(commands):
             command.add_argument('--role', choices=('preparer', 'reviewer', 'owner'), required=True)
 
 
-def _interactive_password():
+def _interactive_password(*, confirm=True):
     # Fail instead of getpass's fallback that can echo a secret in noninteractive logs.
     with warnings.catch_warnings():
         warnings.simplefilter('error', getpass.GetPassWarning)
         try:
             password = getpass.getpass('Passphrase: ')
-            repeated = getpass.getpass('Repeat passphrase: ')
+            repeated = getpass.getpass('Repeat passphrase: ') if confirm else password
         except (getpass.GetPassWarning, EOFError) as error:
             raise CredentialError('A terminal with hidden passphrase entry is required') from error
     if password != repeated:

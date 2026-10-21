@@ -7,6 +7,7 @@ from accounting_harness.access import AccessDenied
 
 # Exhaustive mappings: adding a Workspace method/action requires an explicit choice.
 READ_METHODS = {
+    'operations_status': 'read_audit', 'operations_status_detail': 'read_audit',
     'state': 'read_audit', 'providers': 'read_audit', 'list_sources': 'read_evidence',
     'list_bank_statements': 'read_evidence', 'bank_statement_detail': 'read_evidence',
     'bank_matches': 'read_reports', 'bank_reconciliation': 'read_reports',
@@ -113,6 +114,10 @@ class AuthenticatedWorkspace:
         if method == 'action' and action == 'agent-proposals':
             return self._agent_run(token, entity_id, data)
         def perform(principal):
+            if method in ('operations_status', 'operations_status_detail'):
+                from accounting_harness.operations_status import capture_status, status_detail
+                reader = capture_status if method == 'operations_status' else status_detail
+                return reader(principal.workspace_path, principal.entity_id, *args)
             workspace = self._workspace(principal)
             if method == 'action':
                 if action == 'activate-account':
