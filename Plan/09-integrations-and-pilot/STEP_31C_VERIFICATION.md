@@ -6,8 +6,8 @@ live model call, external connection or actual pilot acceptance.
 
 Local implementation, native browser acceptance and independent review are complete.
 Final local verification passed: **860 tests and all 45 demonstrations**, foundation
-links/reference checks, JavaScript syntax and diff whitespace. Exact GitHub CI
-is pending at the implementation commit.
+links/reference checks, JavaScript syntax and diff whitespace. Implementation upload
+and exact-SHA GitHub CI passed on the first attempt.
 
 ## Workflow inventory
 
@@ -123,8 +123,15 @@ inputs. Other historical accounting-code minor findings remain outside this step
 
 ## GitHub delivery
 
-Implementation upload and exact-SHA CI are pending. No previous green run is
-substituted for this step's result.
+Implementation commit [068729a](https://github.com/DatasanAli/Accounting_Harness/commit/068729a5c10afc5c670bf77c3a5cdfdd25f85a98) was pushed to `origin/main`; local and
+remote SHA were compared. Its [exact-SHA CI run 39644580556](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39644580556) passed on the
+first attempt (job 4m02s). The log records `Ran 860 tests in 211.574s` followed by
+`OK`; all 45 demonstration steps succeeded, including the six-group workbench,
+HTTP 403 boundary and one 125.00 USD journal. Foundation and JavaScript checks
+also passed. The follow-up evidence update changes documentation only.
+
+Step 31c is delivered. The next requested implementation is Step 32's approved
+offline export contract; no export work was included here.
 
 ## Rollback and limitations
 

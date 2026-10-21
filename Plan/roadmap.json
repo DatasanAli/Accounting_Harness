@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "30",
-  "next_step": "31",
+  "current_step": "31",
+  "next_step": "32",
   "phases": [
     {
       "id": "01",
@@ -423,7 +423,7 @@
         {
           "id": "31",
           "title": "Review workbench",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "31a",
@@ -442,14 +442,16 @@
             {
               "id": "31c",
               "title": "Integrated authenticated workbench",
-              "status": "ready"
+              "status": "complete",
+              "commit": "068729a5c10afc5c670bf77c3a5cdfdd25f85a98",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39644580556"
             }
           ]
         },
         {
           "id": "32",
           "title": "One sandbox journal export",
-          "status": "planned"
+          "status": "ready"
         },
         {
           "id": "33",

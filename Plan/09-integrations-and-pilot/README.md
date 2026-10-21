@@ -1,10 +1,12 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 31b is delivered with exact CI. Step 31c's integrated authenticated
-workbench is locally implemented and independently reviewed; keyboard preparation,
-separate approval, exact trace/restart and desktop/narrow layouts were demonstrated.
-See its [verification](STEP_31C_VERIFICATION.md) for delivery and current CI status.
-This request covers Step 31c only; no live calls or pilot acceptance are implied.
+Status: Step 31c is delivered with exact CI: coherent authenticated workbench
+navigation, readable/exact review traces, role-aware handoffs and native keyboard
+review across the delivered services. 860 tests/45 demos, desktop/narrow viewport,
+restart and grant-revocation checks passed. Independent re-review has no remaining
+findings. See [verification](STEP_31C_VERIFICATION.md). Next is Step 32's approved
+offline export contract when requested. This request stops after Step 31c; live
+calls, connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 

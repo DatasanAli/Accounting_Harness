@@ -2,18 +2,16 @@
 
 Updated: 2026-10-21.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–31b. Step 31b local
-verification, independent review, upload and exact CI passed; see [verification](09-integrations-and-pilot/STEP_31B_VERIFICATION.md).
+**Delivered:** Steps 01–11 and offline/local slices 12a–31c. Step 31c local
+verification, native browser rehearsal, independent review, upload and exact CI
+passed; see [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Next:** [Step 31c coherent authenticated workbench](09-integrations-and-pilot/STEP_31C_PLAN.md),
+**Next:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_PLAN.md),
 when the user requests the next delivery.
 
-The current request authorizes Step 31c only. Verify/review/commit/push/check exact
-CI, report, and stop. Live provider/external-account connections and actual
-real-data pilot acceptance remain deferred, never passed by inference. See the
-[working plan](LOCALHOST_APP_PLAN.md) and [exact next prompt](NEXT_STEP.md).
-
-Step 31c is locally implemented and independently reviewed (860 tests/45 demos passed); [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md) records keyboard, exact-value, viewport and restart evidence. GitHub delivery remains pending.
+The current request ends after Step 31c. Report and stop. Live provider/external-account
+connections and actual real-data pilot acceptance remain deferred, never passed by
+inference. See the [working plan](LOCALHOST_APP_PLAN.md) and [exact next prompt](NEXT_STEP.md).
 
 ## Verified application boundary
 
@@ -64,6 +62,15 @@ protocol/provider refusals with 0 journals posted by any run. Strict OpenAI/Olla
 tool-call adapters are tested with mocked transports. **842 tests and 44
 demonstrations passed**; a native browser preparer/reviewer flow passed. See
 [Step 31b verification](09-integrations-and-pilot/STEP_31B_VERIFICATION.md).
+
+Step 31c integrates all 18 existing views into six task groups, with persistent
+identity/entity/role/period/provider context, native history, readable evidence and
+exact audit traces, and role-aware source/draft/approval/journal/report links.
+Separate keyboard preparation/reviewer approval, refresh/Back confirmation reset,
+process restart, revoked-session clearing and actual 390px/desktop layout checks
+passed. Both assigned stale-context UI issues and the review-discovered malformed
+hash/initialization issue are fixed. **860 tests and 45 demonstrations passed**;
+independent re-review has no remaining findings. See [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 
 The Step 20c implementation uses ledger schema 6, review schema 11 (12 since Step 31a), prepaid
 schema 1 and expense/revenue-accrual schema 1. Step 22 adds close schema 1. Old expense captures remain v1;
@@ -121,6 +128,7 @@ retained in the verification record and Git history.
 | 31a | [Reviewed owner and prepaid cash entries](09-integrations-and-pilot/STEP_31A_VERIFICATION.md) | [68c450b](https://github.com/DatasanAli/Accounting_Harness/commit/68c450bf99bd173b63afbe54acc019f78602d4e8) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39453521635) |
 | 31b | [Bounded operational agent proposals](09-integrations-and-pilot/STEP_31B_VERIFICATION.md) | [a0a9d86](https://github.com/DatasanAli/Accounting_Harness/commit/a0a9d86666ed39a19ad577692cb0d685cf24f433) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39463094489) |
 | 30 | [Offline QuickBooks journal read](09-integrations-and-pilot/STEP_30_VERIFICATION.md) | [c022dfa](https://github.com/DatasanAli/Accounting_Harness/commit/c022dfa54b0d5a9042e5faecbf70cf33cd92beca) | [Passed (attempt 2)](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39278821004) |
+| 31c | [Authenticated workbench](09-integrations-and-pilot/STEP_31C_VERIFICATION.md) | [068729a](https://github.com/DatasanAli/Accounting_Harness/commit/068729a5c10afc5c670bf77c3a5cdfdd25f85a98) | [Passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39644580556) |
 
 Earlier foundations and Steps 02–11 are documented in [Phase01](01-foundation/README.md),
 [ledger core](02-ledger-core/README.md), [evidence/review](03-evidence-and-review/README.md)

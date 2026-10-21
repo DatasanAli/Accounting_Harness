@@ -48,18 +48,18 @@ own container. Do not weaken authorization merely to make an action button work.
 **Files:** Static workbench plus necessary read-only API presentation hooks and
 focused UI/HTTP contract checks. Root owns browser rehearsal, docs and CI.
 
-- [ ] Inventory every supported operation/report and link it from the appropriate
+- [x] Inventory every supported operation/report and link it from the appropriate
   existing view; no missing owner/prepaid/adjustment or later management flows.
-- [ ] Make role/entity/provider context and permission denial understandable;
+- [x] Make role/entity/provider context and permission denial understandable;
   stale sessions clear protected state. Keep direct-route server denial coverage.
-- [ ] Improve source/proposal/review/post handoffs and cited journal/report traces;
+- [x] Improve source/proposal/review/post handoffs and cited journal/report traces;
   use readable summaries with optional exact audit details.
-- [ ] Cover hostile text, huge exact cents, pending/rejected/stale/posted states,
+- [x] Cover hostile text, huge exact cents, pending/rejected/stale/posted states,
   failed retry, unavailable providers and empty data without misleading success.
-- [ ] Parent performs keyboard-only preparation/review with separate identities,
+- [x] Parent performs keyboard-only preparation/review with separate identities,
   direct API preparer denial and reviewer approval, then refresh/restart trace
   inspection at desktop and narrow view. Journal count changes only on approval.
-- [ ] Add `demo-workbench` for authenticated presentation/route contracts, run
+- [x] Add `demo-workbench` for authenticated presentation/route contracts, run
   focused then guarded suite/foundation/all demos/JS/diff, independent review,
   commit/push/exact CI before the offline journal export contract.
 

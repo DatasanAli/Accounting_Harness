@@ -190,7 +190,7 @@ The delivery target is this repository on GitHub with its verification workflow 
 
 Next prompt:
 
-> Build Step 31c using Plan/09-integrations-and-pilot/STEP_31C_PLAN.md. Implement only the coherent authenticated workbench navigation, role-aware workflow handoffs and keyboard/accessibility review over the delivered services, without new accounting policies or live connections. Verify, review, demonstrate, commit, push, check exact CI, report, and stop.
+> Build Step 32 using Plan/09-integrations-and-pilot/STEP_32_PLAN.md. Implement only the approved offline journal-export contract with separate human authorization, durable retries and exact simulated readback. Keep live connections deferred. Verify, review, demonstrate, commit, push, check exact CI, report, and stop.
 
 The original PDF files and extracted text stay local. Bibliographic details and fingerprints are in [sources](Plan/references/sources.json).
 
