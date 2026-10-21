@@ -255,6 +255,7 @@ function render() {
   const role = identity.entities.find(grant => grant.entity_id === identity.entity_id)?.role;
   $('context-role').textContent = 'Role: ' + human(role);
   $('context-provider').textContent = providerContext(state.providers);
+  $('recovery-notice').hidden = !state.recovery?.transports_disabled;
   const reviewCount = state.drafts.filter(draft => !['posted', 'rejected'].includes(draft.status)).length;
   $('metric-sources').textContent = state.sources.length;
   $('metric-review').textContent = reviewCount;
@@ -2520,7 +2521,10 @@ function renderVariance(report) {
 }
 
 
-function can(action) { return !!state?.allowed_actions?.includes(action); }
+function can(action) {
+  if (state?.recovery?.transports_disabled && ['qbo-read', 'qbo-export-send', 'qbo-export-check'].includes(action)) return false;
+  return !!state?.allowed_actions?.includes(action);
+}
 function actionButton(action, ...args) {
   const node = button(...args); node.dataset.action = action;
   node.dataset.authorized = String(can(action)); return node;
@@ -2529,12 +2533,19 @@ function applyPermissions() {
   document.querySelectorAll('[data-action], form[action^="/api/"]').forEach(node => {
     const action = node.dataset.action || node.getAttribute('action').slice(5);
     const allowed = can(action);
+    const recoveryBlocked = state?.recovery?.transports_disabled && ['qbo-read', 'qbo-export-send', 'qbo-export-check'].includes(action);
+    const message = recoveryBlocked
+      ? 'This action is disabled on the recovered workspace. Historical records remain available; transports stay disabled.'
+      : 'Your role can inspect this workflow. The “' + human(action) + '” action requires another authorized role. Ask an owner to review entity grants.';
     node.dataset.authorized = String(allowed);
     if (node.tagName === 'FORM' && !node.previousElementSibling?.classList.contains('permission-note')) {
-      const note = el('p', 'Your role can inspect this workflow. The “' + human(action) + '” action requires another authorized role. Ask an owner to review entity grants.', 'permission-note');
+      const note = el('p', message, 'permission-note');
       note.dataset.permissionFor = action; node.before(note);
     }
-    if (node.tagName === 'FORM' && node.previousElementSibling?.dataset.permissionFor === action) node.previousElementSibling.hidden = allowed;
+    if (node.tagName === 'FORM' && node.previousElementSibling?.dataset.permissionFor === action) {
+      const note = node.previousElementSibling; note.hidden = allowed;
+      if (note.textContent !== message) note.textContent = message;
+    }
   });
 }
 new MutationObserver(applyPermissions).observe(document.body, {childList: true, subtree: true});

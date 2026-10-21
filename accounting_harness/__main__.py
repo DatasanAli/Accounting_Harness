@@ -267,6 +267,16 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-owner-prepaid-cash", help="review evidenced owner contribution, drawing and prepaid purchase cash entries")
     commands.add_parser("demo-operational-agent", help="run bounded offline operational agent contract cases")
     commands.add_parser("demo-workbench", help="demonstrate authenticated workbench presentation and HTTP route contracts")
+    commands.add_parser("demo-recovery", help="coherent synthetic backup, restore and interrupted-run drill")
+    backup_parser = commands.add_parser('backup-workspace', help='coherent maintenance snapshot of every mapped entity')
+    backup_parser.add_argument('--access-db', required=True, type=Path)
+    backup_parser.add_argument('--destination', required=True, type=Path)
+    verify_parser = commands.add_parser('verify-backup', help='verify a trusted local recovery manifest and all stores')
+    verify_parser.add_argument('--backup', required=True, type=Path)
+    restore_parser = commands.add_parser('restore-workspace', help='restore to a new location with fresh login and disabled transports')
+    restore_parser.add_argument('--backup', required=True, type=Path)
+    restore_parser.add_argument('--destination', required=True, type=Path)
+    restore_parser.add_argument('--activate', action='store_true')
     commands.add_parser("demo-sandbox-export", help="offline approved export with persistent simulated readback")
     commands.add_parser("demo-sandbox-read", help="offline contract simulation of a paginated QuickBooks journal read into staging")
     web = commands.add_parser("serve", help="open a persistent fictional accounting workspace on localhost")
@@ -282,7 +292,21 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'demo-workbench':
+        if args.command == 'demo-recovery':
+            from accounting_harness.recovery_demo import demo_recovery
+            demo_recovery()
+        elif args.command in ('backup-workspace', 'verify-backup', 'restore-workspace'):
+            from accounting_harness.recovery import backup_group, verify_backup, restore_group
+            if args.command == 'backup-workspace':
+                result = backup_group(args.access_db, args.destination)
+                result = {k:result[k] for k in ('backup_id','captured_at','backup_ms','verification_ms','bytes')}
+            elif args.command == 'verify-backup':
+                verified = verify_backup(args.backup)
+                result = dict(backup_id=verified['manifest']['backup_id'], verification_ms=verified['verification_ms'], bytes=verified['bytes'])
+            else:
+                result = restore_group(args.backup, args.destination, activate=args.activate)
+            print(json.dumps(result, indent=2))
+        elif args.command == 'demo-workbench':
             from accounting_harness.workbench_demo import demo_workbench
             demo_workbench()
         elif args.command == 'demo-operational-agent':

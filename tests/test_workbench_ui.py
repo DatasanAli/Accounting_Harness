@@ -275,3 +275,22 @@ const refresh=async()=>{state={retained_secret:'protected accounting state'};ret
         self.assertEqual(set(inventory.groups),{'prepare','review','ledger','period','planning','operations'})
         self.assertTrue(inventory.forms <= inventory.targets, inventory.forms-inventory.targets)
         self.assertTrue(inventory.targets <= inventory.ids, inventory.targets-inventory.ids)
+
+    def test_recovery_transport_notice_does_not_request_owner_grants(self):
+        script=between('function can(action)', 'new MutationObserver(applyPermissions)')
+        self.run_js('''
+let state={allowed_actions:['qbo-read'],recovery:{transports_disabled:true}};
+const form={tagName:'FORM',dataset:{},getAttribute(){return '/api/qbo-read';},before(note){this.previousElementSibling=note;}};
+const document={querySelectorAll(){return [form];}};
+const human=value=>value;
+const el=(tag,text,cls)=>({textContent:text,dataset:{},classList:{contains(value){return value===cls;}}});
+''' + script + '''
+applyPermissions();
+assert.equal(form.dataset.authorized,'false');
+assert.match(form.previousElementSibling.textContent,/recovered workspace/i);
+assert.doesNotMatch(form.previousElementSibling.textContent,/grants|another authorized role/i);
+state={allowed_actions:[],recovery:null};applyPermissions();
+assert.match(form.previousElementSibling.textContent,/another authorized role/);
+state.allowed_actions=['qbo-read'];applyPermissions();
+assert.equal(form.previousElementSibling.hidden,true);
+''')

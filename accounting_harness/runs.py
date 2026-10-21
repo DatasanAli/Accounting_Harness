@@ -120,7 +120,8 @@ class SQLiteRunEngine:
         registry_path = store.registry._connection.execute('PRAGMA database_list').fetchone()[2]
         if not ledger_path or not registry_path or str(path) == ':memory:':
             raise ValueError('resumable runs require file-backed ledger, registry and run storage')
-        self._path = str(Path(path).resolve())
+        self._physical_path = str(Path(path).resolve())
+        self._path = self._physical_path
         if self._path in (str(Path(ledger_path).resolve()), str(Path(registry_path).resolve())):
             raise ValueError('run log must be separate from ledger and registry')
         self._scope = _canonical(dict(entity_id=store.ledger._empty.catalog.entity_id,
@@ -129,6 +130,8 @@ class SQLiteRunEngine:
                                       ledger_context=store.ledger._context, policy_version=store.policy_version,
                                       tool_schema_digest=digest(self._tool_contract()),
                                       allowed_tools=sorted(self._tool_contract())))
+        from accounting_harness.recovery import relocated_run_identity
+        self._path, self._scope = relocated_run_identity(self._physical_path, self._scope)
         self.db = sqlite3.connect(path, timeout=busy_timeout_ms / 1000, isolation_level=None)
         try:
             self.db.execute('PRAGMA foreign_keys=ON')
@@ -379,7 +382,7 @@ class SQLiteRunEngine:
             import fcntl
         except ImportError as error:
             raise ValueError('run execution requires macOS/Linux advisory locks') from error
-        with open(self._path + '.dispatch.lock', 'a+b') as lock:
+        with open(self._physical_path + '.dispatch.lock', 'a+b') as lock:
             try:
                 fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError as error:

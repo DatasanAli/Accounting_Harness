@@ -20,6 +20,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import MappingProxyType
 
+from accounting_harness.maintenance import maintenance_lock, access_lock
+
 READ = frozenset({'read_evidence', 'read_drafts', 'read_reports', 'read_audit'})
 PREPARE = frozenset({'register_evidence', 'prepare_proposal', 'revise_proposal',
     'import_bank_csv', 'classify_bank', 'match_bank', 'withdraw_bank_match',
@@ -190,28 +192,35 @@ class AccessStore:
         self.path = Path(path).resolve()
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            descriptor = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        except FileExistsError:
-            pass
-        else:
-            os.close(descriptor)
-        with self._transaction() as connection:
-            version = connection.execute('PRAGMA user_version').fetchone()[0]
-            application = connection.execute('PRAGMA application_id').fetchone()[0]
-            if version == SCHEMA_VERSION and application == APPLICATION_ID:
-                return
-            if version or application:
-                raise ValueError('Unsupported access schema/application version')
-            if connection.execute('SELECT 1 FROM sqlite_master LIMIT 1').fetchone():
-                raise ValueError('Refusing nonempty unversioned access database')
-            for statement in SCHEMA:
-                connection.execute(statement)
-            connection.execute(f'PRAGMA application_id={APPLICATION_ID}')
-            connection.execute(f'PRAGMA user_version={SCHEMA_VERSION}')
+        with maintenance_lock(access_lock(self.path)):
+            try:
+                descriptor = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            except FileExistsError:
+                pass
+            else:
+                os.close(descriptor)
+            with self._transaction() as connection:
+                version = connection.execute('PRAGMA user_version').fetchone()[0]
+                application = connection.execute('PRAGMA application_id').fetchone()[0]
+                if version == SCHEMA_VERSION and application == APPLICATION_ID:
+                    return
+                if version or application:
+                    raise ValueError('Unsupported access schema/application version')
+                if connection.execute('SELECT 1 FROM sqlite_master LIMIT 1').fetchone():
+                    raise ValueError('Refusing nonempty unversioned access database')
+                for statement in SCHEMA:
+                    connection.execute(statement)
+                connection.execute(f'PRAGMA application_id={APPLICATION_ID}')
+                connection.execute(f'PRAGMA user_version={SCHEMA_VERSION}')
 
     @contextmanager
     def _transaction(self):
+        with maintenance_lock(access_lock(self.path)):
+            with self._locked_transaction() as connection:
+                yield connection
+
+    @contextmanager
+    def _locked_transaction(self):
         connection = sqlite3.connect(self.path, timeout=2, isolation_level=None)
         connection.row_factory = sqlite3.Row
         try:

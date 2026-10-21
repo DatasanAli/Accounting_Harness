@@ -8,6 +8,7 @@ from contextlib import contextmanager, ExitStack
 from dataclasses import asdict, replace
 from pathlib import Path
 
+from accounting_harness.maintenance import maintenance_lock, workspace_lock, workspace_operation
 from accounting_harness.approval import ReviewApplication
 from accounting_harness.domain.accounts import load_account_catalog
 from accounting_harness.domain.dates import accounting_date
@@ -64,6 +65,13 @@ class EnrollmentPending(RuntimeError):
 
 class Workspace:
     def __init__(self, directory, *, enable_providers=False, ollama_model=None, entity_id=None, actor_id=None):
+        self.root = Path(directory).resolve()
+        self.root.mkdir(parents=True, exist_ok=True)
+        with maintenance_lock(workspace_lock(self.root)):
+            self._initialize_workspace(directory, enable_providers=enable_providers,
+                ollama_model=ollama_model, entity_id=entity_id, actor_id=actor_id)
+
+    def _initialize_workspace(self, directory, *, enable_providers=False, ollama_model=None, entity_id=None, actor_id=None):
         # This is a trusted local constructor. The authenticated facade must check
         # its server-owned mapping BEFORE calling it (construction opens stores).
         self.actor_id = actor_id
@@ -77,7 +85,9 @@ class Workspace:
                 raise ValueError('Workspace entity cannot change its immutable identity')
             entity_id = stored_id
         self.root.mkdir(parents=True, exist_ok=True)
-        self.enable_providers = enable_providers
+        from accounting_harness.recovery import relocation_record
+        self.recovery = relocation_record(self.root)
+        self.enable_providers = enable_providers and self.recovery is None
         self.ollama_model = ollama_model
         if ollama_model:
             OllamaExpenseProvider('configuration', ollama_model)
@@ -93,7 +103,7 @@ class Workspace:
             for case in self.cases:
                 registry.register(case['document'], actor_id='workspace-fixture-import')
             for source in registry.list_documents():
-                if source.document_id not in ledger.known_source_ids():
+                if self.recovery is None and source.document_id not in ledger.known_source_ids():
                     try:
                         ledger.enroll_source(registry, source.document_id, actor_id=(self.actor_id or 'workspace-startup-recovery'))
                     except (ValueError, TypeError, sqlite3.Error, PersistenceBusy):
@@ -101,7 +111,7 @@ class Workspace:
 
     @contextmanager
     def storage(self):
-        with ExitStack() as authority:
+        with maintenance_lock(workspace_lock(self.root)), ExitStack() as authority:
             if self.authority_guard:
                 authority.enter_context(self.authority_guard())
             with SQLiteSourceRegistry(self.root / 'sources.sqlite3', self.catalog.entity_id) as registry:
@@ -220,10 +230,12 @@ class Workspace:
         with self.storage() as (_, ledger, _, _, _):
             return BudgetService(ledger).get(version_id)
 
+    @workspace_operation
     def external_reads(self):
         from accounting_harness.qbo_read import FILE, staged_batches
         return staged_batches(self.root / FILE, self.catalog.entity_id)
 
+    @workspace_operation
     def external_exports(self):
         from accounting_harness.qbo_export import ExportService
         return ExportService(self).history()
@@ -547,6 +559,7 @@ class Workspace:
                         for payload, entry in zip(snapshot, report.snapshot.entries)]
             from accounting_harness.operational_agent import WORKFLOWS, OPERATOR, list_runs
             return dict(entity_id=self.catalog.entity_id, period='January 2026', currency='USD',
+                recovery=(dict(transports_disabled=True, backup_id=self.recovery['backup_id']) if self.recovery else None),
                 providers=self.providers(), sources=sources, drafts=drafts, runs=runs,
                 agent_runs=list_runs(self, store), agent_workflows={name: dict(roles=spec[1], operator=list(OPERATOR.get(name, ())))
                                                                      for name, spec in WORKFLOWS.items()},
@@ -556,7 +569,10 @@ class Workspace:
                 journal_count=len(snapshot), journals=journals, payables=payables, receivables=receivables, advances=advances, prepaid=prepaid, expense_accruals=expense_accruals, revenue_accruals=revenue_accruals, accruals=accruals,
                 trial_balance=trial_balance)
 
+    @workspace_operation
     def action(self, action, data):
+        if self.recovery is not None and action in ('qbo-read', 'qbo-export-send', 'qbo-export-check'):
+            raise ValueError('Recovered workspace transports are disabled')
         if action in ('agent-proposals', 'agent-cancel'):
             from accounting_harness.operational_agent import cancel_run, continue_run, start_run
             if action == 'agent-cancel':

@@ -111,3 +111,5 @@ jobs:
         run: python3 -m accounting_harness demo-workbench
       - name: Demonstrate separately authorized offline journal export and uncertain retry
         run: python3 -m accounting_harness demo-sandbox-export
+      - name: Demonstrate coherent group backup and verified recovery
+        run: python3 -m accounting_harness demo-recovery

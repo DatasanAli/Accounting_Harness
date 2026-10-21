@@ -263,7 +263,7 @@ def serve(args):
         print(f'Accounting Harness: http://127.0.0.1:{server.server_port}', flush=True)
         print('Login required. Entity access comes from current local grants.', flush=True)
         print('Loopback HTTP only; remote/TLS hosting is unavailable.', flush=True)
-        print('Provider calls enabled by operator.' if args.enable_providers else
+        print('Provider calls requested by operator; recovered workspaces remain disabled.' if args.enable_providers else
               'Offline mode. No provider connections or model calls.', flush=True)
         try:
             server.serve_forever()

@@ -6,7 +6,7 @@ Updated: 2026-10-21.
 verification, native browser rehearsal, independent review, upload and exact CI
 passed; see [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a is now in progress.
+**Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a local verification and review are complete; upload/CI pending. Step 33b follows.
 
 The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). Continue through Steps 33a, 33b, 34 and adversarial review. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 
@@ -154,7 +154,7 @@ Step 31c resolved the two UI findings: project capture can no longer replace
 attribution context during preview, and indicator month edits/failed reloads
 invalidate cached inputs. Prior payable seal and
 migration findings were resolved in16c. A copied-workspace run-path limitation was
-reproduced in19a and has an explicit verified-relocation plan in
+reproduced in19a and is corrected by verified relocation in
 [33a](09-integrations-and-pilot/STEP_33A_PLAN.md); file copying alone is not recovery.
 
 Keep this page, [NEXT_STEP.md](NEXT_STEP.md), active phase and [roadmap.json](roadmap.json)
