@@ -1,6 +1,6 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 32 is locally verified: separately authorized offline cash-expense export, persistent uncertain replay and exact readback. 879 tests/46 demos, native browser and independent re-review passed. Upload/exact CI is pending; see [verification](STEP_32_VERIFICATION.md). The autonomous campaign continues with 33a, 33b, 34 and final adversarial review/fixes. Live connections and actual pilot acceptance remain deferred.
+Status: Step 32 is delivered: separately authorized offline cash-expense export, persistent uncertain replay and exact readback. 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified; see [verification](STEP_32_VERIFICATION.md). The autonomous campaign continues with 33a, 33b, 34 and final adversarial review/fixes. Live connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 

@@ -2,11 +2,11 @@
 
 Updated: 2026-10-21.
 
-**Delivered:** Steps 01–11 and offline/local slices 12a–31c. Step 31c local
+**Delivered:** Steps 01–11 and offline/local slices 12a–32. Step 31c local
 verification, native browser rehearsal, independent review, upload and exact CI
 passed; see [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Locally verified:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit/upload/exact CI pending. Next: Step 33a after GitHub verification.
+**Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a is now in progress.
 
 The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). Continue through Steps 33a, 33b, 34 and adversarial review. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 

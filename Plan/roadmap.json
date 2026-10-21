@@ -451,7 +451,9 @@
         {
           "id": "32",
           "title": "One sandbox journal export",
-          "status": "complete"
+          "status": "complete",
+          "commit": "9bc2e49bd0b5f95e73a23022ea246561103f4f50",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410"
         },
         {
           "id": "33",

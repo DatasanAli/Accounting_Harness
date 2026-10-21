@@ -1,6 +1,6 @@
 # Step 32 verification: separately authorized offline journal export
 
-Local implementation, verification, native browser rehearsal and independent re-review passed. Upload and exact-commit CI are pending.
+Local implementation, verification, native browser rehearsal and independent re-review passed. Implementation commit `9bc2e49bd0b5f95e73a23022ea246561103f4f50` was pushed and its [exact CI passed](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410).
 
 ## Delivered behavior under verification
 
@@ -38,7 +38,7 @@ Used a new ignored synthetic group with alpha/beta entities and owner/preparer/r
 
 Independent review found one Important defect: a drift exception followed by a read timeout and then matching data could return to confirmed without reconciliation. The fix derives unresolved exception state from the entire immutable event history. Two regression sequences first failed, then passed, covering both prior confirmation and initially invalid readback, repeated timeouts, reopen and repeated matching observations. All 19 focused export tests pass (5.389s). Scoped independent re-review approved the fix and ran three targeted tests successfully. No Important or Critical findings remain. The final guarded suite passed all 879 tests in 121.527s.
 
-Commit, remote SHA and exact CI will be recorded after verification. The autonomous campaign proceeds to Step 33a after delivery.
+Implementation commit [9bc2e49](https://github.com/DatasanAli/Accounting_Harness/commit/9bc2e49bd0b5f95e73a23022ea246561103f4f50) matched `origin/main` after push. [GitHub run 39665520410](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) completed successfully for that exact SHA on 2026-10-21. Step 32 is delivered; the authorized campaign proceeds to Step 33a.
 
 ## Rollback and boundaries
 
