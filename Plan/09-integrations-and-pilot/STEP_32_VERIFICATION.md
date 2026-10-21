@@ -20,7 +20,7 @@ These are offline contract simulations. There is no OAuth, credential, live netw
 - Native JavaScript syntax and diff whitespace checks passed.
 - Focused export tests cover exact large cents, changed preview/mapping, unsupported shapes/policies, permissions, revocation, concurrency, authorization rollback, crash points, rate limiting/caps, malformed readback and preserved history.
 
-`demo-sandbox-export` creates one separately authorized 125.00 expense, simulates a lost creation response, reopens both stores and retries the same request. It confirms **one simulated remote journal**, exact 125.00 per side, with one unchanged local journal.
+`demo-sandbox-export` creates one separately authorized 125.00 expense, performs a normal send/readback, and repeats the same request through the same facade. It confirms **one simulated remote journal**, exact 125.00 per side, with one unchanged local journal. Lost creation-response and restart evidence belongs to the focused export tests and the later [Step 34 acceptance scenario](STEP_34_VERIFICATION.md), which explicitly commits a simulated receipt before losing the response and reopening.
 
 ## Actual browser rehearsal
 

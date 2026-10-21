@@ -260,7 +260,7 @@ class SQLiteReviewStore:
         if not isinstance(proposal, dict):
             return tuple(findings)
         sources = proposal.get('source_ids')
-        valid_sources = isinstance(sources, list) and all(isinstance(s, str) for s in sources)
+        valid_sources = isinstance(sources, (list, tuple)) and all(isinstance(s, str) for s in sources)
         if not valid_sources or set(sources) != set(evidence):
             findings.append(Finding('evidence_binding', 'source_ids', 'bind every source identity exactly'))
         records = []
@@ -281,7 +281,7 @@ class SQLiteReviewStore:
             records.append(source)
         if self.policy_version == 'review-v1':
             extension_codes = {a.code for a in catalog.accounts} - {a.code for a in self.ledger._empty.catalog.accounts}
-            for line in proposal.get('lines', []) if isinstance(proposal.get('lines'), list) else []:
+            for line in proposal.get('lines', []) if isinstance(proposal.get('lines'), (list, tuple)) else []:
                 if isinstance(line, dict) and isinstance(line.get('account'), str) and line['account'] in extension_codes:
                     findings.append(Finding('unsupported_account', 'lines',
                                             'receipt policy requires an original baseline account'))
@@ -339,7 +339,7 @@ class SQLiteReviewStore:
             if result.total_debits != Money.parse(json.loads(records[0].canonical_content)['amount']):
                 findings.append(Finding('evidence_amount', 'lines', 'debit total differs from receipt amount'))
         lines = proposal.get('lines')
-        for i, line in enumerate(lines if isinstance(lines, list) else []):
+        for i, line in enumerate(lines if isinstance(lines, (list, tuple)) else []):
             if isinstance(line, dict):
                 try:
                     if Money.parse(line.get('amount')).cents > MAX_CENTS:

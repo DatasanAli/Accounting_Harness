@@ -6,9 +6,9 @@ Updated: 2026-10-21.
 verification, native browser rehearsal, independent review, upload and exact CI
 passed; see [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
-**Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a is also delivered: 899 tests/47 demos, restored browser and independent re-review passed; commit `ea85484` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628). [Recovery evidence](09-integrations-and-pilot/STEP_33A_VERIFICATION.md). Step 33b is delivered: 922 tests/48 demos, read-only native browser and independent re-review passed; commit `8e451a9` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408) verified. [Status evidence](09-integrations-and-pilot/STEP_33B_VERIFICATION.md). Step 34 is in progress.
+**Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a is also delivered: 899 tests/47 demos, restored browser and independent re-review passed; commit `ea85484` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628). [Recovery evidence](09-integrations-and-pilot/STEP_33A_VERIFICATION.md). Step 33b is delivered: 922 tests/48 demos, read-only native browser and independent re-review passed; commit `8e451a9` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408) verified. [Status evidence](09-integrations-and-pilot/STEP_33B_VERIFICATION.md). Step 34 and final adversarial fixes passed locally: 931 tests/49 demos, native browser and fresh recovery. Final upload and exact CI are pending; see [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md).
 
-The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). Continue through Steps 33a, 33b, 34 and adversarial review. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
+The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). The remaining offline implementation and adversarial review are locally verified; finish final upload and exact CI. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 
 ## Verified application boundary
 
@@ -80,7 +80,7 @@ operations are versioned separately in [31b](09-integrations-and-pilot/STEP_31B_
 Captured financial statements, direct cash flow, portable report verification, confirmed close and durable date locks are implemented.
 Project attribution, auditable service time, versioned project costing, operating/cash budgets, captured variances and contribution/indicator scenarios are implemented. Reviewed owner contribution, drawing and prepaid-purchase entry paths are implemented. Credentials, sessions, fixed entity roles and authenticated application/UI
 enforcement are implemented. An offline QuickBooks journal-read contract into a
-separate staging mirror is implemented; export and verified recovery remain planned. New human actions carry authenticated stable user IDs. The [Phase09 plan](09-integrations-and-pilot/README.md)
+separate staging mirror is implemented; separately authorized offline export and verified recovery are implemented. New human actions carry authenticated stable user IDs. The [Phase09 plan](09-integrations-and-pilot/README.md)
 separates implemented offline contracts from future live gates.
 
 ## Delivery evidence
@@ -150,9 +150,9 @@ purchase by its Jan1 coverage start. Step20d explicitly uses a new synthetic Jan
 purchase variant, preserving original fixture/history bytes and identical
 January 31 totals; early cutoff results are intentionally different.
 
-Two accounting-code Minor issues remain queued for final whole-work review:
-receipt list/tuple validation consistency (saved proposals normalize before
-posting), and shared revenue-validation errors using an expense label.
+The two carried-forward accounting Minor findings (receipt list/tuple validation
+and revenue error labels) and three additional final-review findings are fixed
+and independently rechecked; see the [final review](09-integrations-and-pilot/ADVERSARIAL_REVIEW.md).
 Step 31c resolved the two UI findings: project capture can no longer replace
 attribution context during preview, and indicator month edits/failed reloads
 invalidate cached inputs. Prior payable seal and

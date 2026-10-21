@@ -8,6 +8,24 @@ from unittest.mock import patch
 import test_review
 
 
+def assert_policy_error_labels(test, service, draft, name, party):
+    from dataclasses import replace
+    from accounting_harness.expense_accrual import prepare_expense_accrual_post
+    proposal, evidence = json.loads(draft.proposal_json), json.loads(draft.evidence_json)
+    for change, message in [(dict(principal_cents=True), 'requires strict integer intent'),
+                            ({party+'_id': 'wrong'}, 'identity, intent or journal differs from supported facts')]:
+        with test.subTest(policy=name, change=change):
+            intent = dict(json.loads(draft.operation_intent_json), **change)
+            findings = service.store.validate(proposal, evidence, operation_intent=intent, draft_id=draft.draft_id)
+            with test.subTest(stage='validation'):
+                test.assertEqual([(f.code, f.message) for f in findings],
+                                 [('unsupported_'+name+'_accrual', name+' accrual '+message)])
+            invalid_revision = replace(draft, operation_intent_json=json.dumps(intent))
+            with test.assertRaisesRegex(ValueError, '^'+name+' accrual no longer valid: '+name+' accrual '):
+                prepare_expense_accrual_post(service.store, None, invalid_revision, None)
+    test.assertEqual(test.ledger.counts()['journals'], 0)
+
+
 class ExpenseAccrualTests(unittest.TestCase):
     setUp = test_review.ReviewTests.setUp
 
@@ -36,6 +54,10 @@ class ExpenseAccrualTests(unittest.TestCase):
 
     def post(self,service,draft):
         return service.app.post(self.approve(service,draft).approval_id,actor_id='human',idempotency_key='post')
+
+    def test_shared_validation_and_post_errors_identify_expense_policy(self):
+        service=self.service(); self.facts(); draft=self.propose(service)
+        assert_policy_error_labels(self, service, draft, 'expense', 'vendor')
 
     def test_supported_150_requires_human_confirmation_and_has_zero_residual(self):
         service=self.service();self.facts();draft=self.propose(service)

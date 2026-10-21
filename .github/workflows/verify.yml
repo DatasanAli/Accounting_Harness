@@ -115,3 +115,5 @@ jobs:
         run: python3 -m accounting_harness demo-recovery
       - name: Demonstrate redacted local operational status
         run: python3 -m accounting_harness demo-operations-status
+      - name: Demonstrate authenticated synthetic release acceptance
+        run: python3 -m accounting_harness demo-acceptance

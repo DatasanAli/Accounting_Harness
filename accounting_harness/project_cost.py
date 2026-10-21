@@ -71,7 +71,7 @@ class ProjectCostService:
         with self.ledger._transaction():
             actuals, time = _capture_inputs(self.ledger,as_of)
             versions = [json.loads(r[0]) for r in self.db.execute('SELECT result_json FROM project_cost_versions ORDER BY scenario_id,version')]
-        return dict(actuals=actuals,time=time,policy=POLICY,category_policy=CATEGORY_POLICY,
+        return dict(actuals=actuals,time=time,policy=POLICY,category_policy=json.loads(_canonical(CATEGORY_POLICY)),
             eligible_direct_costs=[dict(row,reference=_reference(row)) for row in actuals['allocations'] if _eligible(row)],
             versions=[{k:r[k] for k in ('version_id','entity_id','scenario_id','name','project_id','version','prior_version_id','as_of','actor_id','recorded_at')} for r in versions])
 
@@ -130,7 +130,7 @@ class ProjectCostService:
             eligible = {(r['revision_id'],r['allocation_number']) for r in actuals['allocations'] if r['project_id']==data['project_id'] and _eligible(r)}
             if not identities <= eligible:
                 raise ValueError('selected portion must be a current direct nonlabor expense allocation for this project')
-            result = dict(data,version_id='cost-'+uuid4().hex,version=current[1]+1 if current else 1,policy=POLICY,
+            result = dict(json.loads(_canonical(data)),version_id='cost-'+uuid4().hex,version=current[1]+1 if current else 1,policy=POLICY,
                 actor_id=actor_id,recorded_at=datetime.now(timezone.utc).isoformat(),payload_digest=payload_digest,
                 actuals=actuals,time=time)
             result['cost_sheet'] = cost_sheet(result)
@@ -181,7 +181,7 @@ def cost_sheet(scenario):
     expense = sum(int(r['signed_cents']) for r in rows if r['kind']=='expense')
     total=labor+direct+overhead
     report = dict(entity_id=scenario['entity_id'],currency='USD',scenario_id=scenario['scenario_id'],version_id=scenario['version_id'],version=scenario['version'],
-        name=scenario['name'],project_id=scenario['project_id'],period_start=actuals['period_start'],as_of=scenario['as_of'],policy=POLICY,category_policy=CATEGORY_POLICY,
+        name=scenario['name'],project_id=scenario['project_id'],period_start=actuals['period_start'],as_of=scenario['as_of'],policy=POLICY,category_policy=json.loads(_canonical(CATEGORY_POLICY)),
         actor_id=scenario['actor_id'],recorded_at=scenario['recorded_at'],reason=scenario['reason'],explanation=scenario['explanation'],prior_version_id=scenario['prior_version_id'],
         scope='Management costing and modeled project margin, distinct from financial net income. Rates are assumptions, not evidence of wages paid or accrued. No financial posting.',
         total_minutes=minutes,duration=_duration(minutes),time_records=records,calculations=calculations,actuals_bridge=bridge,findings=findings,actuals=actuals,

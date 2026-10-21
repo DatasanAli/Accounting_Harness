@@ -75,14 +75,15 @@ def operation(store, incurrence_source_id, basis_source_id):
 
 
 def validate_expense_accrual(store,proposal,records,intent,draft_id):
+    policy=accrual_policy(store.policy_version)
     try:
         if type(intent) is not dict or type(intent.get('schema_version')) is not int or type(intent.get('principal_cents')) is not int:
-            raise ValueError('expense accrual requires strict integer intent')
-        expected=operation(store,intent['evidence_roles'][accrual_policy(store.policy_version)['role']],intent['evidence_roles']['basis'])
+            raise ValueError(policy['name']+' accrual requires strict integer intent')
+        expected=operation(store,intent['evidence_roles'][policy['role']],intent['evidence_roles']['basis'])
         if (draft_id,intent,proposal,{r.document_id:r.content_digest for r in records})!=expected:
-            raise ValueError('expense accrual identity, intent or journal differs from supported facts')
+            raise ValueError(policy['name']+' accrual identity, intent or journal differs from supported facts')
     except (ValueError,TypeError,KeyError) as error:
-        return (Finding('unsupported_'+accrual_policy(store.policy_version)['name']+'_accrual','operation_intent',str(error)),)
+        return (Finding('unsupported_'+policy['name']+'_accrual','operation_intent',str(error)),)
     return ()
 
 
@@ -214,8 +215,8 @@ class ExpenseAccrualService:
 def prepare_expense_accrual_post(store,approval,revision,entry):
     intent=json.loads(revision.operation_intent_json)
     findings=store.validate(json.loads(revision.proposal_json),json.loads(revision.evidence_json),operation_intent=intent,draft_id=revision.draft_id)
-    if findings:raise ValueError('expense accrual no longer valid: '+findings[0].message)
     p=accrual_policy(store.policy_version)
+    if findings:raise ValueError(p['name']+' accrual no longer valid: '+findings[0].message)
     store.db.execute(f"INSERT INTO {p['name']}_accrual_effects VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
         (intent['entity_id'],intent['event_id'],intent[p['party']+'_id'],intent['evidence_roles'][p['role']],intent['evidence_roles']['basis'],
          intent['principal_cents'],intent[p['account']],intent['effective_date'],revision.draft_id,revision.revision,approval.approval_id,entry.id))

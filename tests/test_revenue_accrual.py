@@ -37,6 +37,11 @@ class RevenueAccrualTests(unittest.TestCase):
     def post(self,service,draft):
         return service.app.post(self.approve(service,draft).approval_id,actor_id='human',idempotency_key='post')
 
+    def test_shared_validation_and_post_errors_identify_revenue_policy(self):
+        from test_expense_accrual import assert_policy_error_labels
+        service=self.service(); self.facts(); draft=self.propose(service)
+        assert_policy_error_labels(self, service, draft, 'revenue', 'customer')
+
     def test_supported_250_requires_human_confirmation_and_has_zero_residual(self):
         service=self.service();self.facts();draft=self.propose(service)
         self.assertTrue(draft.reviewable,draft.current_findings)

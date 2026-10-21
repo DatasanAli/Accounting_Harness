@@ -50,6 +50,39 @@ class ReviewTests(unittest.TestCase):
         args.update(changes)
         return self.store.reject(**args)
 
+    def test_tuple_receipt_validation_matches_saved_normalization(self):
+        self.ledger.ensure_bank_fee_account(actor_id='owner')
+        huge = self.registry.register(dict(self.document, document_id='huge', amount='999999999999999999.00'),
+                                      actor_id='importer').record
+        self.ledger.enroll_source(self.registry, 'huge', actor_id='importer')
+        extension = json.loads(json.dumps(self.proposal))
+        extension['lines'][0]['account'] = '5300'
+        extension['lines'] = tuple(extension['lines'])
+        overflow = dict(self.proposal, source_ids=['huge'], lines=tuple(
+            dict(line, amount='999999999999999999.00') for line in self.proposal['lines']))
+        cases = [('sources', dict(self.proposal, source_ids=('rent',)), self.evidence, []),
+                 ('extension', extension, self.evidence, ['unsupported_account']),
+                 ('overflow', overflow, {'huge': huge.content_digest}, ['storage_overflow', 'storage_overflow'])]
+        for name, proposal, evidence, codes in cases:
+            with self.subTest(case=name):
+                direct = self.store.validate(proposal, evidence)
+                saved = self.save(draft_id=name, proposal=proposal, evidence=evidence, idempotency_key=name)
+                self.assertEqual(direct, saved.findings)
+                self.assertEqual([finding.code for finding in direct], codes)
+        self.assertEqual(self.ledger.counts()['journals'], 0)
+
+    def test_malformed_receipt_containers_remain_invalid_before_and_after_save(self):
+        for field in ('source_ids', 'lines'):
+            for index, value in enumerate((None, 'rent', {}, [None])):
+                with self.subTest(field=field, value=value):
+                    proposal = dict(self.proposal, **{field: value})
+                    direct = self.store.validate(proposal, self.evidence)
+                    saved = self.save(draft_id=field+str(index), proposal=proposal, idempotency_key=field+str(index))
+                    self.assertTrue(direct)
+                    self.assertEqual(direct, saved.findings)
+                    self.assertFalse(saved.reviewable)
+        self.assertEqual(self.ledger.counts()['journals'], 0)
+
     def test_edit_history_reopen_and_input_snapshot(self):
         first = self.save()
         self.assertTrue(first.reviewable)

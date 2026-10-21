@@ -6,6 +6,7 @@ import json
 from datetime import date, datetime, timezone
 
 from accounting_harness.domain.dates import accounting_date
+from accounting_harness.domain.accounts import _validate_text
 from accounting_harness.domain.money import Money
 from accounting_harness.persistence import _canonical as canonical
 from accounting_harness.review import digest, protect_table
@@ -39,6 +40,14 @@ def identifier(value, label):
     if (type(value) is not str or not value or len(value) > MAX_ID_CHARS
             or value != value.strip() or any(ord(c) < 32 or ord(c) == 127 for c in value)):
         raise ValueError(f'{label} must contain 1 through {MAX_ID_CHARS} characters without surrounding whitespace or controls')
+    return value
+
+
+def journal_reference(value):
+    """Local ledger IDs are not external bank IDs (reviewed IDs exceed 80)."""
+    _validate_text(value, 'journal_id')
+    if any(ord(c) < 32 or ord(c) == 127 for c in value):
+        raise ValueError('journal_id must not contain controls')
     return value
 
 
@@ -297,6 +306,8 @@ class BankStatementService:
             if key == 'reason':
                 if type(value) is not str or not value.strip() or len(value) > 1000 or '\x00' in value:
                     raise ValueError('unmatch requires a nonempty reason of at most 1000 characters')
+            elif key == 'journal_id':
+                journal_reference(value)
             else:
                 identifier(value, key)
         identifier(actor_id, 'actor_id')

@@ -42,6 +42,41 @@ class BankMatchingTests(unittest.TestCase):
     def view(self):
         return self.workspace.bank_matches('fictional-bank')
 
+    def test_reviewed_owner_journal_ids_work_for_matching_and_timing(self):
+        from accounting_harness.acceptance import nonoperating_facts
+        journals = []
+        for alias, amount in [('reviewed-funding', '200.00'), ('reviewed-timing', '50.00')]:
+            documents = nonoperating_facts(alias, amount, '2026-01-05', 'owner_contribution',
+                                           entity=self.workspace.catalog.entity_id)
+            for document in documents:
+                self.workspace.action('operation-sources', dict(document=document))
+            draft = self.workspace.action('nonoperating-cash-proposals', dict(
+                cash_source_id=documents[0]['document_id'], basis_source_id=documents[1]['document_id'], expected_revision=0))
+            posted = self.workspace.action('approve-post', dict(draft_id=draft['draft_id'],
+                revision=draft['revision'], confirmed_digest=draft['content_digest']))
+            journals.append(posted['journal_id'])
+        self.assertTrue(all(len(journal) > 80 for journal in journals))
+        confirmation = self.confirmation()
+        for field in ('bank_account_id', 'transaction_id', 'idempotency_key'):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, '80'):
+                self.match(dict(confirmation, **{field: 'x' * 81}))
+        for value in (' padded', 'embedded\ncontrol', ''):
+            with self.subTest(journal=value), self.assertRaises(ValueError):
+                self.match(dict(confirmation, journal_id=value))
+        self.assertEqual(self.match(confirmation)['journal_id'], journals[0])
+        report = self.workspace.bank_reconciliation('fictional-bank', 'matching')['report']
+        timing = dict(bank_account_id='fictional-bank', statement_id='matching', journal_id=journals[1],
+            role='deposit_in_transit', reason='Reviewed owner timing', binding=report['digest'], idempotency_key='timing')
+        for field in ('bank_account_id', 'statement_id', 'idempotency_key'):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, '80'):
+                self.workspace.action('bank-timing', dict(timing, **{field: 'x' * 81}))
+        self.workspace.action('bank-timing', timing)
+        report = self.workspace.bank_reconciliation('fictional-bank', 'matching')['report']
+        self.assertEqual(report['book_balance'], '250.00')
+        self.assertEqual(report['adjusted_bank_balance'], '250.00')
+        self.assertEqual(report['unexplained_difference'], '0.00')
+        self.assertEqual(self.workspace.state()['journal_count'], 2)
+
     def confirmation(self, key='confirm', row=None):
         row = row or self.view()['rows'][0]
         return dict(bank_account_id='fictional-bank', transaction_id=row['transaction_id'],

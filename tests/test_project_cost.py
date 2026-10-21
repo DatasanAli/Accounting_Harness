@@ -75,6 +75,39 @@ class ProjectCostTests(unittest.TestCase):
         self.assertEqual(self.workspace.report_package('2026-01-31'),before)
         self.assertEqual(self.workspace.project_dimensions('2026-01-31'),actuals)
 
+    def test_saved_cost_owns_nested_request_portions(self):
+        self.fixture()
+        before = self.workspace.report_package('2026-01-31')
+        data = self.data()
+        result = self.save(data)
+        frozen = json.loads(json.dumps(result))
+        data['direct_cost_portions'][0]['allocation_number'] = 99
+        self.assertEqual(result, frozen)
+        data['direct_cost_portions'].clear()
+        self.assertEqual(self.module().cost_sheet(result), frozen['cost_sheet'])
+        self.assertEqual(self.workspace.project_cost(result['version_id']), frozen)
+        self.assertEqual(self.workspace.report_package('2026-01-31'), before)
+
+    def test_returned_category_metadata_cannot_change_process_policy(self):
+        self.fixture()
+        module = self.module()
+        policy = json.loads(json.dumps(module.CATEGORY_POLICY))
+        self.addCleanup(module.CATEGORY_POLICY.update, policy)
+        result = self.save()
+        for name, outward in [('inputs', self.inputs()['category_policy']),
+                ('saved_sheet', result['cost_sheet']['category_policy']),
+                ('rendered_sheet', module.cost_sheet(result)['category_policy'])]:
+            with self.subTest(path=name):
+                try:
+                    outward['direct_nonlabor'].remove('software')
+                    outward['labor'].append('software')
+                    fresh = self.inputs()
+                    self.assertEqual(len(fresh['eligible_direct_costs']), 1)
+                    self.assertEqual(module.CATEGORY_POLICY, policy)
+                    self.assertEqual(fresh['category_policy'], policy)
+                finally:
+                    module.CATEGORY_POLICY.update(json.loads(json.dumps(policy)))
+
     def test_component_rounding_once_half_up_zero_and_large_exact_rates(self):
         self.module(); self.project(); self.time(1); self.time(1,identity='day2',day='2026-01-11')
         sheet=self.save(labor_rate='0.15',overhead_rate='0.14')['cost_sheet']

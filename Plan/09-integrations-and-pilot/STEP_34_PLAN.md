@@ -68,17 +68,18 @@ unsupported corrections/settlements and actual-pilot decisions plainly.
 **Files:** Focused end-to-end acceptance driver/tests/CLI and synthetic fixtures;
 root owns final browser rehearsal, release record, final whole-work review and CI.
 
-- [ ] RED if any reference-month operation still requires bypassing the reviewed
+- [x] RED if any reference-month operation still requires bypassing the reviewed
   application path; route through delivered templates and assert exact results.
-- [ ] Add `demo-acceptance` with independently asserted adjusted/closed reports,
+- [x] Add `demo-acceptance` with independently asserted adjusted/closed reports,
   control reconciliation, portable readback and unchanged pre-close captures.
-- [ ] Exercise separate bank, accrual, management, integration and recovery
+- [x] Resolve the discovered journal-reference composition gap: reviewed owner/prepaid journal IDs are longer than bank external-ID bounds; matching and timing must accept valid ledger references without relaxing bank/import identity rules. Add real reviewed-workflow regressions.
+- [x] Exercise separate bank, accrual, management, integration and recovery
   scenarios with published expected results and no mixing of scenario/actuals.
-- [ ] Verify unauthorized-action count zero across roles/entities/agent tools,
+- [x] Verify unauthorized-action count zero across roles/entities/agent tools,
   stale approval, hostile sources, revocation and replay/restart cases.
-- [ ] Root performs final authenticated browser workflow and restored UI checks;
+- [x] Root performs final authenticated browser workflow and restored UI checks;
   record actual viewport/keyboard behavior and source→approval→journal trace.
-- [ ] Run guarded full suite, foundation, every documented demo and JS/diff checks;
+- [x] Run guarded full suite, foundation, every documented demo and JS/diff checks;
   perform one final whole-work independent review including all deferred findings.
 - [ ] Resolve reviewed blocking findings with one focused fix/re-review wave,
   commit/push and inspect exact remote CI. Publish exact evidence and live gates.

@@ -1,7 +1,7 @@
-# Active delivery: Step 34 synthetic acceptance
+# Active delivery: final upload and exact CI
 
-Step 33b is delivered with exact-commit CI: **922 tests and 48 demonstrations**, native read-only status/record/recovery checks, and independent re-review. A keyboard skip-link refresh loophole was fixed and verified against unchanged stores. See [verification](09-integrations-and-pilot/STEP_33B_VERIFICATION.md) for upload and exact CI evidence.
+Steps 32, 33a and 33b are delivered with exact-commit CI. Step 34 and the final adversarial fixes passed local verification: **931 tests, 49 demonstrations**, authenticated native-browser trace/reports and fresh two-entity recovery. No review findings remain open.
 
-Continue autonomously with [Step 34](09-integrations-and-pilot/STEP_34_PLAN.md), then the final cross-phase adversarial review and correction of findings under the [authorized campaign](AUTONOMOUS_DELIVERY.md). Use authenticated preparation and separate review for the complete reference month; retain exact report and recovery evidence.
+Finish the Step 34 commit, push and exact GitHub CI, then record delivery. See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md), [final review](09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) and the [authorized campaign](AUTONOMOUS_DELIVERY.md).
 
-Live providers, real sandbox import/export, model accuracy and actual real-data pilot acceptance remain deferred.
+Live providers, real sandbox import/export, model accuracy and actual real-data pilot acceptance remain deferred. Optional Phase 10 is outside this campaign.

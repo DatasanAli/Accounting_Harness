@@ -3,7 +3,7 @@ import json
 from dataclasses import asdict
 from datetime import datetime, timezone
 
-from accounting_harness.bank import BankStatementService, identifier, signed_amount, signed_cents
+from accounting_harness.bank import BankStatementService, identifier, journal_reference, signed_amount, signed_cents
 from accounting_harness.persistence import _canonical as canonical
 from accounting_harness.review import digest, protect_table
 
@@ -185,6 +185,8 @@ class ReconciliationService:
             if key == 'reason':
                 if type(value) is not str or not value.strip() or len(value)>1000 or '\x00' in value:
                     raise ValueError('timing review requires a nonempty reason of at most 1000 characters')
+            elif key == 'journal_id':
+                journal_reference(value)
             else:
                 identifier(value,key)
         identifier(actor_id,'actor_id')

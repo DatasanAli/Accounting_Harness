@@ -1,6 +1,6 @@
 # Phase 09: Access, integrations and controlled pilot
 
-Status: Step 32 is delivered with exact CI. Step 33a is delivered: 899 tests/47 demos, restored-browser rehearsal, independent re-review and exact CI passed; see [verification](STEP_33A_VERIFICATION.md) for final delivery evidence. Step 33b is also delivered: 922 tests/48 demos, read-only native browser, independent re-review and exact CI passed; [delivery evidence](STEP_33B_VERIFICATION.md). The autonomous campaign continues with 34 and final adversarial review/fixes. Live connections and actual pilot acceptance remain deferred.
+Status: Step 32 is delivered with exact CI. Step 33a is delivered: 899 tests/47 demos, restored-browser rehearsal, independent re-review and exact CI passed; see [verification](STEP_33A_VERIFICATION.md) for final delivery evidence. Step 33b is also delivered: 922 tests/48 demos, read-only native browser, independent re-review and exact CI passed; [delivery evidence](STEP_33B_VERIFICATION.md). Step 34 and final adversarial fixes passed locally (931 tests/49 demos, native browser and recovery); final upload and exact CI are pending. See [acceptance](STEP_34_VERIFICATION.md) and [final review](ADVERSARIAL_REVIEW.md). Live connections and actual pilot acceptance remain deferred.
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 

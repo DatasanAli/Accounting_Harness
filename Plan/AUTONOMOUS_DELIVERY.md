@@ -7,8 +7,8 @@ The user authorized autonomous completion on 2026-10-21 of the remaining numbere
 | 32: separately authorized offline journal export | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_32_VERIFICATION.md) |
 | 33a: coherent backup and verified relocation | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_33A_VERIFICATION.md) |
 | 33b: redacted operational visibility | Delivered; exact CI passed | [Verification](09-integrations-and-pilot/STEP_33B_VERIFICATION.md) |
-| 34: authenticated synthetic release rehearsal | In progress | Pending |
-| Cross-phase adversarial review and fixes | Pending | Pending |
+| 34: authenticated synthetic release rehearsal | Locally verified; final upload/CI pending | [Acceptance](09-integrations-and-pilot/STEP_34_VERIFICATION.md) |
+| Cross-phase adversarial review and fixes | Complete; all five findings fixed and re-reviewed | [Final review](09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) |
 
 The optional Phase 10 backlog is outside this campaign. Live model evaluation, real sandbox connections and actual real-data pilot acceptance remain deferred. No offline result satisfies those gates.
 
@@ -26,4 +26,4 @@ After Step 34, independently challenge these boundaries and correct material fin
 - Recovery: complete group roster, coherent maintenance snapshot, strict manifest/path handling, historical identity preservation, authenticated relocation, session revocation and disabled transports.
 - Reports and management: captured snapshot reproducibility, portable exact readback and separation of modeled assumptions from actual journals.
 
-Carry-forward review items: receipt list/tuple validation consistency, shared revenue validation errors using an expense label. These must receive an explicit disposition in the final review record.
+Carry-forward review items: receipt list/tuple validation consistency, shared revenue validation errors using an expense label. Both were corrected and independently rechecked; all dispositions are in the final review record.
