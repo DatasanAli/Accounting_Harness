@@ -6,6 +6,8 @@ Commit [`0a7b181`](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b1
 
 See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md), [final review](09-integrations-and-pilot/ADVERSARIAL_REVIEW.md) and the [completed campaign](AUTONOMOUS_DELIVERY.md). No further numbered offline implementation remains. Optional Phase 10 is outside this campaign.
 
-Live model evaluation, real sandbox import/export and actual real-data pilot acceptance remain deferred. A possible separately requested next prompt is:
+The requested [deferred live verification plan](09-integrations-and-pilot/LIVE_VERIFICATION_GATES.md) is now prepared locally. It separates offline prerequisites, current-document checks, receipt and operational-provider evaluations, sandbox reads, one bounded export and separately authorized drift testing. No network calls, credentials inspection or live gate execution occurred while preparing the plan; all live gates remain pending. Actual real-data pilot acceptance remains deferred.
 
-> Plan the deferred live-provider and sandbox verification gates. List the required configuration, policy decisions and acceptance evidence before making any external calls.
+Next prompt:
+
+> Prepare G0's decision record and refine the offline prerequisite implementation plan from LIVE_VERIFICATION_GATES.md. Do not make network calls, inspect credentials or enable live transports.

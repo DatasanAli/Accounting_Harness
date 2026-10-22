@@ -10,6 +10,8 @@ Step 12 provider adapters/offline evaluation are implemented; live evaluation is
 
 The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). The remaining numbered offline implementation and adversarial review are complete. No further numbered offline step remains. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 
+The subsequent planning request is recorded in [deferred live verification gates](09-integrations-and-pilot/LIVE_VERIFICATION_GATES.md). This is a locally prepared plan only: no external calls or credential inspection, no new implementation, and no live gate marked passed. Provider scoring, sandbox transport/OAuth prerequisites, bounded experiments and separate approvals are explicit. GitHub upload of this planning update has not been performed under the no-external-calls constraint.
+
 ## Verified application boundary
 
 The persistent localhost app has exact USD cents, audited source enrollment,

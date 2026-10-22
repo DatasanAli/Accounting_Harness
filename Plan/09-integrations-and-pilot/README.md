@@ -4,6 +4,8 @@ Status: Step 32 is delivered with exact CI. Step 33a is delivered: 899 tests/47 
 
 **Depends on:** Steps 02–28 for this default sequence; may reprioritize after the local bookkeeping demo. No live connector or deployment is implied by this plan.
 
+Deferred work is now organized in the [live verification gate plan](LIVE_VERIFICATION_GATES.md). It is planning-only and leaves every live gate pending. Existing offline delivery evidence remains unchanged.
+
 **Outcome:** A specifically scoped pilot has authenticated access, reconciled integration, a review interface and tested recovery.
 
 **Source basis:** Volume 1 §§7.1, 8.2–8.5; operational security, adapter and recovery design are engineering additions. See the [source map](../SOURCE_MAP.md).
