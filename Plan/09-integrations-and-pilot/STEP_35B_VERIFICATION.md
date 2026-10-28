@@ -53,8 +53,14 @@ preserved the report and request count; a one-request cap remained incomplete.
 Foundation, JavaScript syntax and diff checks passed.
 
 The complete application suite passed **967 tests in 188.978 seconds**, with no
-failures or ResourceWarnings. Exact-commit GitHub evidence is pending; no upload
-or CI success is claimed until observed.
+failures or ResourceWarnings. Implementation commit [`657481c`](https://github.com/DatasanAli/Accounting_Harness/commit/657481c5cbc3b97eb256d99d87321bf433b107d3)
+was pushed and matched `origin/main`. [Exact-commit GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40731822177)
+passed **967 tests in 288.795 seconds and all 51 demonstrations**. The hosted
+scoring demo also confirmed 14/14, 6/6, 4/4, 66 requests, zero agent effects and
+87 separate reviewer setup postings. Independent re-review has no remaining findings.
+
+Step 35 is complete in its defined offline provider-control scope. G0 and the live
+gates remain incomplete. Unrelated untracked user files were preserved.
 
 ## Reproduce
 

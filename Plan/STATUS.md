@@ -2,16 +2,20 @@
 
 Updated: 2026-10-28.
 
-**Current delivery:** [Step 35b authenticated offline scoring](09-integrations-and-pilot/STEP_35B_VERIFICATION.md)
-is implemented. Independent re-review passed; all 967 tests, 51 demonstrations,
-foundation/JavaScript/diff checks passed locally. GitHub shipping is in progress. Live gates remain pending.
+**Delivered:** [Step 35b authenticated offline scoring](09-integrations-and-pilot/STEP_35B_VERIFICATION.md):
+14/14 exact proposals, 6/6 handoffs, 4/4 repeats, zero agent financial/close effects;
+66 synthetic requests and 87 separate reviewer dependency postings. All 967 tests
+and 51 demos passed locally and in [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40731822177).
+Commit [`657481c`](https://github.com/DatasanAli/Accounting_Harness/commit/657481c5cbc3b97eb256d99d87321bf433b107d3) was pushed and matched `origin/main`.
+Independent review fixes passed re-review. Step 35's offline provider controls are
+complete; remaining G0 decisions, public compatibility review and live gates are next.
 
 **Delivered:** [Step 35a durable evaluation controls](09-integrations-and-pilot/STEP_35A_VERIFICATION.md):
 immutable experiment budgets, frozen semantic manifest and crash/deadline refusal.
 Independent review fixes were rechecked; 950 tests and all 50 demonstrations passed
 in [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40721400386). Commit [`ffed155`](https://github.com/DatasanAli/Accounting_Harness/commit/ffed1553da35bcff3bb763b960a097ba54d35acd)
 was pushed and matched `origin/main`. [Step 35b authenticated scoring](09-integrations-and-pilot/STEP_35_PLAN.md)
-is under verification; [G0 decisions](09-integrations-and-pilot/G0_DECISIONS.md) and all live gates
+is delivered; [G0 decisions](09-integrations-and-pilot/G0_DECISIONS.md) and all live gates
 remain incomplete. The original 01–34 campaign below remains complete.
 
 **Delivered:** Steps 01–11 and offline/local slices 12a–34. Step 31c local

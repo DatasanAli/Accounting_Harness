@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "current_step": "34",
-  "next_step": "35",
+  "current_step": "35",
+  "next_step": null,
   "phases": [
     {
       "id": "01",
@@ -494,7 +494,7 @@
         {
           "id": "35",
           "title": "Offline operational evaluation prerequisites",
-          "status": "ready",
+          "status": "complete",
           "substeps": [
             {
               "id": "35a",
@@ -506,10 +506,14 @@
             {
               "id": "35b",
               "title": "Authenticated semantic scoring integration",
-              "status": "ready"
+              "status": "complete",
+              "commit": "657481c5cbc3b97eb256d99d87321bf433b107d3",
+              "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/40731822177"
             }
           ],
-          "delivery_scope": "Offline controls and scoring; live provider selection and execution remain separately gated"
+          "delivery_scope": "Offline controls and scoring; live provider selection and execution remain separately gated",
+          "commit": "657481c5cbc3b97eb256d99d87321bf433b107d3",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/40731822177"
         }
       ]
     }

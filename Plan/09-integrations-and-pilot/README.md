@@ -147,6 +147,7 @@ The [G0 decision record](G0_DECISIONS.md) distinguishes selected offline scope
 from unselected operator, provider, account and live-experiment decisions.
 Step 35a is delivered: [verification](STEP_35A_VERIFICATION.md), commit
 [`ffed155`](https://github.com/DatasanAli/Accounting_Harness/commit/ffed1553da35bcff3bb763b960a097ba54d35acd), [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40721400386)
-(950 tests/50 demos). Step 35b is implemented and undergoing final verification;
-see its [plan](STEP_35B_PLAN.md) and [verification](STEP_35B_VERIFICATION.md). G0
-remains incomplete.
+(950 tests/50 demos). Step 35b is delivered: [plan](STEP_35B_PLAN.md),
+[verification](STEP_35B_VERIFICATION.md), commit [`657481c`](https://github.com/DatasanAli/Accounting_Harness/commit/657481c5cbc3b97eb256d99d87321bf433b107d3),
+[exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40731822177) (967 tests/51 demos). Step 35's offline provider-control scope
+is complete. G0 and all live gates remain incomplete.

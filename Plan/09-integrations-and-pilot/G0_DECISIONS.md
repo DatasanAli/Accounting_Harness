@@ -1,6 +1,6 @@
 # G0 decision record — 2026-10-28
 
-Status: offline prerequisites in progress; G0 is not complete. This record does
+Status: provider-control slices 35a/35b delivered; G0 is not complete. This record does
 not authorize live calls or claim operator/account decisions have been made.
 
 | Decision | Recorded choice / remaining requirement |
