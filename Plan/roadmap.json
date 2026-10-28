@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "current_step": "34",
-  "next_step": null,
+  "next_step": "35",
   "phases": [
     {
       "id": "01",
@@ -490,6 +490,24 @@
             "Real sandbox import/export compatibility",
             "Actual entity policies, operators and real-data pilot acceptance"
           ]
+        },
+        {
+          "id": "35",
+          "title": "Offline operational evaluation prerequisites",
+          "status": "ready",
+          "substeps": [
+            {
+              "id": "35a",
+              "title": "Durable evaluation budgets and semantic manifest",
+              "status": "ready"
+            },
+            {
+              "id": "35b",
+              "title": "Authenticated semantic scoring integration",
+              "status": "planned"
+            }
+          ],
+          "delivery_scope": "Offline controls and scoring; live provider selection and execution remain separately gated"
         }
       ]
     }

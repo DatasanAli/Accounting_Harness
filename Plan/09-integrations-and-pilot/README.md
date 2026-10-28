@@ -133,3 +133,16 @@ Copyable prompt:
 The phase is complete only when each of its steps has its own observed verification and GitHub delivery evidence. Apply the [shared testing rules](../TESTING_STRATEGY.md) and [GitHub workflow](../GITHUB_WORKFLOW.md).
 
 A failed sync stops at a recoverable checkpoint. Do not retry non-idempotent writes blindly. Exporting journals is not permission to send money. Preserve ledger history during recovery.
+
+
+### Step 35: Offline operational evaluation prerequisites
+
+The 2026-10-28 build-and-ship request begins G0 implementation, split in the
+[Step 35 plan](STEP_35_PLAN.md). Step 35a adds durable aggregate reservations,
+restart/crash refusal, process deadlines and the frozen semantic manifest.
+Step 35b connects these controls to authenticated semantic scoring. No live
+provider or sandbox gate is passed by either offline delivery.
+
+The [G0 decision record](G0_DECISIONS.md) distinguishes selected offline scope
+from unselected operator, provider, account and live-experiment decisions.
+[Step 35a verification](STEP_35A_VERIFICATION.md) records shipping evidence.

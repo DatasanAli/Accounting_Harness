@@ -267,6 +267,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-owner-prepaid-cash", help="review evidenced owner contribution, drawing and prepaid purchase cash entries")
     commands.add_parser("demo-operational-agent", help="run bounded offline operational agent contract cases")
     commands.add_parser("demo-workbench", help="demonstrate authenticated workbench presentation and HTTP route contracts")
+    commands.add_parser('demo-evaluation-budget', help='offline durable evaluation limits and semantic manifest')
     commands.add_parser('demo-acceptance', help='authenticated synthetic release rehearsal; offline only')
     commands.add_parser('demo-operations-status', help='redacted local alerts and read-only recovery status')
     status_parser = commands.add_parser('operations-status', help='authenticated redacted status; prompts for password, no credential argv')
@@ -298,7 +299,10 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'demo-acceptance':
+        if args.command == 'demo-evaluation-budget':
+            from accounting_harness.operational_evaluation import demo_evaluation_budget
+            demo_evaluation_budget()
+        elif args.command == 'demo-acceptance':
             from accounting_harness.acceptance import demo_acceptance
             demo_acceptance()
         elif args.command == 'demo-operations-status':

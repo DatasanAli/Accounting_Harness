@@ -3,6 +3,7 @@
 import json
 import multiprocessing
 import os
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -85,20 +86,31 @@ def bounded_request(worker, arguments, *, timeout_ms, cancelled):
     receive, send = context.Pipe(duplex=False)
     process = context.Process(target=worker, args=(send, *arguments))
     deadline = time.monotonic_ns() + timeout_ms * 1_000_000
+    received = threading.Event()
+    message = []
+    reader = None
+    def read_message():
+        # poll() only guarantees some pipe bytes, not a complete pickled frame.
+        # Keep receive off the supervisor so a partial frame cannot block timeout.
+        try:
+            message.append(receive.recv())
+        except Exception:
+            message.append(('error', 'provider_unavailable'))
+        finally:
+            received.set()
     try:
         process.start()
         send.close()
+        reader = threading.Thread(target=read_message, name='accounting-provider-receive', daemon=True)
+        reader.start()
         while True:
             if cancelled():
                 raise ProviderFailure('provider_cancelled')
             remaining = (deadline - time.monotonic_ns()) / 1_000_000_000
             if remaining <= 0:
                 raise ProviderFailure('provider_timeout')
-            if receive.poll(min(0.05, remaining)):
-                try:
-                    status, result = receive.recv()
-                except EOFError:
-                    raise ProviderFailure('provider_unavailable') from None
+            if received.wait(min(0.05, remaining)):
+                status, result = message[0]
                 if status != 'ok':
                     raise ProviderFailure(result)
                 return result
@@ -110,6 +122,8 @@ def bounded_request(worker, arguments, *, timeout_ms, cancelled):
             if process.is_alive():
                 process.kill()
                 process.join()
+        if reader is not None:
+            reader.join(timeout=1)
         receive.close()
         send.close()
 

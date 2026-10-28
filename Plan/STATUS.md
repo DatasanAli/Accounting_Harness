@@ -1,6 +1,14 @@
 # Current status
 
-Updated: 2026-10-21.
+Updated: 2026-10-28.
+
+**Current delivery:** [Step 35a durable evaluation controls](09-integrations-and-pilot/STEP_35A_VERIFICATION.md)
+implements the first bounded G0 prerequisite. Local verification passed (948 full-suite
+tests plus the two additional focused cases, all 50 demos); independent re-review
+found no remaining Important/Critical findings. GitHub shipping is in progress. The [Step 35 plan](09-integrations-and-pilot/STEP_35_PLAN.md)
+splits authenticated scoring into 35b; [G0 decisions](09-integrations-and-pilot/G0_DECISIONS.md)
+and all live gates remain incomplete. The original 01–34 offline campaign below
+remains complete; this is newly requested follow-up work.
 
 **Delivered:** Steps 01–11 and offline/local slices 12a–34. Step 31c local
 verification, native browser rehearsal, independent review, upload and exact CI
@@ -8,7 +16,7 @@ passed; see [verification](09-integrations-and-pilot/STEP_31C_VERIFICATION.md).
 Step 12 provider adapters/offline evaluation are implemented; live evaluation is deferred.
 **Delivered:** [Step 32 approved offline journal export](09-integrations-and-pilot/STEP_32_VERIFICATION.md): 879 tests/46 demos, native browser and independent re-review passed. Commit `9bc2e49` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39665520410) verified. Step 33a is also delivered: 899 tests/47 demos, restored browser and independent re-review passed; commit `ea85484` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39669686628). [Recovery evidence](09-integrations-and-pilot/STEP_33A_VERIFICATION.md). Step 33b is delivered: 922 tests/48 demos, read-only native browser and independent re-review passed; commit `8e451a9` and [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39672699408) verified. [Status evidence](09-integrations-and-pilot/STEP_33B_VERIFICATION.md). Step 34 and final adversarial fixes are delivered: 931 tests/49 demos, native browser and fresh recovery. Commit [`0a7b181`](https://github.com/DatasanAli/Accounting_Harness/commit/0a7b181424ce1944cc894897c8d727725bba8fc6) was pushed and matched `origin/main`; [exact GitHub CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/39676697662) passed. See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md).
 
-The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). The remaining numbered offline implementation and adversarial review are complete. No further numbered offline step remains. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
+The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). The remaining numbered offline implementation and adversarial review are complete. No further numbered offline step remains in that original campaign. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 
 The subsequent planning request is recorded in [deferred live verification gates](09-integrations-and-pilot/LIVE_VERIFICATION_GATES.md). This is a locally prepared plan only: no external calls or credential inspection, no new implementation, and no live gate marked passed. Provider scoring, sandbox transport/OAuth prerequisites, bounded experiments and separate approvals are explicit. GitHub upload of this planning update has not been performed under the no-external-calls constraint.
 

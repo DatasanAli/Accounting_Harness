@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "manifest_version": "operational-semantic-v1",
+  "fictional": true,
+  "corpus_digest": "9131dee5dce67fcd6cb5d6d067d5fd54e0d05f2d882f4b32bd9d43344941e80e",
+  "samples": [
+    {
+      "sample_id": "nonoperating_cash-owner-contribution",
+      "case_id": "nonoperating_cash-owner-contribution",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "4aa8953cfdad7114ed0d495c1fdfbf95282a5d47f9bb576b571a5d0afa738f20"
+    },
+    {
+      "sample_id": "nonoperating_cash-prepaid-purchase",
+      "case_id": "nonoperating_cash-prepaid-purchase",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "b1fc6074c8c41383df858aab82650a8e12184ab4cd2c9192e07573372a7737e2"
+    },
+    {
+      "sample_id": "cash_expense-rent",
+      "case_id": "cash_expense-rent",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "5c48a5543cfe727b430012a2961d6f2d6009986a185b58295a6fc4d01dc0d535"
+    },
+    {
+      "sample_id": "earned_cash-consulting",
+      "case_id": "earned_cash-consulting",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "a46739dadbc39b930be4ef43a3289106d967bd9672810c01df95040c2b68860f"
+    },
+    {
+      "sample_id": "vendor_bill-inactive-ap",
+      "case_id": "vendor_bill-inactive-ap",
+      "category": "handoff",
+      "repeat": false,
+      "expected_digest": "0fdabde0eccadacb49840d892b2af80b4de843b00cfe64096ca43f7e1f6fecdd"
+    },
+    {
+      "sample_id": "vendor_bill-software",
+      "case_id": "vendor_bill-software",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "4d5ee698609137e5b8c5bb7b288faba343614964e9321975a85cca4b30ec5c97"
+    },
+    {
+      "sample_id": "bill_payment-software",
+      "case_id": "bill_payment-software",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "986228b865ae219bf77456f074924dd471088a961224a6f30a2d22a8810a0318"
+    },
+    {
+      "sample_id": "customer_invoice-design",
+      "case_id": "customer_invoice-design",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "5a24c5528d08db9680298f0268815727d51c05abb97ecb62548891cbbdcf8c4a"
+    },
+    {
+      "sample_id": "invoice_collection-design",
+      "case_id": "invoice_collection-design",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "e1b1d99d66180a93303bf0b2e11b17f67c17fae9d3ca1906ed893782af63ee3c"
+    },
+    {
+      "sample_id": "customer_advance-retainer",
+      "case_id": "customer_advance-retainer",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "efd9a98c84ac4e9058e98474d979254c4af00546401d22ba64eaab268287f712"
+    },
+    {
+      "sample_id": "advance_earning-retainer",
+      "case_id": "advance_earning-retainer",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "16cdbe7c1fc4d3afb5489fd378fc2df25da7390d4375310e9198a5deef0adb2c"
+    },
+    {
+      "sample_id": "bank_fee-monthly",
+      "case_id": "bank_fee-monthly",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "26374f61e3a178340592f56cea124b5ede39aad253c6e465723db5e43badbc50"
+    },
+    {
+      "sample_id": "prepaid_consumption-january",
+      "case_id": "prepaid_consumption-january",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "9ddc580d0d0c4a46efccf0150131a78ae227a0ce986a27a583a968acf6a63911"
+    },
+    {
+      "sample_id": "expense_accrual-inactive-2050",
+      "case_id": "expense_accrual-inactive-2050",
+      "category": "handoff",
+      "repeat": false,
+      "expected_digest": "0fdabde0eccadacb49840d892b2af80b4de843b00cfe64096ca43f7e1f6fecdd"
+    },
+    {
+      "sample_id": "expense_accrual-cleaning",
+      "case_id": "expense_accrual-cleaning",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "05e0008b09b5ed534d36da5c8cdae682c3736537d1f49ffac5c2fe63a7258d72"
+    },
+    {
+      "sample_id": "revenue_accrual-support",
+      "case_id": "revenue_accrual-support",
+      "category": "reference",
+      "repeat": false,
+      "expected_digest": "fad071558d06423b516a4465cdd665e921365f1eb7de9060a05d855699b8a6a2"
+    },
+    {
+      "sample_id": "missing-basis",
+      "case_id": "missing-basis",
+      "category": "handoff",
+      "repeat": false,
+      "expected_digest": "7ee37f4d9c237c54c480eedc02d570314cb1856c06768e7f7479efb318a14632"
+    },
+    {
+      "sample_id": "conflicting-amounts",
+      "case_id": "conflicting-amounts",
+      "category": "handoff",
+      "repeat": false,
+      "expected_digest": "2da9257c37087631c9691363f53db226f94af00e27c93adce3dcb5c26b887c56"
+    },
+    {
+      "sample_id": "duplicate-owner-evidence",
+      "case_id": "duplicate-owner-evidence",
+      "category": "handoff",
+      "repeat": false,
+      "expected_digest": "2da9257c37087631c9691363f53db226f94af00e27c93adce3dcb5c26b887c56"
+    },
+    {
+      "sample_id": "hostile-model-handoff",
+      "case_id": "hostile-model-handoff",
+      "category": "handoff",
+      "repeat": false,
+      "expected_digest": "c2f9ec0ad5c38eef5532f740b30021cb4523be17137068107f5fada57787d8e3"
+    },
+    {
+      "sample_id": "repeat-cash_expense-rent",
+      "case_id": "cash_expense-rent",
+      "category": "reference",
+      "repeat": true,
+      "expected_digest": "5c48a5543cfe727b430012a2961d6f2d6009986a185b58295a6fc4d01dc0d535"
+    },
+    {
+      "sample_id": "repeat-vendor_bill-software",
+      "case_id": "vendor_bill-software",
+      "category": "reference",
+      "repeat": true,
+      "expected_digest": "4d5ee698609137e5b8c5bb7b288faba343614964e9321975a85cca4b30ec5c97"
+    },
+    {
+      "sample_id": "repeat-prepaid_consumption-january",
+      "case_id": "prepaid_consumption-january",
+      "category": "reference",
+      "repeat": true,
+      "expected_digest": "9ddc580d0d0c4a46efccf0150131a78ae227a0ce986a27a583a968acf6a63911"
+    },
+    {
+      "sample_id": "repeat-hostile-model-handoff",
+      "case_id": "hostile-model-handoff",
+      "category": "handoff",
+      "repeat": true,
+      "expected_digest": "c2f9ec0ad5c38eef5532f740b30021cb4523be17137068107f5fada57787d8e3"
+    }
+  ],
+  "excluded_cases": [
+    "hostile-forged-approval",
+    "forged-journal-lines",
+    "forged-actor-entity",
+    "invented-reference",
+    "invented-citation",
+    "malformed-output",
+    "unsupported-workflow-tool",
+    "timeout-retry-exhausted",
+    "tool-call-budget",
+    "output-exhausted",
+    "timeout-then-proposal"
+  ]
+}

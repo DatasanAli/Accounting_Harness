@@ -8,6 +8,14 @@
 
 **Basis:** [completed acceptance](STEP_34_VERIFICATION.md), [Step 12 contract](../04-agent-harness/STEP_12_PLAN.md), [operational agent contract](STEP_31B_PLAN.md), [sandbox read](STEP_30_PLAN.md), [export](STEP_32_PLAN.md), [recovery](RECOVERY_RUNBOOK.md), and [local setup](LOCAL_SYNTHETIC_RUNBOOK.md). This plan is based on repository inspection, not newly verified external documentation. Model availability, prices, OAuth requirements and remote API semantics must be checked at G1.
 
+## Follow-up implementation
+
+The 2026-10-28 build-and-ship request starts the offline prerequisite work in
+[Step 35](STEP_35_PLAN.md), with decisions tracked in [G0](G0_DECISIONS.md).
+The original planning-only restriction above describes the 2026-10-21 task.
+Shipping the new offline implementation includes authorized GitHub access;
+provider calls, sandbox calls and all live-gate decisions remain separate.
+
 ## Existing capability and actual gaps
 
 | Area | Existing local implementation | Prerequisite for live evidence |

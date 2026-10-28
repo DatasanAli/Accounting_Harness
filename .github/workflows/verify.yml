@@ -117,3 +117,5 @@ jobs:
         run: python3 -m accounting_harness demo-operations-status
       - name: Demonstrate authenticated synthetic release acceptance
         run: python3 -m accounting_harness demo-acceptance
+      - name: Demonstrate durable offline evaluation budgets
+        run: python3 -m accounting_harness demo-evaluation-budget
