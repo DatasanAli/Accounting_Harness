@@ -139,12 +139,24 @@ class AuthenticatedWorkspace:
         workspace.authority_guard = lambda: self._guard(token, entity, 'stage_external')
         return workspace.action('qbo-read', data)
 
-    def _agent_run(self, token, entity, data):
-        from accounting_harness.operational_agent import continue_run, start_run
+    def evaluate_operational(self, token, entity, data, adapter):
+        """Trusted offline evaluator entry; untrusted HTTP cannot inject adapters."""
+        from accounting_harness.operational_agent import OfflineEvaluationProvider
+        if type(adapter) is not OfflineEvaluationProvider:
+            raise ValueError('offline evaluation adapter required')
+        return self._agent_run(token, entity, data, evaluation_adapter=adapter)
+
+    def _agent_run(self, token, entity, data, *, evaluation_adapter=None):
+        from accounting_harness.operational_agent import continue_run, start_run, start
         # Validate and bind the run under the identity lock; provider calls happen
         # outside it, and every run transaction and tool effect rechecks authority.
         def begin(principal):
             workspace = self._workspace(principal)
+            if evaluation_adapter is not None:
+                from accounting_harness.workspace import fields
+                fields(data, dict(run_id=str, workflow=str, source_ids=list, target_ids=list, operator=dict))
+                start(workspace, **data, adapter=evaluation_adapter)
+                return workspace, evaluation_adapter
             return workspace, start_run(workspace, data)
         workspace, adapter = self.access.perform(token, entity, 'start_run', begin)
         workspace.authority_guard = lambda: self._guard(token, entity, 'start_run')

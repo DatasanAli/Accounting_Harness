@@ -30,6 +30,9 @@ including access revocation/restart and sanitized result capture. Actual selecte
 provider/model, budget approval and G1 compatibility remain prerequisites to live
 execution; this plan does not infer them from credentials.
 
+The detailed [Step 35b implementation plan](STEP_35B_PLAN.md) defines the authenticated
+scorer, durable sample claims, failure denominators and offline-only command.
+
 ## Step 35a implementation and acceptance
 
 Reuse SQLite, the existing immutable-table helper and provider process deadline

@@ -15,6 +15,8 @@ The 2026-10-28 build-and-ship request starts the offline prerequisite work in
 The original planning-only restriction above describes the 2026-10-21 task.
 Shipping the new offline implementation includes authorized GitHub access;
 provider calls, sandbox calls and all live-gate decisions remain separate.
+[Step 35b](STEP_35B_VERIFICATION.md) exercises authenticated scoring with injected
+synthetic responses; it does not enable or verify a live experiment.
 
 ## Existing capability and actual gaps
 

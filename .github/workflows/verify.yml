@@ -119,3 +119,5 @@ jobs:
         run: python3 -m accounting_harness demo-acceptance
       - name: Demonstrate durable offline evaluation budgets
         run: python3 -m accounting_harness demo-evaluation-budget
+      - name: Demonstrate authenticated offline operational scoring
+        run: python3 -m accounting_harness demo-operational-evaluation

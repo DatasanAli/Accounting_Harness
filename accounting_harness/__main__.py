@@ -267,6 +267,9 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-owner-prepaid-cash", help="review evidenced owner contribution, drawing and prepaid purchase cash entries")
     commands.add_parser("demo-operational-agent", help="run bounded offline operational agent contract cases")
     commands.add_parser("demo-workbench", help="demonstrate authenticated workbench presentation and HTTP route contracts")
+    commands.add_parser('demo-operational-evaluation', help='authenticated offline semantic scoring; no live calls')
+    operational_eval = commands.add_parser('eval-operational', help='create or resume a synthetic offline evaluation')
+    operational_eval.add_argument('--directory', required=True, type=Path)
     commands.add_parser('demo-evaluation-budget', help='offline durable evaluation limits and semantic manifest')
     commands.add_parser('demo-acceptance', help='authenticated synthetic release rehearsal; offline only')
     commands.add_parser('demo-operations-status', help='redacted local alerts and read-only recovery status')
@@ -299,7 +302,16 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'demo-evaluation-budget':
+        if args.command == 'demo-operational-evaluation':
+            from accounting_harness.operational_scoring import demo_operational_evaluation
+            demo_operational_evaluation()
+        elif args.command == 'eval-operational':
+            from accounting_harness.operational_scoring import OperationalEvaluation
+            with OperationalEvaluation(args.directory) as evaluation:
+                report = evaluation.run()
+            print(json.dumps(report, indent=2, sort_keys=True))
+            return 0 if report['offline_contract_passed'] else 1
+        elif args.command == 'demo-evaluation-budget':
             from accounting_harness.operational_evaluation import demo_evaluation_budget
             demo_evaluation_budget()
         elif args.command == 'demo-acceptance':

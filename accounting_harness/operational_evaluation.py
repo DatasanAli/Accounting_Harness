@@ -228,19 +228,21 @@ class EvaluationBudget:
             if not self._cancelled():
                 self.db.execute('INSERT INTO cancellation VALUES (1, ?)', (self._clock(),))
 
-    def dispatch(self, sample, worker, arguments=()):
+    def dispatch(self, sample, worker, arguments=(), *, timeout_ms=None, cancelled=None, usage_reader=None):
         """Run an explicit offline worker with the existing killable process boundary.
 
         Worker protocol is bounded_request's pipe protocol. Only its validated
-        cost_nanodollars value is retained; all other response fields are discarded.
+        cost is retained; the response is returned in memory to the trusted caller.
         No default worker, credential lookup, provider URL or network enable flag.
         """
+        if timeout_ms is not None:
+            _integer(timeout_ms, 'request timeout', 1)
         attempt = self.reserve(sample)
         outcome, cost = 'provider_failed', None
         stop_reason = None
         def should_stop():
             nonlocal stop_reason
-            if self._cancelled():
+            if self._cancelled() or (cancelled is not None and cancelled()):
                 stop_reason = 'cancelled'
             else:
                 try:
@@ -254,11 +256,11 @@ class EvaluationBudget:
             if remaining <= 0:
                 outcome = 'time_budget'
                 raise ValueError(outcome)
-            response = bounded_request(worker, arguments, timeout_ms=remaining, cancelled=should_stop)
+            response = bounded_request(worker, arguments, timeout_ms=min(remaining, timeout_ms) if timeout_ms is not None else remaining, cancelled=should_stop)
             if type(response) is not dict:
                 outcome = 'invalid_usage'
                 raise ValueError(outcome)
-            cost = response.get('cost_nanodollars')
+            cost = usage_reader(response) if usage_reader is not None else response.get('cost_nanodollars')
             if type(cost) is not int or not 0 <= cost <= self.policy['reservation_nanodollars']:
                 cost, outcome = None, 'invalid_usage'
                 raise ValueError(outcome)
@@ -269,6 +271,7 @@ class EvaluationBudget:
                 outcome = 'time_budget'
                 raise ValueError(outcome)
             outcome = 'received'
+            return response
         except ProviderFailure as error:
             outcome = stop_reason or {'provider_timeout': 'provider_timeout', 'provider_cancelled': 'cancelled'}.get(str(error), 'provider_failed')
             raise ValueError(outcome) from None
@@ -313,4 +316,5 @@ def demo_evaluation_budget():
     print('Frozen semantic manifest: 20 cases (14 reference, 6 handoff), 4 repeats; 11 injected faults excluded.')
     print('Reopened experiment: 2 requests, 100 reserved / 18 observed USD nanodollars; third request refused.')
     print('Interrupted reservation: retained, billing incomplete, reopen refused automatic resend.')
-    print('Offline controls only: zero network requests; authenticated scoring and live verification remain pending.')
+    print('Offline budget controls: zero network requests; authenticated scoring uses demo-operational-evaluation.')
+    print('Live verification remains a separate gate.')

@@ -1,17 +1,20 @@
-# Step 35a delivered; Step 35b next
+# Step 35b delivery in progress
 
-The 2026-10-28 request starts the planned offline prerequisites for live verification.
-[Step 35a](09-integrations-and-pilot/STEP_35A_VERIFICATION.md) adds durable evaluation
-budgets, deadline/crash controls and a frozen semantic manifest. Independent
-re-review passed. Commit [`ffed155`](https://github.com/DatasanAli/Accounting_Harness/commit/ffed1553da35bcff3bb763b960a097ba54d35acd)
-was pushed and matched `origin/main`; [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40721400386)
-passed **950 tests and all 50 demonstrations**.
+The user confirmed provider evaluation controls as the next scope. Step 35a is
+[delivered](09-integrations-and-pilot/STEP_35A_VERIFICATION.md). Step 35b now connects
+the durable budgets and frozen cases to authenticated offline scoring; see the
+[plan](09-integrations-and-pilot/STEP_35B_PLAN.md) and
+[verification](09-integrations-and-pilot/STEP_35B_VERIFICATION.md). Focused tests and
+independent re-review pass. All 967 tests and 51 demos pass locally; GitHub shipping
+and exact-SHA CI are in progress.
 
-[Step 35](09-integrations-and-pilot/STEP_35_PLAN.md) is split into independent
-substeps. Step 35b remains unimplemented. G0 operator/account choices are explicit
-in the [decision record](09-integrations-and-pilot/G0_DECISIONS.md); no live gate
-has passed. Optional Phase 10 is still unselected.
+This completes the planned provider-control implementation after verification,
+not G0 or any live gate. [G0 decisions](09-integrations-and-pilot/G0_DECISIONS.md)
+remain unselected for actual operators, provider/account/model, live budgets and
+sandbox ownership. Public compatibility review and sandbox prerequisites remain
+in [LIVE_VERIFICATION_GATES.md](09-integrations-and-pilot/LIVE_VERIFICATION_GATES.md).
+Optional Phase 10 is still unselected.
 
-Next prompt:
+Next prompt after delivery:
 
-> Build Step 35b: connect the durable evaluation controls and frozen manifest to authenticated operational scoring. Use synthetic fixtures and injected transports, test and demonstrate the access, restart, usage and scoring boundaries, then commit, push and verify exact-SHA CI. Keep live providers, credentials and sandbox connections disabled.
+> Prepare the remaining G0 decision checklist and G1 compatibility review using current official public documentation. Check the existing provider/model and proposed sandbox contracts. Do not inspect credentials, enable live transports, make provider or sandbox account calls, or change financial records.

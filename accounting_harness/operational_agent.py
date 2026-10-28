@@ -146,7 +146,7 @@ class OperationalRunEngine(SQLiteRunEngine):
 
     @staticmethod
     def _provider(provider):
-        if type(provider) not in (FakeProvider, OfflinePlayback, OpenAIOperationalProvider, OllamaOperationalProvider):
+        if type(provider) not in (FakeProvider, OfflinePlayback, OpenAIOperationalProvider, OllamaOperationalProvider, OfflineEvaluationProvider):
             raise TypeError('unsupported operational provider type')
         return provider.identity
 
@@ -512,6 +512,34 @@ class OllamaOperationalProvider:
     def frame(self, context, *, timeout_ms, cancelled):
         payload = (self.transport or request_ollama)(self.body(context), timeout_ms=timeout_ms, cancelled=cancelled)
         return parse_ollama(payload, self.model)
+
+
+@dataclass(frozen=True, slots=True)
+class OfflineEvaluationProvider:
+    """Server-owned synthetic worker; cannot be selected by HTTP provider input."""
+    budget: object = field(repr=False, compare=False)
+    sample_id: str
+    worker: object = field(repr=False, compare=False)
+    experiment_digest: str
+    usages: list = field(default_factory=list, repr=False, compare=False)
+    timeout_ms = live.TIMEOUT_MS
+
+    @property
+    def identity(self):
+        return dict(provider_version='offline-evaluation-tools-v1', model='synthetic-response-envelope',
+                    synthetic=True, prompt_version=PROMPT_VERSION, cost_unit='USD_nanodollar', reservation=RESERVATION,
+                    fingerprint=digest([SPEC_DIGEST, self.experiment_digest, self.sample_id, RESERVATION, self.timeout_ms]))
+
+    def frame(self, context, *, timeout_ms, cancelled):
+        try:
+            payload = self.budget.dispatch(self.sample_id, self.worker,
+                (OpenAIOperationalProvider.body(context), self.sample_id), timeout_ms=timeout_ms, cancelled=cancelled,
+                usage_reader=lambda response: parse_openai(response)[1]['cost_nanodollars'])
+        except ValueError:
+            raise live.ProviderFailure('evaluation_stopped') from None
+        frame, usage = parse_openai(payload)
+        self.usages.append(usage)
+        return frame, usage
 
 
 def limits(adapter):
