@@ -36,7 +36,16 @@ acceptance/recovery flows. Foundation, JavaScript syntax and diff checks pass.
 The final full-suite run passed **948 tests in 142.353 seconds**. The focused
 19-test run also passed after adding the two cancellation/redaction cases (950
 tests now discovered by the runner). The zero-test discovery guard is unchanged.
-GitHub shipping and exact-SHA CI are pending; no CI success is claimed yet.
+GitHub delivery verified: implementation commit [`ffed155`](https://github.com/DatasanAli/Accounting_Harness/commit/ffed1553da35bcff3bb763b960a097ba54d35acd) was
+pushed and matched `origin/main`. [Exact-commit CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40721400386) completed successfully,
+running **950 tests and all 50 demonstrations**. The earlier deferred-gate planning
+commit `2358d26` was included in this authorized push. Unrelated `.cognee-dataset`,
+`.vscode/` and `CLAUDE.md` files were left untouched and untracked.
+
+No browser rehearsal was added: this delivery changes an offline CLI/control and
+the shared process deadline helper, with no UI changes. Existing application,
+provider, acceptance and recovery checks passed. Step 35b and all live gates remain
+pending; this delivery is not a complete G0 or a live-model evaluation.
 
 ## Reproduce
 

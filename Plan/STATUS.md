@@ -2,13 +2,13 @@
 
 Updated: 2026-10-28.
 
-**Current delivery:** [Step 35a durable evaluation controls](09-integrations-and-pilot/STEP_35A_VERIFICATION.md)
-implements the first bounded G0 prerequisite. Local verification passed (948 full-suite
-tests plus the two additional focused cases, all 50 demos); independent re-review
-found no remaining Important/Critical findings. GitHub shipping is in progress. The [Step 35 plan](09-integrations-and-pilot/STEP_35_PLAN.md)
-splits authenticated scoring into 35b; [G0 decisions](09-integrations-and-pilot/G0_DECISIONS.md)
-and all live gates remain incomplete. The original 01–34 offline campaign below
-remains complete; this is newly requested follow-up work.
+**Delivered:** [Step 35a durable evaluation controls](09-integrations-and-pilot/STEP_35A_VERIFICATION.md):
+immutable experiment budgets, frozen semantic manifest and crash/deadline refusal.
+Independent review fixes were rechecked; 950 tests and all 50 demonstrations passed
+in [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40721400386). Commit [`ffed155`](https://github.com/DatasanAli/Accounting_Harness/commit/ffed1553da35bcff3bb763b960a097ba54d35acd)
+was pushed and matched `origin/main`. [Step 35b authenticated scoring](09-integrations-and-pilot/STEP_35_PLAN.md)
+is next; [G0 decisions](09-integrations-and-pilot/G0_DECISIONS.md) and all live gates
+remain incomplete. The original 01–34 campaign below remains complete.
 
 **Delivered:** Steps 01–11 and offline/local slices 12a–34. Step 31c local
 verification, native browser rehearsal, independent review, upload and exact CI
@@ -18,7 +18,7 @@ Step 12 provider adapters/offline evaluation are implemented; live evaluation is
 
 The 2026-10-21 request authorizes the [remaining offline campaign](AUTONOMOUS_DELIVERY.md). The remaining numbered offline implementation and adversarial review are complete. No further numbered offline step remains in that original campaign. Live provider/external-account connections and actual real-data pilot acceptance remain deferred.
 
-The subsequent planning request is recorded in [deferred live verification gates](09-integrations-and-pilot/LIVE_VERIFICATION_GATES.md). This is a locally prepared plan only: no external calls or credential inspection, no new implementation, and no live gate marked passed. Provider scoring, sandbox transport/OAuth prerequisites, bounded experiments and separate approvals are explicit. GitHub upload of this planning update has not been performed under the no-external-calls constraint.
+The subsequent planning request is recorded in [deferred live verification gates](09-integrations-and-pilot/LIVE_VERIFICATION_GATES.md). This is a locally prepared plan only: no external calls or credential inspection, no new implementation, and no live gate marked passed. Provider scoring, sandbox transport/OAuth prerequisites, bounded experiments and separate approvals are explicit. It was initially kept local under that request’s no-external-calls constraint; the subsequent 2026-10-28 build-and-ship request authorized its upload with Step 35a.
 
 ## Verified application boundary
 
