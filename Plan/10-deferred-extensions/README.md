@@ -1,6 +1,6 @@
 # Phase 10: Deferred extensions
 
-Status: straight-line depreciation selected on 2026-10-31 as Step 36; remaining extensions are an optional backlog. These topics have been accounted for in the source review but are outside the initial service-business workflow. Do not implement them merely because their chapters exist. Select an extension, confirm its policy inputs, and assign one small testable step before starting.
+Status: Step 36 straight-line depreciation delivered on 2026-10-31 with [verification and exact CI](STEP_36_VERIFICATION.md); remaining extensions are an optional backlog. These topics have been accounted for in the source review but are outside the initial service-business workflow. Do not implement them merely because their chapters exist. Select an extension, confirm its policy inputs, and assign one small testable step before starting.
 
 All extensions reuse exact money, evidence, approval, journal, reconciliation and reporting services. The [implementation](../IMPLEMENTATION_GUIDELINES.md), [testing](../TESTING_STRATEGY.md) and [delivery](../GITHUB_WORKFLOW.md) guidelines still apply. Each increment needs its own fictional demonstration, failure cases, commit, push and CI evidence.
 

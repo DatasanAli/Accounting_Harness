@@ -57,7 +57,7 @@ Policy `straight-line-full-month-final-remainder-v1`:
   ordered roadmap and update status/next-step guidance.
 - [x] Run focused tests, all tests, foundation, JavaScript syntax, all documented
   demos and diff checks. Obtain independent code review and resolve findings.
-- [ ] Commit only intended files, push without rewriting history, inspect remote
+- [x] Commit only intended files, push without rewriting history, inspect remote
   SHA and exact-SHA CI, then record delivery evidence.
 
 Rollback is a new software revert commit. This step creates no posted entries to

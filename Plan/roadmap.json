@@ -526,7 +526,9 @@
           "id": "36",
           "title": "Straight-line depreciation schedule",
           "status": "complete",
-          "delivery_scope": "Supplied-input projection only; asset enrollment and approved posting deferred"
+          "delivery_scope": "Supplied-input projection only; asset enrollment and approved posting deferred",
+          "commit": "4d146120bc9e669cab3cbf93fbfa716498f2ee91",
+          "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/41246529815"
         }
       ]
     }

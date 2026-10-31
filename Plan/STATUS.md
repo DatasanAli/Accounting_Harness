@@ -2,7 +2,7 @@
 
 Updated: 2026-10-31.
 
-**Locally verified:** [Step 36 straight-line depreciation](10-deferred-extensions/STEP_36_VERIFICATION.md) starts the user-selected Phase 10 extension. All 976 tests and 52 demonstrations passed; independent review found no Critical or Important issues. Exact-cent projection only, with full months and final-month remainder. Commit/upload and exact-SHA CI are pending. Phase 09 live gates remain deferred.
+**Delivered:** [Step 36 straight-line depreciation](10-deferred-extensions/STEP_36_VERIFICATION.md) starts the user-selected Phase 10 extension. All 976 tests and 52 demonstrations passed; independent review found no Critical or Important issues. Exact-cent projection only, with full months and final-month remainder. Commit [`4d14612`](https://github.com/DatasanAli/Accounting_Harness/commit/4d146120bc9e669cab3cbf93fbfa716498f2ee91) was pushed and matched `origin/main`; [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/41246529815) passed. Phase 09 live gates remain deferred.
 
 **Delivered:** [Step 35b authenticated offline scoring](09-integrations-and-pilot/STEP_35B_VERIFICATION.md):
 14/14 exact proposals, 6/6 handoffs, 4/4 repeats, zero agent financial/close effects;
