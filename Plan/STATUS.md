@@ -1,6 +1,8 @@
 # Current status
 
-Updated: 2026-10-28.
+Updated: 2026-10-31.
+
+**Locally verified:** [Step 36 straight-line depreciation](10-deferred-extensions/STEP_36_VERIFICATION.md) starts the user-selected Phase 10 extension. All 976 tests and 52 demonstrations passed; independent review found no Critical or Important issues. Exact-cent projection only, with full months and final-month remainder. Commit/upload and exact-SHA CI are pending. Phase 09 live gates remain deferred.
 
 **Delivered:** [Step 35b authenticated offline scoring](09-integrations-and-pilot/STEP_35B_VERIFICATION.md):
 14/14 exact proposals, 6/6 handoffs, 4/4 repeats, zero agent financial/close effects;
@@ -8,7 +10,7 @@ Updated: 2026-10-28.
 and 51 demos passed locally and in [exact CI](https://github.com/DatasanAli/Accounting_Harness/actions/runs/40731822177).
 Commit [`657481c`](https://github.com/DatasanAli/Accounting_Harness/commit/657481c5cbc3b97eb256d99d87321bf433b107d3) was pushed and matched `origin/main`.
 Independent review fixes passed re-review. Step 35's offline provider controls are
-complete; remaining G0 decisions, public compatibility review and live gates are next.
+complete; remaining G0 decisions, public compatibility review and live gates are deferred while the selected Phase 10 extension proceeds.
 
 **Delivered:** [Step 35a durable evaluation controls](09-integrations-and-pilot/STEP_35A_VERIFICATION.md):
 immutable experiment budgets, frozen semantic manifest and crash/deadline refusal.

@@ -1,6 +1,6 @@
 # Phase 10: Deferred extensions
 
-Status: optional backlog. These topics have been accounted for in the source review but are outside the initial service-business workflow. Do not implement them merely because their chapters exist. Select an extension, confirm its policy inputs, and assign one small testable step before starting.
+Status: straight-line depreciation selected on 2026-10-31 as Step 36; remaining extensions are an optional backlog. These topics have been accounted for in the source review but are outside the initial service-business workflow. Do not implement them merely because their chapters exist. Select an extension, confirm its policy inputs, and assign one small testable step before starting.
 
 All extensions reuse exact money, evidence, approval, journal, reconciliation and reporting services. The [implementation](../IMPLEMENTATION_GUIDELINES.md), [testing](../TESTING_STRATEGY.md) and [delivery](../GITHUB_WORKFLOW.md) guidelines still apply. Each increment needs its own fictional demonstration, failure cases, commit, push and CI evidence.
 
@@ -27,3 +27,20 @@ Rollback: preserve source records and posted history; reverse accounting effects
 Prompt when choosing an extension:
 
 > Scope the next small step for [extension]. Identify the required business policies and dependencies, write independent acceptance examples, and update the plan. Build only the agreed bounded behavior, test and demonstrate it, then commit and push to GitHub.
+
+
+### Step 36: Straight-line depreciation schedule
+
+The user selected this extension and its full-month/final-remainder policy.
+See the [bounded contract and acceptance examples](STEP_36_PLAN.md).
+
+- **Build:** A pure USD projection and CLI JSON command from supplied entity/asset,
+  cost, residual, in-service date and useful-life assumptions. Policy and normalized
+  inputs identify the calculation; it does not read or change financial actuals.
+- **Verify:** 1,200.00 over 12 months gives 100.00 each month; residual and final-cent
+  remainder reconcile; leap years, invalid inputs, exact large cents and repeat
+  output are checked. No posting capability is introduced.
+- **Demo:** `python3 -m accounting_harness demo-depreciation`.
+- **Delivery:** [verification record](STEP_36_VERIFICATION.md), tests, all demos,
+  independent review, commit, push and exact-SHA CI. Asset enrollment and approved
+  monthly posting need a later scoped step with duplicate-month protection.

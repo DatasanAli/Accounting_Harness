@@ -57,7 +57,7 @@ Plan/
 ├── 09-integrations-and-pilot/
 │   └── README.md                      # Steps 29–35
 └── 10-deferred-extensions/
-    └── README.md                      # Optional; requires a new scoped step
+    └── README.md                      # Step 36; other extensions optional
 ```
 
 The foundation verification record is also stored in `01-foundation/VERIFICATION.md`.
@@ -74,8 +74,8 @@ The foundation verification record is also stored in `01-foundation/VERIFICATION
 | [06: Bank reconciliation](06-bank-reconciliation/README.md) | An operator can explain the difference between statement cash and ledger cash without duplicate transactions. | 17–19 |
 | [07: Adjustments, statements and close](07-period-close/README.md) | A fictional month can be adjusted, reported, closed and reproduced from its original records. | 20–23 |
 | [08: Service costing, budgets and analysis](08-service-management/README.md) | The owner can inspect project costs, cash plans, budget variances and service contribution. | 24–28 |
-| [09: Access, integrations and controlled pilot](09-integrations-and-pilot/README.md) | A specifically scoped pilot has authenticated access, reconciled integration, a review interface and tested recovery. | 29–34 |
-| [10: Deferred extensions](10-deferred-extensions/README.md) | Explicit backlog for broader financial and managerial capabilities | Assign small steps when selected |
+| [09: Access, integrations and controlled pilot](09-integrations-and-pilot/README.md) | A specifically scoped pilot has authenticated access, reconciled integration, a review interface and tested recovery. | 29–35 |
+| [10: Deferred extensions](10-deferred-extensions/README.md) | Selected straight-line depreciation projection; broader extension backlog | 36 |
 
 Every phase contains implementation guidance, per-step tests, a manual demonstration, a delivery rule, rollback considerations, and copyable prompts. The phase is a group of commits, not a single large task. The order is a starting backlog, not a fixed schedule; change it when the user's needs warrant and keep dependencies explicit.
 
@@ -91,4 +91,4 @@ Every phase contains implementation guidance, per-step tests, a manual demonstra
 
 The initial harness prepares, reviews and records supported bookkeeping activity. Payment execution, tax filing/calculation, payroll processing, manufacturing, inventory, complex revenue contracts, and external customer/vendor messaging are deferred. The [source map](SOURCE_MAP.md) and [extension backlog](10-deferred-extensions/README.md) preserve the broader textbook coverage.
 
-**Delivery:** the authorized numbered offline campaign through Step 34 and final adversarial review/fixes is complete. See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md) and [remaining live gates](NEXT_STEP.md). The 2026-10-28 follow-up delivered [Step 35 offline evaluation prerequisites](09-integrations-and-pilot/STEP_35_PLAN.md). Live gates and the optional extension backlog remain deferred.
+**Delivery:** the authorized numbered offline campaign through Step 34 and final adversarial review/fixes is complete. See [acceptance evidence](09-integrations-and-pilot/STEP_34_VERIFICATION.md) and [remaining live gates](09-integrations-and-pilot/LIVE_VERIFICATION_GATES.md). The 2026-10-28 follow-up delivered [Step 35 offline evaluation prerequisites](09-integrations-and-pilot/STEP_35_PLAN.md). Live gates remain deferred. The 2026-10-31 selection starts [Step 36 depreciation](10-deferred-extensions/STEP_36_PLAN.md); other extensions remain unselected.

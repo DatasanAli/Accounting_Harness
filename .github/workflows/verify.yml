@@ -121,3 +121,5 @@ jobs:
         run: python3 -m accounting_harness demo-evaluation-budget
       - name: Demonstrate authenticated offline operational scoring
         run: python3 -m accounting_harness demo-operational-evaluation
+      - name: Demonstrate exact straight-line depreciation projection
+        run: python3 -m accounting_harness demo-depreciation

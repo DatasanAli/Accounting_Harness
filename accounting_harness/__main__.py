@@ -267,6 +267,11 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("demo-owner-prepaid-cash", help="review evidenced owner contribution, drawing and prepaid purchase cash entries")
     commands.add_parser("demo-operational-agent", help="run bounded offline operational agent contract cases")
     commands.add_parser("demo-workbench", help="demonstrate authenticated workbench presentation and HTTP route contracts")
+    commands.add_parser('demo-depreciation', help='exact straight-line depreciation projection; no posting')
+    depreciation = commands.add_parser('depreciation-schedule', help='JSON projection from supplied asset assumptions; no posting')
+    for name in ('entity', 'asset', 'cost', 'residual', 'in-service'):
+        depreciation.add_argument('--' + name, required=True)
+    depreciation.add_argument('--months', required=True, type=int)
     commands.add_parser('demo-operational-evaluation', help='authenticated offline semantic scoring; no live calls')
     operational_eval = commands.add_parser('eval-operational', help='create or resume a synthetic offline evaluation')
     operational_eval.add_argument('--directory', required=True, type=Path)
@@ -302,7 +307,15 @@ def main(argv: list[str] | None = None) -> int:
         review.add_argument(f"--{name}", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == 'demo-operational-evaluation':
+        if args.command == 'demo-depreciation':
+            from accounting_harness.depreciation import demo_depreciation
+            demo_depreciation()
+        elif args.command == 'depreciation-schedule':
+            from accounting_harness.depreciation import depreciation_schedule
+            report = depreciation_schedule(entity_id=args.entity, asset_id=args.asset, cost=args.cost,
+                residual=args.residual, months=args.months, in_service=args.in_service)
+            print(json.dumps(report, indent=2, sort_keys=True))
+        elif args.command == 'demo-operational-evaluation':
             from accounting_harness.operational_scoring import demo_operational_evaluation
             demo_operational_evaluation()
         elif args.command == 'eval-operational':

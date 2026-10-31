@@ -17,6 +17,20 @@ to the same experiment. Generated identities use known fixture passwords solely
 for isolated synthetic workspaces. Results are offline contract checks, not live
 model accuracy; this command has no live/provider selector.
 
+Step 36 starts the selected Phase 10 extension with a straight-line depreciation
+projection. It uses full months from the in-service month, rounds monthly amounts
+down to cents and puts the remainder in the final month. Inputs are assumptions;
+this command does not enroll an asset, approve an estimate or post depreciation.
+
+```sh
+python3 -m accounting_harness depreciation-schedule --entity demo-service-001 --asset synthetic-laptop --cost 1200.00 --residual 0.00 --months 12 --in-service 2026-01-15
+```
+
+The JSON includes normalized inputs, policy, schedule digest, monthly allocations,
+accumulated depreciation and carrying values. It supports USD, positive cost,
+residual no greater than cost and 1–1,200 months; see the
+[Step 36 contract](Plan/10-deferred-extensions/STEP_36_PLAN.md).
+
 Start with the [plan directory tree](Plan/README.md), [current status](Plan/STATUS.md), and [next step](Plan/NEXT_STEP.md). The [source map](Plan/SOURCE_MAP.md) connects the plan to the supplied textbooks, reviewed in order: Volume 1, then Volume 2.
 
 ## Open the localhost workspace
@@ -154,6 +168,7 @@ python3 -m accounting_harness demo-operations-status
 python3 -m accounting_harness demo-acceptance
 python3 -m accounting_harness demo-evaluation-budget
 python3 -m accounting_harness demo-operational-evaluation
+python3 -m accounting_harness demo-depreciation
 ```
 
 The adjusted-month demonstration uses a distinct January 1 insurance-purchase variant; the original January 3 fixture stays unchanged. It labels trusted owner/purchase fixture entries separately from the eight reviewed operations.

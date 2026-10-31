@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "current_step": "35",
+  "current_step": "36",
   "next_step": null,
   "phases": [
     {
@@ -514,6 +514,19 @@
           "delivery_scope": "Offline controls and scoring; live provider selection and execution remain separately gated",
           "commit": "657481c5cbc3b97eb256d99d87321bf433b107d3",
           "ci": "https://github.com/DatasanAli/Accounting_Harness/actions/runs/40731822177"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "path": "Plan/10-deferred-extensions/README.md",
+      "title": "Selected extensions",
+      "steps": [
+        {
+          "id": "36",
+          "title": "Straight-line depreciation schedule",
+          "status": "complete",
+          "delivery_scope": "Supplied-input projection only; asset enrollment and approved posting deferred"
         }
       ]
     }
